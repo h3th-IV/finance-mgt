@@ -8,8 +8,6 @@ const passport = require("passport");
 const session = require("express-session");
 const app = express();
 
-app.use(cors());
-
 app.use(
   session({
     resave: false,
@@ -17,3 +15,13 @@ app.use(
     secret: "SECRET",
   })
 );
+
+app.use(passport.initialize());
+app.use(passport.session);
+
+app.use(cors());
+app.use(cookieParser());
+app.set("view engine", "ejs");
+
+const sever = http.createServer(app)
+
