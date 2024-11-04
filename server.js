@@ -17,11 +17,53 @@ app.use(
 );
 
 app.use(passport.initialize());
-app.use(passport.session);
+app.use(passport.session());
 
 app.use(cors());
 app.use(cookieParser());
 app.set("view engine", "ejs");
 
-const sever = http.createServer(app)
+const sever = http.createServer(app);
 
+const db = require("./config/db");
+// db.connectDB();
+
+app.use(express.json());
+
+app.get("/", (req, res) => {
+    res.send("capitalWise Backend is running");
+});
+
+app.get("/google-auth", function (req, res) {
+  res.render("pages/auth");
+});
+app.get("/csrf-token", (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+var userProfile;
+app.get("/success", (req, res) => res.send(userProfile));
+app.get("/error", (req, res) => res.send("error logging in"));
+
+passport.serializeUser(function (user, cb) {
+  cb(null, user);
+});
+
+passport.deserializeUser(function (obj, cb) {
+  cb(null, obj);
+});
+
+// route for logging out
+app.get("/logout", function (req, res, next) {
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("/");
+  });
+});
+
+const PORT = process.env.PORT || 9000;
+sever.listen(PORT, () => {
+  console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`);
+});
