@@ -19,7 +19,7 @@ const UserSchema = new mongoose.Schema({
     phone_number: {
     type: String,
     required: false,
-  },
+    },
     password: {
         type: String,
         required: true,
@@ -49,7 +49,7 @@ UserSchema.methods.getSignedJwtToken = function(){
     email: this.email
   },
  
-  "thugnificient@lethalinterjections.com",
+  "thugnificient@lethalinterjection.com",
   {
     expiresIn: "30d",
   })
