@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const color = require("colors");
 mongoose.set('strictQuery', true);
 
-
 //all test dbs
 module.exports.connectDB = async () => {
   if (process.env.NODE_ENV === "development") {
@@ -14,7 +13,6 @@ module.exports.connectDB = async () => {
    
   } else {
     mongoose.connect(process.env.MONGO_URI);
-    
   }
 };
 

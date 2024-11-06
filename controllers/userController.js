@@ -71,4 +71,9 @@ module.exports = class UserController {
             return errorResponse(res, 500, "An unexpected error occurred", error);
         }
     }
+
+    static async login(req, res){
+        const { email, password } = req.body;
+        //add booking source
+    }
 };
