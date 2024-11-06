@@ -31,8 +31,29 @@ const UserSchema = new mongoose.Schema({
     address: {
         type: String,
         required: false,
+    },
+    otp: {
+        type: String,
+        unique: true,
+    },
+    otpCreatedAt: {
+        type: Date,
+        default: Date.now,
     }
 }, {timestamps: true,});
+
+UserSchema.methods.isOTPExpired = function (){
+    const otpExpirationTime = 5 * 60 * 1000;
+    return Date.now() > this.otpCreatedAt.getTime() + otpExpirationTime;
+};
+
+UserSchema.methods.clearOTPIfExpired = async function(){
+    if (this.isOtpExpired()) {
+        this.otp = "EXPIRED";
+        this.otpCreatedAt = null;
+        await this.save();
+    }
+}
 
 UserSchema.pre("save", async function (next) {
     const salt = await bcrypt.genSalt(10);
@@ -45,7 +66,7 @@ UserSchema.methods.getSignedJwtToken = function(){
     email: this.email
   },
  
-  "thugnificient@lethalinterjections.com",
+  "thugnificient@lethalinterjection.com",
   {
     expiresIn: "30d",
   })

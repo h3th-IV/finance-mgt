@@ -7,6 +7,7 @@ const csrf = require("csurf");
 const passport = require("passport");
 const session = require("express-session");
 const app = express();
+const user = require("./routes/user");
 
 app.use(
   session({
@@ -53,7 +54,7 @@ passport.deserializeUser(function (obj, cb) {
   cb(null, obj);
 });
 
-// route for logging out
+// route for sign out
 app.get("/logout", function (req, res, next) {
   req.logout(function (err) {
     if (err) {
@@ -62,6 +63,8 @@ app.get("/logout", function (req, res, next) {
     res.redirect("/");
   });
 });
+
+app.use("/api/v1/user", user);
 
 const PORT = process.env.PORT || 9000;
 sever.listen(PORT, () => {

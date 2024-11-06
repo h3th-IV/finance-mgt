@@ -1,6 +1,6 @@
 const UserService = require("../services/userService");
 const { successResponse, errorResponse } = require("../utils/responses");
-
+const mailer = require("../config/mailer");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -31,18 +31,44 @@ module.exports = class UserController {
                 return errorResponse(res, 400, "User with this email already exist");
             }
             const characters = "0123456789";
-            let OTP = "";
+            let otp = "";
             for(let i=0; i<5; i++) {
-                OTP += characters[Math.floor(Math.random() * 6)];
+                otp += characters[Math.floor(Math.random() * 6)];
             }
+            const first_name = name.split(" ")[0];
             const user = {
                 name,
                 email,
                 number,
                 password,
+                otp
             };
+            const response = await UserService.createUser(user);
+            if (response?.errors){
+                return errorResponse(res, 500, "An error occurred", response);
+            }
+            mailer.sendOTPEmail(email, first_name, otp);
+            return successResponse(res, 201, "User created successfully, OTP sent to email", response);
         } catch (error) {
-            
+            return errorResponse(res, 500, "An unexpected error occurred", error);
         } 
+    }
+
+    static async validateOTP(req, res){
+        const userId = req.params.userId;
+        const { inputOTP } = req.body;
+        if (!userId || !inputOTP) {
+        return errorResponse(res, 400, "Missing user ID or OTP.");
+        }
+        try {
+            const response = UserService.validateOTP(userId, inputOTP);
+            if (response.success) {
+                return successResponse(res, 200, response.message);
+            } else {
+                return errorResponse(res, 400, response.message);
+            }
+        } catch (error) {
+            return errorResponse(res, 500, "An unexpected error occurred", error);
+        }
     }
 };

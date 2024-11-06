@@ -8,4 +8,4 @@ const sender = nodemailer.createTransport({
     },
 });
 
-module.exports.sendOTPEmail = (email, OTP) => {};
+module.exports.sendOTPEmail = (email, first_name, OTP) => {};
