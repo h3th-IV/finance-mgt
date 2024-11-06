@@ -66,7 +66,7 @@ UserSchema.methods.getSignedJwtToken = function(){
     email: this.email
   },
  
-  "thugnificient@lethalinterjection.com",
+  "thugnificient@lethalinterjections.com",
   {
     expiresIn: "30d",
   })
