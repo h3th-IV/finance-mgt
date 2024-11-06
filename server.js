@@ -27,7 +27,7 @@ app.set("view engine", "ejs");
 const sever = http.createServer(app);
 
 const db = require("./config/db");
-// db.connectDB();
+db.connectDB();
 
 app.use(express.json());
 
@@ -68,5 +68,5 @@ app.use("/api/v1/user", user);
 
 const PORT = process.env.PORT || 9000;
 sever.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });

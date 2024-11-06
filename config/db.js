@@ -1,33 +1,28 @@
 const mongoose = require("mongoose");
+const color = require("colors");
 mongoose.set('strictQuery', true);
 
 
+//all test dbs
 module.exports.connectDB = async () => {
   if (process.env.NODE_ENV === "development") {
-    mongoose.connect("connectionURL here", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
- console.log("staging db connected");
+    mongoose.connect(process.env.MONGO_URI);
+ console.log("staging db connected".blue);
   } else if (process.env.NODE_ENV === "production") {
-    mongoose.connect("connectionURL here", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("production db connected");
+    mongoose.connect(process.env.MONGO_URI);
+    console.log("production db connected".bgBlue);
    
   } else {
-    mongoose.connect("connectionURL here", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    mongoose.connect(process.env.MONGO_URI);
     
   }
 };
+
 module.exports.closeDatabase = async () => {
   await mongoose.connection.dropDatabase();
   await mongoose.disconnect();
 };
+
 module.exports.clearDatabase = async () => {
   const collections = mongoose.connection.collections;
 
