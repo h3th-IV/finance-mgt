@@ -3,11 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const UserSchema = new mongoose.Schema({
-    first_name: {
-        type: String,
-        required: true,
-    },
-    last_name: {
+    full_name: {
         type: String,
         required: true,
     },
@@ -17,8 +13,8 @@ const UserSchema = new mongoose.Schema({
         unique: true,
     },
     phone_number: {
-    type: String,
-    required: false,
+        type: String,
+        required: false,
     },
     password: {
         type: String,
@@ -30,11 +26,11 @@ const UserSchema = new mongoose.Schema({
     },
     dateOfBirth: {
         type: Date,
-        required: true
+        required: false
     },
     address: {
         type: String,
-        required: true,
+        required: false,
     }
 }, {timestamps: true,});
 
@@ -49,7 +45,7 @@ UserSchema.methods.getSignedJwtToken = function(){
     email: this.email
   },
  
-  "thugnificient@lethalinterjection.com",
+  "thugnificient@lethalinterjections.com",
   {
     expiresIn: "30d",
   })
