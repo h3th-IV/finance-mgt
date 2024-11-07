@@ -63,7 +63,7 @@ module.exports = class UserController {
         const userId = req.params.userId;
         const { inputOTP } = req.body;
         if (!userId || !inputOTP) {
-        return errorResponse(res, 400, "Missing user ID or OTP.");
+            return errorResponse(res, 400, "Missing user ID or OTP.");
         }
         try {
             const response = await UserService.validateOTP(userId, inputOTP);
