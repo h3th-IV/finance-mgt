@@ -47,13 +47,28 @@ UserSchema.methods.isOTPExpired = function (){
     return Date.now() > this.otpCreatedAt.getTime() + otpExpirationTime;
 };
 
-UserSchema.methods.clearOTPIfExpired = async function(){
-    if (this.isOtpExpired()) {
+UserSchema.methods.clearOTPIfExpired = async function(){    
+    if (this.isOTPExpired()) {
         this.otp = "EXPIRED";
         this.otpCreatedAt = null;
         await this.save();
     }
 }
+
+UserSchema.methods.regenerateOTP = async function () {
+  if (this.isOTPExpired()) {
+    const characters = "0123456789";
+    let newOTP = "";
+    for (let i = 0; i < 5; i++) {
+      newOTP += characters[Math.floor(Math.random() * 10)];
+    }
+    this.otp = newOTP;
+    this.otpCreatedAt = Date.now();
+    await this.save();
+    return newOTP;
+  }
+  return null;
+};
 
 UserSchema.pre("save", async function (next) {
     const salt = await bcrypt.genSalt(10);
@@ -71,9 +86,5 @@ UserSchema.methods.getSignedJwtToken = function(){
     expiresIn: "30d",
   })
 }
-
-UserSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
 
 module.exports = mongoose.model("User", UserSchema);

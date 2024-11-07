@@ -37,7 +37,7 @@ module.exports = class UserService {
 
     static async getUsers(){
         try {
-            const users = User.find();
+            const users = await User.find();
             return users;
         } catch (error) {
             return error;
@@ -64,6 +64,7 @@ module.exports = class UserService {
                 return { success: false, message: "Invalid OTP."};
             }
         } catch (error) {
+            console.log(error);
             return { success: false, message: "An error occurred during OTP validation.", error };
         }
     }
