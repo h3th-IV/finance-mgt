@@ -7,6 +7,7 @@ const csrf = require("csurf");
 const passport = require("passport");
 const session = require("express-session");
 const app = express();
+const user = require("./routes/user");
 
 app.use(
   session({
@@ -26,7 +27,7 @@ app.set("view engine", "ejs");
 const sever = http.createServer(app);
 
 const db = require("./config/db");
-// db.connectDB();
+db.connectDB();
 
 app.use(express.json());
 
@@ -53,7 +54,7 @@ passport.deserializeUser(function (obj, cb) {
   cb(null, obj);
 });
 
-// route for logging out
+// route for sign out
 app.get("/logout", function (req, res, next) {
   req.logout(function (err) {
     if (err) {
@@ -63,7 +64,9 @@ app.get("/logout", function (req, res, next) {
   });
 });
 
+app.use("/api/v1/user", user);
+
 const PORT = process.env.PORT || 9000;
 sever.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });
