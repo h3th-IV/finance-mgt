@@ -37,35 +37,42 @@ module.exports = class UserService {
 
     static async getUsers(){
         try {
-            const users = User.find();
+            const users = await User.find();
+            // const ussers = await User.deleteMany();
             return users;
         } catch (error) {
             return error;
         }
     }
 
-    static async validateOTP(userId, inputOTP){
+    static async validateOTP(userId, inputOTP) {
         try {
             const user = await User.findById(userId);
             if (!user) {
-            return { success: false, message: "User not found." };
+                return { success: false, message: "User not found." };
             }
+
             await user.clearOTPIfExpired();
-            if (user.otp === "EXPIRED"){
+
+            if (user.otp === "EXPIRED") {
                 return { success: false, message: "OTP has expired." };
             }
-            if(user.otp === inputOTP){
+
+            if (user.otp === inputOTP) {
                 user.otp = "EXPIRED";
                 user.otpCreatedAt = null;
                 await user.save();
 
-                return { success: true, message: "OTP validated successfully."};
-            } else{
-                return { success: false, message: "Invalid OTP."};
+                return { success: true, message: "OTP validated successfully." };
+            } else {
+                return { success: false, message: "Invalid OTP." };
             }
         } catch (error) {
-            return { success: false, message: "An error occurred during OTP validation.", error };
+            console.error("Error validating OTP:", error);
+            return { success: false, message: "An unexpected error occurred during OTP validation." };
         }
     }
+
+
 };
 
