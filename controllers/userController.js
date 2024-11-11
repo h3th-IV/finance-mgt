@@ -83,19 +83,19 @@ module.exports = class UserController {
     static async regenerateOTP(req, res) {
         const userId = req.params.userId;
         try {
-            const user = await UserService.getUserById(userId);
+            const user = await UserService.getUserByID(userId);
             if (!user) {
                 return errorResponse(res, 404, "User not found");
             }
             const newOTP = await user.regenerateOTP();
             if (newOTP) {
-                // Send the new OTP via email
                 mailer.sendOTPEmail(user.email, user.full_name, newOTP);
                 return successResponse(res, 200, "A new OTP has been sent to your email");
             } else {
                 return errorResponse(res, 400, "OTP is still valid. Please try again later");
             }
         } catch (error) {
+            console.log(error);
             return errorResponse(res, 500, "An error occurred while regenerating the OTP", error);
         }
     }

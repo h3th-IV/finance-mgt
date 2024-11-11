@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const UserSchema = new mongoose.Schema({
+const UsersSchema = new mongoose.Schema({
     full_name: {
         type: String,
         required: true,
@@ -34,7 +34,7 @@ const UserSchema = new mongoose.Schema({
     },
     otp: {
         type: String,
-        unique: true,
+        unique: false,
     },
     otpCreatedAt: {
         type: Date,
@@ -42,20 +42,19 @@ const UserSchema = new mongoose.Schema({
     }
 }, {timestamps: true,});
 
-UserSchema.methods.isOTPExpired = function (){
-    const otpExpirationTime = 5 * 60 * 1000;
-    return Date.now() > this.otpCreatedAt.getTime() + otpExpirationTime;
+UsersSchema.methods.isOTPExpired = function () {
+  const otpExpirationTime = 5 * 60 * 1000; // 5 minutes
+  return Date.now() > this.otpCreatedAt.getTime() + otpExpirationTime;
 };
 
-UserSchema.methods.clearOTPIfExpired = async function(){    
-    if (this.isOTPExpired()) {
-        this.otp = "EXPIRED";
-        this.otpCreatedAt = null;
-        await this.save();
-    }
-}
+UsersSchema.methods.clearOTPIfExpired = async function () {
+  if (this.isOTPExpired()) {
+    this.otp = "EXPIRED";
+    await this.save();
+  }
+};
 
-UserSchema.methods.regenerateOTP = async function () {
+UsersSchema.methods.regenerateOTP = async function () {
   if (this.isOTPExpired()) {
     const characters = "0123456789";
     let newOTP = "";
@@ -70,12 +69,16 @@ UserSchema.methods.regenerateOTP = async function () {
   return null;
 };
 
-UserSchema.pre("save", async function (next) {
+
+UsersSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next(); // To avoid rehashing an already hashed password
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt); 
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
 });
 
-UserSchema.methods.getSignedJwtToken = function(){
+
+UsersSchema.methods.getSignedJwtToken = function(){
   return jwt.sign({
     id: this._id,
     email: this.email
@@ -87,4 +90,4 @@ UserSchema.methods.getSignedJwtToken = function(){
   })
 }
 
-module.exports = mongoose.model("User", UserSchema);
+module.exports = mongoose.model("NewUser", UsersSchema);
