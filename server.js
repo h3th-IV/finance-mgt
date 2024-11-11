@@ -8,6 +8,8 @@ const passport = require("passport");
 const session = require("express-session");
 const app = express();
 const user = require("./routes/user");
+const cron = require("node-cron");
+const userModel = require("./models/user");
 
 app.use(
   session({
@@ -28,6 +30,7 @@ const sever = http.createServer(app);
 
 const db = require("./config/db");
 db.connectDB();
+// db.clearDatabase();
 
 app.use(express.json());
 
@@ -70,3 +73,23 @@ const PORT = process.env.PORT || 9000;
 sever.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });
+
+// cron.schedule('*/1 * * * *', async () => {
+//     console.log("there");
+//     try {
+//         const usersWithExpiredOTPs = await userModel.find({
+//             otpExpired: false,
+//             otpCreatedAt: { $lte: new Date(Date.now() - 5 * 60 * 1000) }
+//         });
+
+//         for (const user of usersWithExpiredOTPs) {
+//             user.otp = "EXPIRED";
+//             // user.otpCreatedAt = null;
+//             user.otpExpired = true;
+//             await user.save();
+//         }
+//         console.log(`Expired OTPs cleaned up at ${new Date().toISOString()}`);
+//     } catch (error) {
+//         console.error("Error during OTP cleanup:", error);
+//     }
+// });
