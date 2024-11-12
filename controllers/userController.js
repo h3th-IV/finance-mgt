@@ -5,9 +5,12 @@ const bcryptjs = require("bcryptjs");
 
 module.exports = class UserController {
     static async createUser(req, res) {
-        const { name, email, number, password } = req.body;
+        const { first_name, last_name, email, number, password } = req.body;
         try {
-            if (!name || name === ""){
+            if (!first_name || first_name === ""){
+                return errorResponse(res, 400, "Please provide your full name");
+            }
+            if (!last_name || last_name === ""){
                 return errorResponse(res, 400, "Please provide your full name");
             }
             if (!email || email === ""){
@@ -35,14 +38,10 @@ module.exports = class UserController {
             if (user_exist){
                 return errorResponse(res, 400, "User with this email already exist");
             }
-            const characters = "0123456789";
-            let otp = "";
-            for(let i=0; i<5; i++) {
-                otp += characters[Math.floor(Math.random() * 6)];
-            }
-            const first_name = name.split(" ")[0];
+            const otp = generateOTP()
             const user = {
-                name,
+                first_name,
+                last_name,
                 email: lower_email,
                 number,
                 password,
@@ -55,6 +54,7 @@ module.exports = class UserController {
             mailer.sendOTPEmail(email, first_name, otp);
             return successResponse(res, 201, "User created successfully, please check your email for OTP verification", response);
         } catch (error) {
+            console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
         } 
     }
@@ -143,6 +143,37 @@ module.exports = class UserController {
             return errorResponse(res, 500, "Server Error");
         }
     }
+
+    static async forgotPasswordOTP(req, res){
+        const { email } = req.body;
+        const otp = generateOTP()
+        try {
+            const response = await UserService.updateOTP(email, otp);
+            mailer.sendForgotPassword(email, otp);
+            return successResponse(res, 200, "Password reset email sent!");
+        } catch (error) {
+            return errorResponse(res, 500, "Unable to send password reset email");
+        }
+    }
+
+    static async resetPassword(req, res) {
+        const { email, otp, new_password } = req.body;
+        if (!email || !otp || !new_password) {
+            return errorResponse(res, 400, "All fields (email, otp, and new password) are required.");
+        }
+        
+        try {
+            const response = await UserService.resetPassword(email, otp, new_password);
+            if (response.success) {
+                return successResponse(res, 200, response.message);
+            } else {
+                return errorResponse(res, 400, response.message);
+            }
+        } catch (error) {
+            return errorResponse(res, 500, "An unexpected error occurred", error);
+        }
+    }
+
 };
 
 function validateEmail(email) {
@@ -153,4 +184,13 @@ function validateEmail(email) {
         return { success: false, message: "Email is not valid" };
     }
     return { success: true };
+}
+
+function generateOTP(){
+    const characters = "0123456789";
+    let otp = "";
+    for(let i=0; i<5; i++) {
+        otp += characters[Math.floor(Math.random() * 6)];
+    }
+    return otp;
 }

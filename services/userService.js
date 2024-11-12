@@ -4,7 +4,8 @@ module.exports = class UserService {
     static async createUser(data){
         try {
             const newUser = {
-                full_name: data.name,
+                first_name: data.first_name,
+                last_name: data.last_name,
                 email: data.email,
                 phone_number: data.number,
                 password: data.password,
@@ -73,6 +74,49 @@ module.exports = class UserService {
         }
     }
 
+    //update the OTP for a user
+    static async updateOTP(email, otp) {
+        try {
+            const updateUser = await User.findOneAndUpdate(
+                { email: email },
+                { otp: otp, otpCreatedAt: Date.now() },
+                { new: true }
+            );
+            if (!updateUser) {
+                throw new Error("User not found.");
+            }
+            return updateUser;
+        } catch (error) {
+            console.log(error);
+            return error;
+        }
+    }
+
+    static async resetPassword(email, otp, new_password) {
+        try {
+            const user = await User.findOne({ email });
+
+            if (!user) {
+                return { success: false, message: "User not found." };
+            }
+
+            if (user.otp !== otp || user.otpExpired || user.isOTPExpired()) {
+                return { success: false, message: "Invalid or expired OTP." };
+            }
+
+            user.otpExpired = true;
+            user.otp = null;
+            user.otpCreatedAt = null;
+
+            user.password = new_password;
+            await user.save();
+
+            return { success: true, message: "Password reset successfully." };
+        } catch (error) {
+            console.error("Error resetting password:", error);
+            return { success: false, message: "An error occurred while resetting the password.", error };
+        }
+    }
 
 };
 
