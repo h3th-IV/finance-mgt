@@ -61,10 +61,9 @@ module.exports = class UserService {
 
             if (user.otp === inputOTP) {
                 user.otp = "EXPIRED";
-                user.otpCreatedAt = null;
+                // user.otpCreatedAt = null;
                 await user.save();
-
-                return { success: true, message: "OTP validated successfully." };
+                return { success: true, message: "OTP validated successfully.", User: user};
             } else {
                 return { success: false, message: "Invalid OTP." };
             }

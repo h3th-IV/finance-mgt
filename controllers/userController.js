@@ -69,13 +69,23 @@ module.exports = class UserController {
             return errorResponse(res, 400, "Please provide the OTP");
         }
         try {
-            const response = await UserService.validateOTP(userId, inputOTP);
-            if (response.success) {
-                return successResponse(res, 200, response.message);
+            const responseOTP = await UserService.validateOTP(userId, inputOTP);
+            const user = responseOTP.User;
+            if (responseOTP.success) {
+                const token = user.getSignedJwtToken();
+                const response = {
+                    jwToken: token,
+                    name: user.first_name,
+                    email: user.email,
+                    phone: user.phone_number,
+                    message: "OTP validated successfully"
+                }
+                return successResponse(res, 200, response);
             } else {
-                return errorResponse(res, 400, response.message);
+                return errorResponse(res, 400, responseOTP.message);
             }
         } catch (error) {
+            console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
         }
     }
@@ -89,7 +99,7 @@ module.exports = class UserController {
             }
             const newOTP = await user.regenerateOTP();
             if (newOTP) {
-                mailer.sendOTPEmail(user.email, user.full_name, newOTP);
+                mailer.sendOTPEmail(user.email, user.first_name, newOTP);
                 return successResponse(res, 200, "A new OTP has been sent to your email");
             } else {
                 return errorResponse(res, 400, "OTP is still valid. Please try again later");
@@ -122,10 +132,23 @@ module.exports = class UserController {
         if (!isPassword){
             return errorResponse(res, 401, "Incorrect password");
         }
+        // const loginExp = 24 * 60 * 60 * 1000;
+        const loginExp = 5 * 60 * 1000;
+        if (Date.now() - user.last_login.getTime() > loginExp) {
+            const otp = generateOTP();
+            user.otp = otp;
+            user.otpCreatedAt = Date.now();
+            await user.save();
+            mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
+            return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.");
+        }
+
+        user.last_login = Date.now();
+        await user.save();
         const token = user.getSignedJwtToken();
         const response = {
             jwToken: token,
-            name: user.full_name,
+            name: user.first_name,
             email: user.email,
             phone: user.phone_number,
         }
@@ -156,6 +179,7 @@ module.exports = class UserController {
         }
     }
 
+    //TODO: check if otp is expired
     static async resetPassword(req, res) {
         const { email, otp, new_password } = req.body;
         if (!email || !otp || !new_password) {
