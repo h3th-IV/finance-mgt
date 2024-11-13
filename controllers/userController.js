@@ -8,10 +8,10 @@ module.exports = class UserController {
         const { first_name, last_name, email, number, password } = req.body;
         try {
             if (!first_name || first_name === ""){
-                return errorResponse(res, 400, "Please provide your full name");
+                return errorResponse(res, 400, "Please provide your first_name");
             }
             if (!last_name || last_name === ""){
-                return errorResponse(res, 400, "Please provide your full name");
+                return errorResponse(res, 400, "Please provide your last_name");
             }
             if (!email || email === ""){
                 return errorResponse(res, 400, "Please provide your email address");
