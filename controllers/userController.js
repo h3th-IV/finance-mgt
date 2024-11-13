@@ -5,10 +5,13 @@ const bcryptjs = require("bcryptjs");
 
 module.exports = class UserController {
     static async createUser(req, res) {
-        const { name, email, number, password } = req.body;
+        const { first_name, last_name, email, number, password } = req.body;
         try {
-            if (!name || name === ""){
-                return errorResponse(res, 400, "Please provide your full name");
+            if (!first_name || first_name === ""){
+                return errorResponse(res, 400, "Please provide your first_name");
+            }
+            if (!last_name || last_name === ""){
+                return errorResponse(res, 400, "Please provide your last_name");
             }
             if (!email || email === ""){
                 return errorResponse(res, 400, "Please provide your email address");
@@ -35,14 +38,10 @@ module.exports = class UserController {
             if (user_exist){
                 return errorResponse(res, 400, "User with this email already exist");
             }
-            const characters = "0123456789";
-            let otp = "";
-            for(let i=0; i<5; i++) {
-                otp += characters[Math.floor(Math.random() * 6)];
-            }
-            const first_name = name.split(" ")[0];
+            const otp = generateOTP()
             const user = {
-                name,
+                first_name,
+                last_name,
                 email: lower_email,
                 number,
                 password,
@@ -55,6 +54,7 @@ module.exports = class UserController {
             mailer.sendOTPEmail(email, first_name, otp);
             return successResponse(res, 201, "User created successfully, please check your email for OTP verification", response);
         } catch (error) {
+            console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
         } 
     }
@@ -69,13 +69,23 @@ module.exports = class UserController {
             return errorResponse(res, 400, "Please provide the OTP");
         }
         try {
-            const response = await UserService.validateOTP(userId, inputOTP);
-            if (response.success) {
-                return successResponse(res, 200, response.message);
+            const responseOTP = await UserService.validateOTP(userId, inputOTP);
+            const user = responseOTP.User;
+            if (responseOTP.success) {
+                const token = user.getSignedJwtToken();
+                const response = {
+                    jwToken: token,
+                    name: user.first_name,
+                    email: user.email,
+                    phone: user.phone_number,
+                    message: "OTP validated successfully"
+                }
+                return successResponse(res, 200, response);
             } else {
-                return errorResponse(res, 400, response.message);
+                return errorResponse(res, 400, responseOTP.message);
             }
         } catch (error) {
+            console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
         }
     }
@@ -89,7 +99,7 @@ module.exports = class UserController {
             }
             const newOTP = await user.regenerateOTP();
             if (newOTP) {
-                mailer.sendOTPEmail(user.email, user.full_name, newOTP);
+                mailer.sendOTPEmail(user.email, user.first_name, newOTP);
                 return successResponse(res, 200, "A new OTP has been sent to your email");
             } else {
                 return errorResponse(res, 400, "OTP is still valid. Please try again later");
@@ -122,10 +132,23 @@ module.exports = class UserController {
         if (!isPassword){
             return errorResponse(res, 401, "Incorrect password");
         }
+        // const loginExp = 24 * 60 * 60 * 1000;
+        const loginExp = 5 * 60 * 1000;
+        if (Date.now() - user.last_login.getTime() > loginExp) {
+            const otp = generateOTP();
+            user.otp = otp;
+            user.otpCreatedAt = Date.now();
+            await user.save();
+            mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
+            return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.");
+        }
+
+        user.last_login = Date.now();
+        await user.save();
         const token = user.getSignedJwtToken();
         const response = {
             jwToken: token,
-            name: user.full_name,
+            name: user.first_name,
             email: user.email,
             phone: user.phone_number,
         }
@@ -143,6 +166,38 @@ module.exports = class UserController {
             return errorResponse(res, 500, "Server Error");
         }
     }
+
+    static async forgotPasswordOTP(req, res){
+        const { email } = req.body;
+        const otp = generateOTP()
+        try {
+            const response = await UserService.updateOTP(email, otp);
+            mailer.sendForgotPassword(email, otp);
+            return successResponse(res, 200, "Password reset email sent!");
+        } catch (error) {
+            return errorResponse(res, 500, "Unable to send password reset email");
+        }
+    }
+
+    //TODO: check if otp is expired
+    static async resetPassword(req, res) {
+        const { email, otp, new_password } = req.body;
+        if (!email || !otp || !new_password) {
+            return errorResponse(res, 400, "All fields (email, otp, and new password) are required.");
+        }
+        
+        try {
+            const response = await UserService.resetPassword(email, otp, new_password);
+            if (response.success) {
+                return successResponse(res, 200, response.message);
+            } else {
+                return errorResponse(res, 400, response.message);
+            }
+        } catch (error) {
+            return errorResponse(res, 500, "An unexpected error occurred", error);
+        }
+    }
+
 };
 
 function validateEmail(email) {
@@ -153,4 +208,13 @@ function validateEmail(email) {
         return { success: false, message: "Email is not valid" };
     }
     return { success: true };
+}
+
+function generateOTP(){
+    const characters = "0123456789";
+    let otp = "";
+    for(let i=0; i<5; i++) {
+        otp += characters[Math.floor(Math.random() * 6)];
+    }
+    return otp;
 }
