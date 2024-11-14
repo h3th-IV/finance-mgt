@@ -132,15 +132,14 @@ module.exports = class UserController {
         if (!isPassword){
             return errorResponse(res, 401, "Incorrect password");
         }
-        // const loginExp = 24 * 60 * 60 * 1000;
-        const loginExp = 5 * 60 * 1000;
+        const loginExp = 24 * 60 * 60 * 1000;
         if (Date.now() - user.last_login.getTime() > loginExp) {
             const otp = generateOTP();
             user.otp = otp;
             user.otpCreatedAt = Date.now();
             await user.save();
             mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
-            return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.");
+            return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.", user);
         }
 
         user.last_login = Date.now();
