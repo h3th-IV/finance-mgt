@@ -215,11 +215,21 @@ module.exports = class UserController {
         if (user.kyc_verification) {
             kycRecord = await KYC.findByIdAndUpdate(
             user.kyc_verification._id,
-            { $set: kycData },
+            {       
+                ...kycData,
+                'facial_verification': req.files['facial_verification'] ? req.files['facial_verification'][0].path : null,
+                'document_verification.doc': req.files['document_verification.doc'] ? req.files['document_verification.doc'][0].path : null
+            },
             { new: true, runValidators: true }
             );
         } else {
-            kycRecord = new KYC(kycData);
+            kycRecord = new KYC(
+                {       
+                    ...kycData,
+                    'facial_verification': req.files['facial_verification'] ? req.files['facial_verification'][0].path : null,
+                    'document_verification.doc': req.files['document_verification.doc'] ? req.files['document_verification.doc'][0].path : null
+                },
+            );
             await kycRecord.save();
             user.kyc_verification = kycRecord._id;
         }
