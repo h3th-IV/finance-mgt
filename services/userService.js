@@ -1,3 +1,4 @@
+const kyc = require("../models/kyc");
 const User = require("../models/user");
 
 module.exports = class UserService {
@@ -115,6 +116,5 @@ module.exports = class UserService {
             return { success: false, message: "An error occurred while resetting the password.", error };
         }
     }
-
 };
 

@@ -9,6 +9,7 @@ router.post("/signin", UserController.login);
 router.post("/regenerate-otp/:userId", UserController.regenerateOTP);
 router.post("/forgot-password", UserController.forgotPasswordOTP);
 router.patch("/reset-password", UserController.resetPassword);
+router.patch("/kyc/:userId", UserController.updateKYC);
 
 
 module.exports = router;

@@ -2,6 +2,8 @@ const UserService = require("../services/userService");
 const { successResponse, errorResponse } = require("../utils/responses");
 const mailer = require("../config/mailer");
 const bcryptjs = require("bcryptjs");
+const KYC = require("../models/kyc");
+const User = require("../models/user")
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -132,18 +134,20 @@ module.exports = class UserController {
         if (!isPassword){
             return errorResponse(res, 401, "Incorrect password");
         }
-        const loginExp = 24 * 60 * 60 * 1000;
-        if (Date.now() - user.last_login.getTime() > loginExp) {
-            const otp = generateOTP();
-            user.otp = otp;
-            user.otpCreatedAt = Date.now();
-            await user.save();
-            mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
-            return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.", user);
+        // const loginExp = 24 * 60 * 60 * 1000;
+        // if (Date.now() - user.last_login.getTime() > loginExp) {
+        //     const otp = generateOTP();
+        //     user.otp = otp;
+        //     user.otpCreatedAt = Date.now();
+        //     await user.save();
+        //     mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
+        //     return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.", user);
+        // }
+        if (!user.is_verified) {
+        return successResponse(res, 200, "Please complete your KYC verification to continue.", { is_verified: user.is_verified });
         }
-
-        user.last_login = Date.now();
-        await user.save();
+        // user.last_login = Date.now();
+        // await user.save();
         const token = user.getSignedJwtToken();
         const response = {
             jwToken: token,
@@ -194,6 +198,45 @@ module.exports = class UserController {
             }
         } catch (error) {
             return errorResponse(res, 500, "An unexpected error occurred", error);
+        }
+    }
+
+    static async updateKYC(req, res) {
+        const { userId } = req.params;
+        const kycData = req.body;
+
+        try {
+        let user = await User.findById(userId).populate('kyc_verification');
+        if (!user) {
+            return errorResponse(res, 404, "User not found");
+        }
+
+        let kycRecord;
+        if (user.kyc_verification) {
+            kycRecord = await KYC.findByIdAndUpdate(
+            user.kyc_verification._id,
+            { $set: kycData },
+            { new: true, runValidators: true }
+            );
+        } else {
+            kycRecord = new KYC(kycData);
+            await kycRecord.save();
+            user.kyc_verification = kycRecord._id;
+        }
+        const isVerified = kycRecord.bank_verification_number?.bvn &&
+                            kycRecord.bank_verification_number?.dob &&
+                            kycRecord.facial_verification &&
+                            kycRecord.document_verification?.doc_type &&
+                            kycRecord.document_verification?.doc_no &&
+                            kycRecord.document_verification?.doc &&
+                            kycRecord.document_verification?.home_address;
+
+        user.is_verified = Boolean(isVerified);
+        await user.save();
+
+        return successResponse(res, 200, "KYC information updated successfully", { is_verified: user.is_verified });
+        } catch (error) {
+        return errorResponse(res, 500, "Server error");
         }
     }
 
