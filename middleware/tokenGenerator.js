@@ -16,12 +16,11 @@ exports.tokenProvider = (req, res) => {
 }
 
 exports.verifyToken = (req, res, next) => {
-    let token =
+  let token =
     req.body.token ||
     req.query.token ||
     req.header("x-auth-token") ||
     req.headers["authorization"];
-
   if (req.headers["authorization"]) {
     const bearer = token.split(" ");
     token = bearer[1];
@@ -31,8 +30,9 @@ exports.verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    res.status(200).json({ msg: "Token valid", res});
+    next();
   } catch (e) {
-    res.status(400).json({ msg: "The token used has expired", e});
+    console.log(e);
+    res.status(400).json({ msg: "The token used has expired" });
   }
-}
+};
