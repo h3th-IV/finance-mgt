@@ -40,6 +40,7 @@ module.exports = class UserService {
     static async getUsers(){
         try {
             const users = await User.find();
+            // const userss = await User.deleteMany();
             return users;
         } catch (error) {
             return error;

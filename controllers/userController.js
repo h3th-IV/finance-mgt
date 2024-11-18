@@ -126,10 +126,12 @@ module.exports = class UserController {
             return errorResponse(res, 400, "Password not provided")
         }
         const lower_email = email.toLowerCase();
+        // console.log(lower_email);
         const user = await UserService.getUserByEmail(lower_email);
         if (!user){
             return errorResponse(res, 401, "User with email not found");
         }
+        // console.log("usr: ", user)
         const isPassword = await bcryptjs.compare(password, user.password);
         if (!isPassword){
             return errorResponse(res, 401, "Incorrect password");
@@ -143,21 +145,23 @@ module.exports = class UserController {
         //     mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
         //     return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.", user);
         // }
+        const token = user.getSignedJwtToken();
         if (!user.is_verified) {
-        return successResponse(res, 200, "Please complete your KYC verification to continue.", { is_verified: user.is_verified });
+            const response = {
+                user,
+                jwToken: token,
+            }
+        return successResponse(res, 200, "Please complete your KYC verification to continue.", response);
         }
         // user.last_login = Date.now();
         // await user.save();
-        const token = user.getSignedJwtToken();
         const response = {
             jwToken: token,
             user: user,
-            // name: user.first_name,
-            // email: user.email,
-            // phone: user.phone_number,
         }
         return successResponse(res, 200, "Login successful", response);
         } catch (error) {
+            console.log("err", error);
             return errorResponse(res, 500, "Server Error");
         }
     }
@@ -238,7 +242,6 @@ module.exports = class UserController {
             );
             await kycRecord.save();
             user.kyc_verification = kycRecord._id;
-            console.log("test 4");
         }
         const isVerified = kycRecord.bank_verification_number?.bvn &&
                             kycRecord.bank_verification_number?.dob &&
