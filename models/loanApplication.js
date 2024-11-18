@@ -57,6 +57,9 @@ const LoanApplication = new mongoose.Schema({
     },
     fourth_approval: {
         type: String,
+    },
+    guarantor: {
+        type: String,
     }
 });
 
