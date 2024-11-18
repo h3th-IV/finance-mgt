@@ -21,7 +21,7 @@ module.exports = class UserService {
 
     static async getUserByEmail(email){
         try {
-            const user = await User.findOne({ email: email });
+            const user = await User.findOne({ email: email }).populate('kyc_verification');
             return user;
         } catch (error) {
             return error;

@@ -151,9 +151,10 @@ module.exports = class UserController {
         const token = user.getSignedJwtToken();
         const response = {
             jwToken: token,
-            name: user.first_name,
-            email: user.email,
-            phone: user.phone_number,
+            user: user,
+            // name: user.first_name,
+            // email: user.email,
+            // phone: user.phone_number,
         }
         return successResponse(res, 200, "Login successful", response);
         } catch (error) {
@@ -202,10 +203,12 @@ module.exports = class UserController {
     }
 
     static async updateKYC(req, res) {
+            // console.log("test 1");
         const { userId } = req.params;
         const kycData = req.body;
 
         try {
+            // console.log("test 2");
         let user = await User.findById(userId).populate('kyc_verification');
         if (!user) {
             return errorResponse(res, 404, "User not found");
@@ -213,6 +216,7 @@ module.exports = class UserController {
 
         let kycRecord;
         if (user.kyc_verification) {
+            // console.log("test 3");
             kycRecord = await KYC.findByIdAndUpdate(
             user.kyc_verification._id,
             {       
@@ -223,6 +227,8 @@ module.exports = class UserController {
             { new: true, runValidators: true }
             );
         } else {
+            // console.log("test 3.5");
+
             kycRecord = new KYC(
                 {       
                     ...kycData,
@@ -232,6 +238,7 @@ module.exports = class UserController {
             );
             await kycRecord.save();
             user.kyc_verification = kycRecord._id;
+            console.log("test 4");
         }
         const isVerified = kycRecord.bank_verification_number?.bvn &&
                             kycRecord.bank_verification_number?.dob &&
@@ -246,6 +253,7 @@ module.exports = class UserController {
 
         return successResponse(res, 200, "KYC information updated successfully", { is_verified: user.is_verified });
         } catch (error) {
+            console.log("err: ",error);
         return errorResponse(res, 500, "Server error");
         }
     }
