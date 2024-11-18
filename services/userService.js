@@ -1,3 +1,4 @@
+const kyc = require("../models/kyc");
 const User = require("../models/user");
 
 module.exports = class UserService {
@@ -20,7 +21,7 @@ module.exports = class UserService {
 
     static async getUserByEmail(email){
         try {
-            const user = await User.findOne({ email: email });
+            const user = await User.findOne({ email: email }).populate('kyc_verification');
             return user;
         } catch (error) {
             return error;
@@ -39,6 +40,7 @@ module.exports = class UserService {
     static async getUsers(){
         try {
             const users = await User.find();
+            // const userss = await User.deleteMany();
             return users;
         } catch (error) {
             return error;
@@ -115,6 +117,5 @@ module.exports = class UserService {
             return { success: false, message: "An error occurred while resetting the password.", error };
         }
     }
-
 };
 

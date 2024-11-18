@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const KYC = require('./kyc');
 
 const UsersSchema = new mongoose.Schema({
     first_name: {
@@ -47,6 +48,14 @@ const UsersSchema = new mongoose.Schema({
     last_login: {
       type: Date,
       default: Date.now,
+    },
+    kyc_verification: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "KYC",
+    },
+    is_verified: {
+      type: Boolean,
+      default: false,
     }
 }, {timestamps: true,});
 
@@ -98,4 +107,4 @@ UsersSchema.methods.getSignedJwtToken = function(){
   })
 }
 
-module.exports = mongoose.model("NewUser", UsersSchema);
+module.exports = mongoose.model("User", UsersSchema);

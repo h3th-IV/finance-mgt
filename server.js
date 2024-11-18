@@ -8,6 +8,7 @@ const passport = require("passport");
 const session = require("express-session");
 const app = express();
 const user = require("./routes/user");
+const admin =require('./routes/admin');
 const cron = require("node-cron");
 const userModel = require("./models/user");
 
@@ -68,6 +69,7 @@ app.get("/logout", function (req, res, next) {
 });
 
 app.use("/api/v1/user", user);
+app.use("/api/v1/admin", admin);
 
 const PORT = process.env.PORT || 9000;
 sever.listen(PORT, () => {
