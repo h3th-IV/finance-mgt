@@ -14,7 +14,9 @@ const KYCSchema = new mongoose.Schema({
         },
     },
     facial_verification: {
-        type: String,
+        pic: {
+            type: String,
+        },
         status: {
             type: Boolean,
             default: false,

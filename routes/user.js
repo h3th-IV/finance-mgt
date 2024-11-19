@@ -12,7 +12,7 @@ router.post("/regenerate-otp/:userId", UserController.regenerateOTP);
 router.post("/forgot-password", UserController.forgotPasswordOTP);
 router.patch("/reset-password", UserController.resetPassword);
 router.patch("/kyc/:userId", verifyToken, parser.fields([
-    { name: 'facial_verification', maxCount: 1 }, 
+    { name: 'facial_verification.pic', maxCount: 1 }, 
     { name: 'document_verification.doc', maxCount: 1 }
   ]),  UserController.updateKYC);
 
