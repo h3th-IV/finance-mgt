@@ -206,150 +206,82 @@ module.exports = class UserController {
         }
     }
 
-    // static async updateKYC(req, res) {
-    //     const { userId } = req.params;
-    //     const kycData = req.body;
+    static async updateKYC(req, res) {
+        const { userId } = req.params;
+        const kycData = req.body;
 
-    //     try {
-    //         let user = await User.findById(userId).populate('kyc_verification');
-    //         if (!user) {
-    //             return errorResponse(res, 404, "User not found");
-    //         }
+        try {
+            //fetch the user and their associated KYC record
+            let user = await User.findById(userId).populate('kyc_verification');
+            if (!user) {
+                return errorResponse(res, 404, "User not found");
+            }
 
-    //         let kycRecord;
-    //         const updateData = {
-    //             ...kycData,
-    //             'facial_verification.pic': req.files['facial_verification.pic'] ? req.files['facial_verification.pic'][0].path : user.kyc_verification?.facial_verification?.pic,
-    //             'document_verification.doc': req.files['document_verification.doc'] ? req.files['document_verification.doc'][0].path : user.kyc_verification?.document_verification?.doc,
-    //         };
+            //fetch existing KYC record if it exists
+            let kycRecord = user.kyc_verification
+                ? await KYC.findById(user.kyc_verification._id)
+                : null;
 
-    //         // Update or create KYC record
-    //         if (user.kyc_verification) {
-    //             kycRecord = await KYC.findByIdAndUpdate(
-    //                 user.kyc_verification._id,
-    //                 updateData,
-    //                 { new: true, runValidators: true }
-    //             );
-    //         } else {
-    //             kycRecord = new KYC(updateData);
-    //             await kycRecord.save();
-    //             user.kyc_verification = kycRecord._id;
-    //         }
-    //         const bankVerified = kycData['bank_verification_number.bvn']?.trim() && kycData['bank_verification_number.dob'];
-    //         const facialVerified = Boolean(req.files['facial_verification.pic']);
-    //         const documentVerified = kycData['document_verification.doc_type'] && kycData['document_verification.doc_no'] && req.files['document_verification.doc'] && kycData['document_verification.home_address'];
+            //prep updated data, combine existing and incoming data
+            const updateData = {
+                ...kycData,
+                'facial_verification.pic': req.files['facial_verification.pic']
+                    ? req.files['facial_verification.pic'][0].path
+                    : kycRecord?.facial_verification?.pic,
+                'document_verification.doc': req.files['document_verification.doc']
+                    ? req.files['document_verification.doc'][0].path
+                    : kycRecord?.document_verification?.doc,
+            };
 
-    //         // const bankVerified = kycData['bank_verification_number.bvn']?.trim() && kycData['bank_verification_number.dob'] || kycRecord.bank_verification_number.bvn && kycRecord.bank_verification_number.dob;
-    //         // const facialVerified = Boolean(req.files['facial_verification.pic']) || kycRecord.facial_verification.pic;
-    //         // const documentVerified = kycData['document_verification.doc_type'] && kycData['document_verification.doc_no'] && req.files['document_verification.doc'] && kycData['document_verification.home_address'] || kycRecord.document_verification.doc_type && kycRecord.document_verification.doc_no && kycRecord.document_verification.doc && kycRecord.document_verification.home_address;
+            //update or create the KYC record
+            if (kycRecord) {
+                kycRecord = await KYC.findByIdAndUpdate(
+                    kycRecord._id,
+                    updateData,
+                    { new: true, runValidators: true }
+                );
+            } else {
+                kycRecord = new KYC(updateData);
+                await kycRecord.save();
+                user.kyc_verification = kycRecord._id;
+            }
 
-    //         console.log('bank_verified: ', bankVerified);
-    //         console.log('face_id: ', facialVerified);
-    //         console.log('doc_id', documentVerified);
+            //update statuses based on existing and new data
+            const bankVerified =
+                Boolean(kycData['bank_verification_number.bvn'] || kycRecord.bank_verification_number?.bvn) &&
+                Boolean(kycData['bank_verification_number.dob'] || kycRecord.bank_verification_number?.dob);
+            const facialVerified =
+                Boolean(req.files['facial_verification.pic'] || kycRecord.facial_verification?.pic);
+            const documentVerified =
+                Boolean(kycData['document_verification.doc_type'] || kycRecord.document_verification?.doc_type) &&
+                Boolean(kycData['document_verification.doc_no'] || kycRecord.document_verification?.doc_no) &&
+                Boolean(req.files['document_verification.doc'] || kycRecord.document_verification?.doc) &&
+                Boolean(kycData['document_verification.home_address'] || kycRecord.document_verification?.home_address);
 
-
-    //         updateData['bank_verification_number.status'] = Boolean(bankVerified);
-    //         updateData['facial_verification.status'] = facialVerified ;
-    //         updateData['document_verification.status'] = Boolean(documentVerified);
-
-    //         // updateData['bank_verification_number.status'] = Boolean(bankVerified) || kycRecord.bank_verification_number.status;
-    //         // updateData['facial_verification.status'] = facialVerified || kycRecord.facial_verification.status;
-    //         // updateData['document_verification.status'] = Boolean(documentVerified) || kycRecord.document_verification.status;
-    //         // Check if the entire KYC is verified
-
-    //         // console.log(kycRecord.bank_verification_number.status);
-    //         // console.log(kycRecord.facial_verification.status);
-    //         // console.log(kycRecord.document_verification.status);
-    //         const isVerified = kycRecord.bank_verification_number?.status &&
-    //                         kycRecord.facial_verification?.status &&
-    //                         kycRecord.document_verification?.status;
-
-    //         user.is_verified = Boolean(isVerified);
-    //         await user.save();
-
-    //         return successResponse(res, 200, "KYC information updated successfully", { is_verified: user.is_verified });
-    //     } catch (error) {
-    //         console.log("err: ", error);
-    //         return errorResponse(res, 500, "Server error");
-    //     }
-    // }
-
-        static async updateKYC(req, res) {
-    const { userId } = req.params;
-    const kycData = req.body;
-
-    try {
-        // Fetch the user and their associated KYC record
-        let user = await User.findById(userId).populate('kyc_verification');
-        if (!user) {
-            return errorResponse(res, 404, "User not found");
-        }
-
-        // Fetch existing KYC record if it exists
-        let kycRecord = user.kyc_verification
-            ? await KYC.findById(user.kyc_verification._id)
-            : null;
-
-        // Prepare the updated data, combining existing and incoming data
-        const updateData = {
-            ...kycData,
-            'facial_verification.pic': req.files['facial_verification.pic']
-                ? req.files['facial_verification.pic'][0].path
-                : kycRecord?.facial_verification?.pic,
-            'document_verification.doc': req.files['document_verification.doc']
-                ? req.files['document_verification.doc'][0].path
-                : kycRecord?.document_verification?.doc,
-        };
-
-        // Update or create the KYC record
-        if (kycRecord) {
-            kycRecord = await KYC.findByIdAndUpdate(
-                kycRecord._id,
-                updateData,
-                { new: true, runValidators: true }
-            );
-        } else {
-            kycRecord = new KYC(updateData);
+            //update the KYC record with statuses
+            kycRecord.bank_verification_number.status = bankVerified;
+            kycRecord.facial_verification.status = facialVerified;
+            kycRecord.document_verification.status = documentVerified;
             await kycRecord.save();
-            user.kyc_verification = kycRecord._id;
+
+            //update the user's overall verification status
+            const isVerified =
+                kycRecord.bank_verification_number.status &&
+                kycRecord.facial_verification.status &&
+                kycRecord.document_verification.status;
+            user.is_verified = isVerified;
+
+            await user.save();
+
+            return successResponse(res, 200, "KYC information updated successfully", {
+                is_verified: user.is_verified,
+                kyc: kycRecord,
+            });
+        } catch (error) {
+            console.error("Error updating KYC:", error);
+            return errorResponse(res, 500, "Server error");
         }
-
-        // Update statuses based on existing and new data
-        const bankVerified =
-            Boolean(kycData['bank_verification_number.bvn'] || kycRecord.bank_verification_number?.bvn) &&
-            Boolean(kycData['bank_verification_number.dob'] || kycRecord.bank_verification_number?.dob);
-        const facialVerified =
-            Boolean(req.files['facial_verification.pic'] || kycRecord.facial_verification?.pic);
-        const documentVerified =
-            Boolean(kycData['document_verification.doc_type'] || kycRecord.document_verification?.doc_type) &&
-            Boolean(kycData['document_verification.doc_no'] || kycRecord.document_verification?.doc_no) &&
-            Boolean(req.files['document_verification.doc'] || kycRecord.document_verification?.doc) &&
-            Boolean(kycData['document_verification.home_address'] || kycRecord.document_verification?.home_address);
-
-        // Update the KYC record with statuses
-        kycRecord.bank_verification_number.status = bankVerified;
-        kycRecord.facial_verification.status = facialVerified;
-        kycRecord.document_verification.status = documentVerified;
-        await kycRecord.save();
-
-        // Update the user's overall verification status
-        const isVerified =
-            kycRecord.bank_verification_number.status &&
-            kycRecord.facial_verification.status &&
-            kycRecord.document_verification.status;
-        user.is_verified = isVerified;
-
-        await user.save();
-
-        return successResponse(res, 200, "KYC information updated successfully", {
-            is_verified: user.is_verified,
-            kyc: kycRecord,
-        });
-    } catch (error) {
-        console.error("Error updating KYC:", error);
-        return errorResponse(res, 500, "Server error");
     }
-}
 
 
 };
