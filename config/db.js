@@ -5,14 +5,14 @@ mongoose.set('strictQuery', true);
 //all test dbs
 module.exports.connectDB = async () => {
   if (process.env.NODE_ENV === "development") {
-    mongoose.connect(process.env.MONGO_URI);
+    mongoose.connect("mongodb+srv://victor:Maythird1.!@test.4f52hfp.mongodb.net/capitalwise?retryWrites=true&w=majority&appName=test");
  console.log("staging db connected".blue);
   } else if (process.env.NODE_ENV === "production") {
-    mongoose.connect(process.env.MONGO_URI);
+    mongoose.connect("mongodb+srv://victor:Maythird1.!@test.4f52hfp.mongodb.net/capitalwise?retryWrites=true&w=majority&appName=test");
     console.log("production db connected".blue);
    
   } else {
-    mongoose.connect(process.env.MONGO_URI);
+    mongoose.connect("mongodb+srv://victor:Maythird1.!@test.4f52hfp.mongodb.net/capitalwise?retryWrites=true&w=majority&appName=test");
   }
 };
 
