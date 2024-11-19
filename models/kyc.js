@@ -7,10 +7,18 @@ const KYCSchema = new mongoose.Schema({
         },
         dob: {
             type: Date,
-        }
+        },
+        status: {
+            type: Boolean,
+            default: false,
+        },
     },
     facial_verification: {
         type: String,
+        status: {
+            type: Boolean,
+            default: false,
+        },
     },
     document_verification: {
         doc_type: {
@@ -18,14 +26,18 @@ const KYCSchema = new mongoose.Schema({
             enum: ["NIN", "INTL_PASSPORT", "DRIVERS_LICENSE"],
         },
         doc_no: {
-            type: String
+            type: String,
         },
         doc: {
             type: String,
         },
         home_address: {
-            type: String
-        }
+            type: String,
+        },
+        status: {
+            type: Boolean,
+            default: false,
+        },
     }
 }, { timestamps: true });
 
