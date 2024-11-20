@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const User = require("./user");
-const LoanPackage = require("./loanPackage");
+const LoanProduct = require("./loanProduct");
 const Staff = require("./staff");
 
 const LoanApplication = new mongoose.Schema({
@@ -12,55 +12,40 @@ const LoanApplication = new mongoose.Schema({
     loan_id: {
         type: String,
     },
-    loan_package: {
+    loan_product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "LoanPackage",
+        ref: "LoanProduct",
         required: true,
     },
     interest_rate: {
         type: Number,
     },
-    loan_duration: {
+    loan_amount: {
         type: Number,
     },
-    no_of_repayments: {
+    loan_duration: {
         type: Number,
     },
     statement_of_account: {
         type: String,
     },
+    guarantor: {
+        kyc_guarantor_form: {
+            type: String, //document Upload
+        },
+        passport_form: {
+            type: String, //document Upload
+        },
+        statement_of_net_worth: {
+            type: String, //document Upload
+        },
+        security_cheque: {
+            type: String, //document Upload
+        },
+    },
     date_disbursed: {
         type: Date,
     },
-    maturity_date: {
-        type: Date,
-    },
-    overdue_accruals: {
-        type: Number,
-    },
-    relationship_officer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Staff",
-        required: true,
-    },
-    credit_score: {
-        type: Number,
-    },
-    first_approval: {
-        type: String,
-    },
-    second_approval: {
-        type: String,
-    },
-    third_approval: {
-        type: String,
-    },
-    fourth_approval: {
-        type: String,
-    },
-    guarantor: {
-        type: String,
-    }
-});
+}, {timestamps: true,});
 
 module.exports = mongoose.model("LoanApplication", LoanApplication)
