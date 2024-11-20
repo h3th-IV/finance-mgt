@@ -64,4 +64,36 @@ module.exports = class LoanApplicationController{
             return errorResponse(res, 500, error.message);
         }
     }
+
+    static async updateLoanApplication(req, res) {
+        const { loanApplicationId } = req.params;
+        const { loan_duration, status } = req.body;
+
+        if (!loan_duration && !status) {
+            return errorResponse(
+                res,
+                400,
+                "Please provide at least one field to update: 'loan_duration' or 'status'."
+            );
+        }
+
+        try {
+            const updateData = {};
+            if (loan_duration) updateData.loan_duration = loan_duration;
+            if (status) updateData.status = status;
+
+            const result = await LoanApplicationService.updateLoanApplication(loanApplicationId, updateData);
+
+            if (!result.success) {
+                return errorResponse(res, 404, result.message);
+            }
+
+            return successResponse(res, 200, "Loan application updated successfully", {
+                loanApplication: result.loanApplication,
+            });
+        } catch (error) {
+            console.error("Error updating loan application:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
 }

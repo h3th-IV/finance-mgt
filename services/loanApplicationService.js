@@ -61,4 +61,27 @@ module.exports = class LoanApplicationService{
             };
         }
     }
+
+    static async updateLoanApplication(loanApplicationId, updateData) {
+        try {
+            const loanApplication = await LoanApplication.findById(loanApplicationId);
+            if (!loanApplication) {
+                return { success: false, message: "Loan application not found" };
+            }
+
+            if (updateData.loan_duration) {
+                loanApplication.loan_duration = updateData.loan_duration;
+            }
+            if (updateData.status) {
+                loanApplication.status = updateData.status;
+            }
+
+            await loanApplication.save();
+
+            return { success: true, loanApplication };
+        } catch (error) {
+            console.error("Error updating loan application:", error);
+            throw new Error("Could not update loan application");
+        }
+    }
 }
