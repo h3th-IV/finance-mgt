@@ -27,24 +27,29 @@ const LoanApplication = new mongoose.Schema({
         type: Number,
     },
     statement_of_account: {
-        type: String, //document Upload
+        type: String,
     },
     guarantor: {
         kyc_guarantor_form: {
-            type: String, //document Upload
+            type: String,
         },
         passport_form: {
-            type: String, //document Upload
+            type: String,
         },
         statement_of_net_worth: {
-            type: String, //document Upload
+            type: String,
         },
         security_cheque: {
-            type: String, //document Upload
+            type: String,
         },
     },
     date_disbursed: {
         type: Date,
+    },
+    status: {
+        type: String,
+        enum: ["approved", "processing", "declined"],
+        default: "processing",
     },
 }, {timestamps: true,});
 
