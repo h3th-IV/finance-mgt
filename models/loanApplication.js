@@ -27,7 +27,7 @@ const LoanApplication = new mongoose.Schema({
         type: Number,
     },
     statement_of_account: {
-        type: String,
+        type: String, //document Upload
     },
     guarantor: {
         kyc_guarantor_form: {
