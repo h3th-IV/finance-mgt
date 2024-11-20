@@ -8,6 +8,7 @@ router.get("/get-kycs", AdminController.getAllkycs);
 router.post("/create-loanproduct/:userId", verifyToken, AdminController.createLoanProduct);
 router.patch("/update-loanapp/:loanApplicationId", verifyToken, LoanApplicationController.updateLoanApplication);
 router.get("/get-loanApps", verifyToken, LoanApplicationController.getAllLoanApplication);
+router.patch("/update-product/:productId", verifyToken, AdminController.updateLoanProduct);
 
 
 module.exports = router;

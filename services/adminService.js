@@ -27,4 +27,30 @@ module.exports = class AdminService{
             return error;
         }
     }
+
+    static async updateLoanProduct(productId, updateData) {
+        try {
+            const loanProduct = await LoanProduct.findById(productId);
+            if (!loanProduct) {
+                return { success: false, message: "Loan product not found" };
+            }
+
+            const updatableFields = ["interest", "max", "min"];
+            updatableFields.forEach((field) => {
+                if (updateData[field] !== undefined) {
+                    loanProduct[field] = updateData[field];
+                }
+            });
+
+            await loanProduct.save();
+            return {
+                success: true,
+                loanProduct,
+            };
+        } catch (error) {
+            console.log('err: ', error);
+            return { success: false, message: `Error updating loanProduct` };
+        }
+
+    }
 }
