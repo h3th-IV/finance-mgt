@@ -22,6 +22,7 @@ module.exports = class LoanApplicationController{
                 return errorResponse(res, 400, "Loan duration is required.");
             }
 
+            // Validate required files
             if (!files || Object.keys(files).length === 0) {
                 return errorResponse(res, 400, "Required files are missing.");
             }
@@ -52,17 +53,15 @@ module.exports = class LoanApplicationController{
                 loan_duration: parseInt(loan_duration, 10),
             };
 
-            const result = await LoanApplicationService.createLoanApplication(userId, loanData, files);
+            const { loanApplication, repaymentPlan } = await LoanApplicationService.createLoanApplication(userId, loanData, files);
 
-            if (!result.success) {
-                return errorResponse(res, 400, result.message);
-            }
-
-            return successResponse(res, 201, result.message, result.data);
+            return successResponse(res, 201, "Loan application created successfully! Our team will review your application and notify you once a decision has been made regarding its approval.", {
+                loanApplication,
+                repaymentPlan,
+            });
         } catch (error) {
             console.error("Error creating loan application:", error);
             return errorResponse(res, 500, error.message);
         }
     }
-
 }
