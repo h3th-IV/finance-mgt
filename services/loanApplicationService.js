@@ -16,7 +16,7 @@ module.exports = class LoanApplicationService{
             if (loanData.loan_amount < loanProduct.min || loanData.loan_amount > loanProduct.max) {
                 return {
                     success: false,
-                    message: `Loan amount for the loan product you have selected must be between ${loanProduct.min} and ${loanProduct.max}`,
+                    message: `Loan amount for ${loanProduct.name} must be between ${loanProduct.min} and ${loanProduct.max}`,
                 };
             }
 
