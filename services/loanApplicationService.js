@@ -21,8 +21,7 @@ module.exports = class LoanApplicationService{
             }
 
             const interestRate = loanProduct.interest;
-            const monthlyInterest = (interestRate / 100) * loanData.loan_amount;
-            const monthlyRepayment = loanData.loan_amount / loanData.loan_duration + monthlyInterest;
+            const repaymentPlan = calculateRepaymentPlan(loanData.loan_amount, loanData.loan_duration, interestRate);
 
             const guarantor = {
                 kyc_guarantor_form: files["guarantor.kyc_guarantor_form"]?.[0]?.path || null,
@@ -43,16 +42,13 @@ module.exports = class LoanApplicationService{
                 statement_of_account: statementOfAccount,
                 guarantor,
                 date_disbursed: loanData.date_disbursed || null,
+                repayment_plan: repaymentPlan,
             });
 
             await loanApplication.save();
-
             return {
                 loanApplication,
-                repaymentPlan: {
-                    monthlyRepayment: monthlyRepayment.toFixed(2),
-                    totalRepayment: (monthlyRepayment * loanData.loan_duration).toFixed(2),
-                },
+                repaymentPlan,
             };
         } catch (error) {
             return {
@@ -64,24 +60,54 @@ module.exports = class LoanApplicationService{
 
     static async updateLoanApplication(loanApplicationId, updateData) {
         try {
-            const loanApplication = await LoanApplication.findById(loanApplicationId);
+            const loanApplication = await LoanApplication.findById(loanApplicationId).populate('loan_product');
             if (!loanApplication) {
                 return { success: false, message: "Loan application not found" };
             }
 
             if (updateData.loan_duration) {
+                const loanProduct = loanApplication.loan_product;
+
+                if (updateData.loan_duration <= 0) {
+                    return { success: false, message: "Loan duration must be greater than 0." };
+                }
+
+                // Update loan_duration and recalculate repayment plan
                 loanApplication.loan_duration = updateData.loan_duration;
+                const repaymentPlan = calculateRepaymentPlan(loanApplication.loan_amount, loanApplication.loan_duration, loanProduct.interest);
+
+                loanApplication.repayment_plan = repaymentPlan;
             }
             if (updateData.status) {
                 loanApplication.status = updateData.status;
             }
-
             await loanApplication.save();
-
-            return { success: true, loanApplication };
+            return { 
+                success: true, 
+                loanApplication, 
+                repaymentPlan: loanApplication.repayment_plan || null
+            };
         } catch (error) {
             console.error("Error updating loan application:", error);
             throw new Error("Could not update loan application");
         }
     }
+
+    static async getAllLoanApplication(){
+        try{
+            const loanApps = await LoanApplication.find();
+            return loanApps;
+        } catch(error) {    
+            return error;
+        }
+    }
 }
+
+const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate) => {
+    const monthlyInterest = (interestRate / 100) * loanAmount;
+    const monthlyRepayment = loanAmount / loanDuration + monthlyInterest;
+    return {
+        monthly_payment: monthlyRepayment.toFixed(2),
+        total_payment: (monthlyRepayment * loanDuration).toFixed(2),
+    };
+};

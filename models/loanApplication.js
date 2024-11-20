@@ -51,6 +51,14 @@ const LoanApplication = new mongoose.Schema({
         enum: ["approved", "processing", "declined"],
         default: "processing",
     },
+    repayment_plan: {
+        monthly_payment: {
+                type: Number,
+        },
+        total_payment: {
+            type: Number
+        }
+    },
 }, {timestamps: true,});
 
 module.exports = mongoose.model("LoanApplication", LoanApplication)

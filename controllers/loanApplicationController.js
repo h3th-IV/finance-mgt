@@ -22,7 +22,6 @@ module.exports = class LoanApplicationController{
                 return errorResponse(res, 400, "Loan duration is required.");
             }
 
-            // Validate required files
             if (!files || Object.keys(files).length === 0) {
                 return errorResponse(res, 400, "Required files are missing.");
             }
@@ -54,7 +53,6 @@ module.exports = class LoanApplicationController{
             };
 
             const { loanApplication, repaymentPlan } = await LoanApplicationService.createLoanApplication(userId, loanData, files);
-
             return successResponse(res, 201, "Loan application created successfully! Our team will review your application and notify you once a decision has been made regarding its approval.", {
                 loanApplication,
                 repaymentPlan,
@@ -70,11 +68,7 @@ module.exports = class LoanApplicationController{
         const { loan_duration, status } = req.body;
 
         if (!loan_duration && !status) {
-            return errorResponse(
-                res,
-                400,
-                "Please provide at least one field to update: 'loan_duration' or 'status'."
-            );
+            return errorResponse(res, 400, "Please provide at least one field to update: 'loan_duration' or 'status'.");
         }
 
         try {
@@ -90,9 +84,19 @@ module.exports = class LoanApplicationController{
 
             return successResponse(res, 200, "Loan application updated successfully", {
                 loanApplication: result.loanApplication,
+                repaymentPlan: result.repaymentPlan,
             });
         } catch (error) {
             console.error("Error updating loan application:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
+
+    static async getAllLoanApplication(req, res){
+        try{
+            const response = await LoanApplicationService.getAllLoanApplication();
+            return successResponse(res, 200, "Loan applications returned successfully", response);
+        } catch(error) {
             return errorResponse(res, 500, "Server error");
         }
     }
