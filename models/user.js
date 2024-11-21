@@ -101,7 +101,8 @@ UsersSchema.methods.getSignedJwtToken = function(){
     email: this.email
   },
  
-  process.env.JWT_SECRET,
+  JWT_SECRET=mySuperSecretKey
+,
   {
     expiresIn: "30d",
   })

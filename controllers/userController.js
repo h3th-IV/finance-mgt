@@ -126,12 +126,10 @@ module.exports = class UserController {
             return errorResponse(res, 400, "Password not provided")
         }
         const lower_email = email.toLowerCase();
-        // console.log(lower_email);
         const user = await UserService.getUserByEmail(lower_email);
         if (!user){
             return errorResponse(res, 401, "User with email not found");
         }
-        // console.log("usr: ", user)
         const isPassword = await bcryptjs.compare(password, user.password);
         if (!isPassword){
             return errorResponse(res, 401, "Incorrect password");
