@@ -100,9 +100,7 @@ UsersSchema.methods.getSignedJwtToken = function(){
     id: this._id,
     email: this.email
   },
- 
-  JWT_SECRET=mySuperSecretKey
-,
+ "thugnificient@lethalinterjections.com",
   {
     expiresIn: "30d",
   })
