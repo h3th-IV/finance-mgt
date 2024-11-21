@@ -4,62 +4,47 @@ const mailer = require("../config/mailer");
 const bcryptjs = require("bcryptjs");
 const KYC = require("../models/kyc");
 const User = require("../models/user")
+const { userValidationSchema } = require("../validators/userValidators");
 
 module.exports = class UserController {
     static async createUser(req, res) {
-        const { first_name, last_name, email, number, password } = req.body;
+        const { error, value } = userValidationSchema.validate(req.body, { abortEarly: false });
+        if (error) {
+            const errorMessages = error.details.map((err) => err.message);
+            return errorResponse(res, 400, "Validation error", { errors: errorMessages });
+        }
+
+        const { first_name, last_name, email, number, password } = value;
+
         try {
-            if (!first_name || first_name === ""){
-                return errorResponse(res, 400, "Please provide your first_name");
-            }
-            if (!last_name || last_name === ""){
-                return errorResponse(res, 400, "Please provide your last_name");
-            }
-            if (!email || email === ""){
-                return errorResponse(res, 400, "Please provide your email address");
-            }
-            const emailValid = validateEmail(email);
-            if (!emailValid.success) {
-                return errorResponse(res, 400, emailValid.message);
-            }
-            if (!number || number === ""){
-                return errorResponse(res, 400, "Please provide your phone number");
-            }
-            if (!password || password === ""){
-                return errorResponse(res, 400, "Please provide a strong password");
-            }
-            if (password.length < 9){
-                return errorResponse(res, 400, "Please provide a longer password")
-            }
-            const specialChars = /[!@#$%^&*()_+:"{}[\]\\|<>,.?/~`']/g;
-            if (!specialChars.test(password)){
-                return errorResponse(res, 400, "Password must include at least one(1) special character");
-            }
             const lower_email = email.toLowerCase();
             const user_exist = await UserService.getUserByEmail(lower_email);
-            if (user_exist){
-                return errorResponse(res, 400, "User with this email already exist");
+            if (user_exist) {
+            return errorResponse(res, 409, "User with this email already exists");
             }
-            const otp = generateOTP()
+
+            const otp = generateOTP();
             const user = {
-                first_name,
-                last_name,
-                email: lower_email,
-                number,
-                password,
-                otp
+            first_name,
+            last_name,
+            email: lower_email,
+            number,
+            password,
+            otp,
             };
+
             const response = await UserService.createUser(user);
-            if (response?.errors){
-                return errorResponse(res, 500, "An error occurred", response);
+            if (response?.errors) {
+            return errorResponse(res, 500, "An error occurred", response);
             }
+
             mailer.sendOTPEmail(email, first_name, otp);
-            return successResponse(res, 201, "User created successfully, please check your email for OTP verification", response);
+            return successResponse(res, 201, "User created successfully. Please check your email for OTP verification.", response);
         } catch (error) {
             console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
-        } 
-    }
+        }
+        }
 
     static async validateOTP(req, res){
         const userId = req.params.userId;
