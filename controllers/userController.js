@@ -173,6 +173,16 @@ module.exports = class UserController {
         }
     }
 
+    static async getSingleUser(req, res){
+        try {
+            console.log({req: req.params});
+            const response = await UserService.getUserByID(req.params.id);
+            return successResponse(res, 200, "User returned successfully", response);
+        } catch (error) {
+            return errorResponse(res, 500, "Server Error");
+        }
+    }
+
     static async forgotPasswordOTP(req, res){
         const { email } = req.body;
         const otp = generateOTP()
