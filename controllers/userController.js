@@ -5,6 +5,11 @@ const bcryptjs = require("bcryptjs");
 const KYC = require("../models/kyc");
 const User = require("../models/user")
 const { userValidationSchema } = require("../validators/userValidators");
+const { loginValidator } = require('../validators/user.validator');
+const { resetPasswordValidator } = require('../validators/user.validator');
+const { kycValidator } = require('../validators/kyc.validator')
+const { fetchUserAndKYC, combineKYCData, calculateStatuses } = require('../helpers/kyc.helper');
+
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -98,51 +103,46 @@ module.exports = class UserController {
     }
 
     static async login(req, res){
+        const { error } = loginValidator.validate(req.body);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
+        }
         const { email, password } = req.body;
         try {
-            if (!email || email === ""){
-            return errorResponse(res, 400, "Email not provided")
-        }
-        const emailValid = validateEmail(email);
-        if (!emailValid.success) {
-            return errorResponse(res, 400, emailValid.message);
-        }
-        if (!password || password === ""){
-            return errorResponse(res, 400, "Password not provided")
-        }
-        const lower_email = email.toLowerCase();
-        const user = await UserService.getUserByEmail(lower_email);
-        if (!user){
-            return errorResponse(res, 401, "User with email not found");
-        }
-        const isPassword = await bcryptjs.compare(password, user.password);
-        if (!isPassword){
-            return errorResponse(res, 401, "Incorrect password");
-        }
-        // const loginExp = 24 * 60 * 60 * 1000;
-        // if (Date.now() - user.last_login.getTime() > loginExp) {
-        //     const otp = generateOTP();
-        //     user.otp = otp;
-        //     user.otpCreatedAt = Date.now();
-        //     await user.save();
-        //     mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
-        //     return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.", user);
-        // }
-        const token = user.getSignedJwtToken();
-        if (!user.is_verified) {
-            const response = {
-                user,
-                jwToken: token,
+            const lower_email = email.toLowerCase();
+            const user = await UserService.getUserByEmail(lower_email);
+            if (!user) {
+                return errorResponse(res, 401, "User with email not found");
             }
-        return successResponse(res, 200, "Please complete your KYC verification to continue.", response);
-        }
-        // user.last_login = Date.now();
-        // await user.save();
-        const response = {
-            jwToken: token,
-            user: user,
-        }
-        return successResponse(res, 200, "Login successful", response);
+
+            const isPassword = await bcryptjs.compare(password, user.password);
+            if (!isPassword) {
+                return errorResponse(res, 401, "Incorrect password");
+            }
+            // const loginExp = 24 * 60 * 60 * 1000;
+            // if (Date.now() - user.last_login.getTime() > loginExp) {
+            //     const otp = generateOTP();
+            //     user.otp = otp;
+            //     user.otpCreatedAt = Date.now();
+            //     await user.save();
+            //     mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
+            //     return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.", user);
+            // }
+            const token = user.getSignedJwtToken();
+            if (!user.is_verified) {
+                const response = {
+                    user,
+                    jwToken: token,
+                }
+            return successResponse(res, 200, "Please complete your KYC verification to continue.", response);
+            }
+            // user.last_login = Date.now();
+            // await user.save();
+            const response = {
+                jwToken: token,
+                user: user,
+            }
+            return successResponse(res, 200, "Login successful", response);
         } catch (error) {
             console.log("err", error);
             return errorResponse(res, 500, "Server Error");
@@ -182,11 +182,12 @@ module.exports = class UserController {
 
     //TODO: check if otp is expired
     static async resetPassword(req, res) {
-        const { email, otp, new_password } = req.body;
-        if (!email || !otp || !new_password) {
-            return errorResponse(res, 400, "All fields (email, otp, and new password) are required.");
+        const { error } = resetPasswordValidator.validate(req.body);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
         }
-        
+
+        const { email, otp, new_password } = req.body;
         try {
             const response = await UserService.resetPassword(email, otp, new_password);
             if (response.success) {
@@ -201,93 +202,50 @@ module.exports = class UserController {
 
     static async updateKYC(req, res) {
         const { userId } = req.params;
+        const { error } = kycValidator.validate(req.body);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
+        }
+
         const kycData = req.body;
 
         try {
-            //fetch the user and their associated KYC record
-            let user = await User.findById(userId).populate('kyc_verification');
-            if (!user) {
-                return errorResponse(res, 404, "User not found");
-            }
+            const { user, kycRecord } = await fetchUserAndKYC(userId);
 
-            //fetch existing KYC record if it exists
-            let kycRecord = user.kyc_verification
-                ? await KYC.findById(user.kyc_verification._id)
-                : null;
+            const updateData = combineKYCData(kycData, req.files, kycRecord);
 
-            //prep updated data, combine existing and incoming data
-            const updateData = {
-                ...kycData,
-                'facial_verification.pic': req.files['facial_verification.pic']
-                    ? req.files['facial_verification.pic'][0].path
-                    : kycRecord?.facial_verification?.pic,
-                'document_verification.doc': req.files['document_verification.doc']
-                    ? req.files['document_verification.doc'][0].path
-                    : kycRecord?.document_verification?.doc,
-            };
-
-            //update or create the KYC record
+            let updatedKYC;
             if (kycRecord) {
-                kycRecord = await KYC.findByIdAndUpdate(
-                    kycRecord._id,
-                    updateData,
-                    { new: true, runValidators: true }
-                );
+                updatedKYC = await KYC.findByIdAndUpdate(kycRecord._id, updateData, {
+                    new: true,
+                    runValidators: true,
+                });
             } else {
-                kycRecord = new KYC(updateData);
-                await kycRecord.save();
-                user.kyc_verification = kycRecord._id;
+                updatedKYC = new KYC(updateData);
+                await updatedKYC.save();
+                user.kyc_verification = updatedKYC._id;
             }
 
-            //update statuses based on existing and new data
-            const bankVerified =
-                Boolean(kycData['bank_verification_number.bvn'] || kycRecord.bank_verification_number?.bvn) &&
-                Boolean(kycData['bank_verification_number.dob'] || kycRecord.bank_verification_number?.dob);
-            const facialVerified =
-                Boolean(req.files['facial_verification.pic'] || kycRecord.facial_verification?.pic);
-            const documentVerified =
-                Boolean(kycData['document_verification.doc_type'] || kycRecord.document_verification?.doc_type) &&
-                Boolean(kycData['document_verification.doc_no'] || kycRecord.document_verification?.doc_no) &&
-                Boolean(req.files['document_verification.doc'] || kycRecord.document_verification?.doc) &&
-                Boolean(kycData['document_verification.home_address'] || kycRecord.document_verification?.home_address);
+            const { bankVerified, facialVerified, documentVerified } = calculateStatuses(kycData, req.files, updatedKYC);
 
-            //update the KYC record with statuses
-            kycRecord.bank_verification_number.status = bankVerified;
-            kycRecord.facial_verification.status = facialVerified;
-            kycRecord.document_verification.status = documentVerified;
-            await kycRecord.save();
+            updatedKYC.bank_verification_number.status = bankVerified;
+            updatedKYC.facial_verification.status = facialVerified;
+            updatedKYC.document_verification.status = documentVerified;
+            await updatedKYC.save();
 
-            //update the user's overall verification status
-            const isVerified =
-                kycRecord.bank_verification_number.status &&
-                kycRecord.facial_verification.status &&
-                kycRecord.document_verification.status;
-            user.is_verified = isVerified;
-
+            user.is_verified = bankVerified && facialVerified && documentVerified;
             await user.save();
 
+            const updatedUser = await User.findById(userId).populate('kyc_verification');
             return successResponse(res, 200, "KYC information updated successfully", {
-                is_verified: user.is_verified,
-                kyc: kycRecord,
+                user: updatedUser,
             });
         } catch (error) {
-            console.error("Error updating KYC:", error);
+            console.error("Error updating KYC:", error.message);
             return errorResponse(res, 500, "Server error");
         }
     }
-
-
 };
-
-function validateEmail(email) {
-    const lower_email = email.toLowerCase();
-    const valid_email = lower_email.split("@");
-    //contains @ or domain part?
-    if (valid_email.length < 2 || !valid_email[1].includes(".")) {
-        return { success: false, message: "Email is not valid" };
-    }
-    return { success: true };
-}
 
 function generateOTP(){
     const characters = "0123456789";
