@@ -30,7 +30,7 @@ module.exports = class UserService {
 
     static async getUserByID(id){
         try {
-            const user = await User.findById(id);
+            const user = await User.findById(id).populate('kyc_verification');
             return user;
         } catch (error) {
             return error;
