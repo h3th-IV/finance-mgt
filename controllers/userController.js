@@ -195,7 +195,6 @@ module.exports = class UserController {
         }
     }
 
-    //TODO: check if otp is expired
     static async resetPassword(req, res) {
         const { email, otp, new_password } = req.body;
         if (!email || !otp || !new_password) {
@@ -290,8 +289,15 @@ module.exports = class UserController {
             return errorResponse(res, 500, "Server error");
         }
     }
-
-
+    
+    static async getAllUser(req, res){
+        try {
+            const response = await UserService.getUserByID(req.params.id);
+            return successResponse(res, 200, "Users returned successfully", response);
+        } catch (error) {
+            return errorResponse(res, 500, "Server Error");
+        }
+    }
 };
 
 function validateEmail(email) {

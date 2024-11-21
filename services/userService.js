@@ -28,9 +28,9 @@ module.exports = class UserService {
         }
     }
 
-    static async getUserByID(_id){
+    static async getUserByID(id){
         try {
-            const user = await User.findById(_id);
+            const user = await User.findById(id);
             return user;
         } catch (error) {
             return error;
