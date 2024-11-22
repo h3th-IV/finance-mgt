@@ -236,6 +236,7 @@ module.exports = class UserController {
             await user.save();
 
             const updatedUser = await User.findById(userId).populate('kyc_verification');
+            // console.log("Response data:", updatedUser);
             return successResponse(res, 200, "KYC information updated successfully", {
                 user: updatedUser,
             });
