@@ -1,6 +1,7 @@
 const LoanApplicationService = require("../services/loanApplicationService");
 const { successResponse, errorResponse } = require("../utils/responses");
 const { loanApplicationValidator, updateLoanApplicationValidator } = require("../validators/loanApplication.validator");
+const { validateRequiredFiles } = require('../helpers/validateFiles.helper');
 
 module.exports = class LoanApplicationController{
     static async createLoanApplication(req, res) {
@@ -29,16 +30,21 @@ module.exports = class LoanApplicationController{
                 loan_duration: parseInt(loan_duration, 10),
             };
 
-            const { loanApplication, repaymentPlan } =
-                await LoanApplicationService.createLoanApplication(userId, loanData, files);
+            const response = await LoanApplicationService.createLoanApplication(userId, loanData, files);
+            if (!response.success) {
+                switch (response.code) {
+                    case "NOT_FOUND":
+                        return errorResponse(res, 404, response.message);
 
-            if (!loanApplication || !repaymentPlan) {
-                return errorResponse(res, 500, "Failed to create loan application. Please try again.");
+                    case "INVALID_AMOUNT":
+                        return errorResponse(res, 400, response.message);
+
+                    case "INTERNAL_ERROR":
+                    default:
+                        return errorResponse(res, 500, "An unexpected server error occurred", response);
+                }
             }
-            return successResponse(res, 201, "Loan application created successfully!", {
-                loanApplication,
-                repaymentPlan,
-            });
+            return successResponse(res, 201, "Loan application created successfully!", response);
         } catch (error) {
             console.error("Error creating loan application:", error);
             return errorResponse(res, 500, error.message);
@@ -85,25 +91,3 @@ module.exports = class LoanApplicationController{
     }
 }
 
-const validateRequiredFiles = (files) => {
-    const requiredGuarantorFiles = [
-        "guarantor.kyc_guarantor_form",
-        "guarantor.passport_form",
-        "guarantor.statement_of_net_worth",
-        "guarantor.security_cheque",
-    ];
-
-    const missingGuarantorFiles = requiredGuarantorFiles.filter(
-        (key) => !files[key] || !files[key][0]?.path
-    );
-
-    if (missingGuarantorFiles.length > 0) {
-        return `Missing required guarantor files: ${missingGuarantorFiles.join(", ")}`;
-    }
-
-    if (!files["statement_of_account"] || !files["statement_of_account"][0]?.path) {
-        return "Statement of account is required.";
-    }
-
-    return null;
-};
