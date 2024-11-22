@@ -54,21 +54,32 @@ module.exports = class LoanApplicationController{
 
     static async updateLoanApplication(req, res) {
         const { loanApplicationId } = req.params;
-        const { loan_duration, status } = req.body;
+        const updateData = req.body;
 
-        if (!loan_duration && !status) {
-            return errorResponse(res, 400, "Please provide at least one field to update: 'loan_duration' or 'status'.");
+        const { error } = updateLoanApplicationValidator.validate(updateData);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
         }
 
+        if (!updateData.loan_duration && !updateData.status) {
+            return errorResponse(
+                res,
+                400,
+                "Please provide at least one field to update: 'loan_duration' or 'status'."
+            );
+        }
         try {
-            const updateData = {};
-            if (loan_duration) updateData.loan_duration = loan_duration;
-            if (status) updateData.status = status;
-
             const result = await LoanApplicationService.updateLoanApplication(loanApplicationId, updateData);
 
-            if (!result.success) {
-                return errorResponse(res, 404, result.message);
+            switch (result.code) {
+                case "NOT_FOUND":
+                    return errorResponse(res, 404, result.message);
+                case "INVALID_DURATION":
+                    return errorResponse(res, 400, result.message);
+                case "SERVER_ERROR":
+                    return errorResponse(res, 500, result.message);
+                default:
+                    break;
             }
 
             return successResponse(res, 200, "Loan application updated successfully", {

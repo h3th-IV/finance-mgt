@@ -64,17 +64,16 @@ module.exports = class LoanApplicationService{
         try {
             const loanApplication = await LoanApplication.findById(loanApplicationId).populate('loan_product');
             if (!loanApplication) {
-                return { success: false, message: "Loan application not found" };
+                return { success: false, message: "Loan application not found", code: "NOT_FOUND", };
             }
 
             if (updateData.loan_duration) {
                 const loanProduct = loanApplication.loan_product;
 
                 if (updateData.loan_duration <= 0) {
-                    return { success: false, message: "Loan duration must be greater than 0." };
+                    return { success: false, message: "Loan duration must be greater than 0.", code: "INVALID_DURATION", };
                 }
 
-                // Update loan_duration and recalculate repayment plan
                 loanApplication.loan_duration = updateData.loan_duration;
                 const repaymentPlan = calculateRepaymentPlan(loanApplication.loan_amount, loanApplication.loan_duration, loanProduct.interest);
 
@@ -91,7 +90,11 @@ module.exports = class LoanApplicationService{
             };
         } catch (error) {
             console.error("Error updating loan application:", error);
-            throw new Error("Could not update loan application");
+            return {
+                success: false,
+                message: "An unexpected error occurred while updating the loan application.",
+                code: "SERVER_ERROR",
+            };
         }
     }
 

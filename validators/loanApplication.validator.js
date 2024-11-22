@@ -17,7 +17,7 @@ const loanApplicationValidator = Joi.object({
     }),
 });
 
-// Validator for updating a Loan Application
+
 const updateLoanApplicationValidator = Joi.object({
     loan_duration: Joi.number().positive().integer().optional().messages({
         'number.base': '"Loan duration" must be a number.',
@@ -34,3 +34,4 @@ module.exports = {
     loanApplicationValidator,
     updateLoanApplicationValidator,
 }
+
