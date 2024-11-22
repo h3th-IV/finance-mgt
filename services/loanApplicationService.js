@@ -106,4 +106,55 @@ module.exports = class LoanApplicationService{
             return error;
         }
     }
+
+    static async getUserLoanApplications(userId, filters, pagination) {
+        try {
+            const { status } = filters;
+            const { page = 1, limit = 10 } = pagination;
+
+            const query = { customer: userId };
+            if (status) {
+                query.status = status;
+            }
+
+            const skip = (page - 1) * limit;
+
+            const loanApplications = await LoanApplication.find(query)
+                .populate("loan_product", "name interest desc")
+                .skip(skip)
+                .limit(limit)
+                .sort({ createdAt: -1 });
+
+            const totalApplications = await LoanApplication.countDocuments(query);
+            const totalPages = Math.ceil(totalApplications / limit);
+
+            const paginationLinks = {
+                first: `/loans/${userId}?page=1&limit=${limit}${status ? `&status=${status}` : ''}`,
+                prev: page > 1 
+                    ? `/loans/${userId}?page=${page - 1}&limit=${limit}${status ? `&status=${status}` : ''}` 
+                    : null,
+                next: page < totalPages 
+                    ? `/loans/${userId}?page=${page + 1}&limit=${limit}${status ? `&status=${status}` : ''}` 
+                    : null,
+                last: `/loans/${userId}?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ''}`,
+            };
+
+            return {
+                success: true,
+                data: {
+                    loanApplications,
+                    total: totalApplications,
+                    currentPage: page,
+                    totalPages: totalPages,
+                    paginationLinks: paginationLinks,
+                },
+            };
+        } catch (error) {
+            console.error("Error fetching loan applications:", error);
+            return {
+                success: false,
+                message: "Could not fetch loan applications",
+            };
+        }
+    }
 }

@@ -100,5 +100,35 @@ module.exports = class LoanApplicationController{
             return errorResponse(res, 500, "Server error");
         }
     }
+
+    static async getUserLoanApplications(req, res) {
+        const { userId } = req.params;
+        const { status, page, limit } = req.query;
+
+        try {
+            const filters = { status };
+            const pagination = {
+                page: parseInt(page, 10) || 1,
+                limit: parseInt(limit, 10) || 10,
+            };
+
+            const result = await LoanApplicationService.getUserLoanApplications(userId, filters, pagination);
+
+            if (!result.success) {
+                return errorResponse(res, 500, result.message);
+            }
+            return successResponse(res, 200, "Loan applications retrieved successfully", {
+                loanApplications: result.data.loanApplications,
+                pagination: {
+                    currentPage: result.data.currentPage,
+                    totalPages: result.data.totalPages,
+                    paginationLinks: result.data.paginationLinks,
+                }
+            });
+        } catch (error) {
+            console.error("Error fetching user loan applications:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
 }
 
