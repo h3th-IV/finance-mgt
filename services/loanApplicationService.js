@@ -1,6 +1,7 @@
 const LoanApplication = require('../models/loanApplication');
 const User = require("../models/user");
 const LoanProduct = require("../models/loanProduct");
+const { calculateRepaymentPlan } = require("../helpers/calcRepayment.helper");
 
 module.exports = class LoanApplicationService{
     static async createLoanApplication(customerId, loanData, files) {
@@ -12,17 +13,21 @@ module.exports = class LoanApplicationService{
                     message: "Loan product not found",
                 };
             }
-
+            console.log("here oop");
+            console.log("Loan amount: ", loanData.loan_amount, typeof loanData.loan_amount);
+            console.log("Min: ", loanProduct.min, typeof loanProduct.min);
+            console.log("Max: ", loanProduct.max, typeof loanProduct.max);
             if (loanData.loan_amount < loanProduct.min || loanData.loan_amount > loanProduct.max) {
                 return {
                     success: false,
                     message: `Loan amount for ${loanProduct.name} must be between ${loanProduct.min} and ${loanProduct.max}`,
                 };
             }
-
+            console.log("thath")
             const interestRate = loanProduct.interest;
             const repaymentPlan = calculateRepaymentPlan(loanData.loan_amount, loanData.loan_duration, interestRate);
-
+            console.log("interestRate: ", interestRate);
+            console.log("repaymentPlan: ", repaymentPlan);
             const guarantor = {
                 kyc_guarantor_form: files["guarantor.kyc_guarantor_form"]?.[0]?.path || null,
                 passport_form: files["guarantor.passport_form"]?.[0]?.path || null,
@@ -31,7 +36,7 @@ module.exports = class LoanApplicationService{
             };
 
             const statementOfAccount = files["statement_of_account"]?.[0]?.path || null;
-
+            console.log("here service 2");
             const loanApplication = new LoanApplication({
                 customer: customerId,
                 loan_id: `CWLN-${Date.now()}`,
@@ -47,6 +52,7 @@ module.exports = class LoanApplicationService{
 
             await loanApplication.save();
             return {
+                success: true,
                 loanApplication,
                 repaymentPlan,
             };
@@ -102,12 +108,3 @@ module.exports = class LoanApplicationService{
         }
     }
 }
-
-const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate) => {
-    const monthlyInterest = (interestRate / 100) * loanAmount;
-    const monthlyRepayment = loanAmount / loanDuration + monthlyInterest;
-    return {
-        monthly_payment: monthlyRepayment.toFixed(2),
-        total_payment: (monthlyRepayment * loanDuration).toFixed(2),
-    };
-};

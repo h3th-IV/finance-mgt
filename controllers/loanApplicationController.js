@@ -1,6 +1,6 @@
 const LoanApplicationService = require("../services/loanApplicationService");
 const { successResponse, errorResponse } = require("../utils/responses");
-
+const { loanApplicationValidator, updateLoanApplicationValidator } = require("../validators/loanApplication.validator");
 
 module.exports = class LoanApplicationController{
     static async createLoanApplication(req, res) {
@@ -9,51 +9,33 @@ module.exports = class LoanApplicationController{
         const files = req.files;
 
         try {
-            if (!userId) {
-                return errorResponse(res, 400, "Customer ID is required.");
-            }
-            if (!loan_product) {
-                return errorResponse(res, 400, "Loan product is required.");
-            }
-            if (!loan_amount) {
-                return errorResponse(res, 400, "Loan amount is required.");
-            }
-            if (!loan_duration) {
-                return errorResponse(res, 400, "Loan duration is required.");
+            const { error } = loanApplicationValidator.validate({
+                loan_product,
+                loan_amount,
+                loan_duration,
+            });
+            if (error) {
+                return errorResponse(res, 400, error.details[0].message);
             }
 
-            if (!files || Object.keys(files).length === 0) {
-                return errorResponse(res, 400, "Required files are missing.");
-            }
-            const requiredGuarantorFiles = [
-                "guarantor.kyc_guarantor_form",
-                "guarantor.passport_form",
-                "guarantor.statement_of_net_worth",
-                "guarantor.security_cheque",
-            ];
-            const missingGuarantorFiles = requiredGuarantorFiles.filter(
-                (key) => !files[key] || !files[key][0]?.path
-            );
-
-            if (missingGuarantorFiles.length > 0) {
-                return errorResponse(
-                    res,
-                    400,
-                    `Missing required guarantor files: ${missingGuarantorFiles.join(", ")}`
-                );
+            const fileError = validateRequiredFiles(files);
+            if (fileError) {
+                return errorResponse(res, 400, fileError);
             }
 
-            if (!files["statement_of_account"] || !files["statement_of_account"][0]?.path) {
-                return errorResponse(res, 400, "Statement of account is required.");
-            }
             const loanData = {
                 loan_product,
                 loan_amount: parseFloat(loan_amount),
                 loan_duration: parseInt(loan_duration, 10),
             };
 
-            const { loanApplication, repaymentPlan } = await LoanApplicationService.createLoanApplication(userId, loanData, files);
-            return successResponse(res, 201, "Loan application created successfully! Our team will review your application and notify you once a decision has been made regarding its approval.", {
+            const { loanApplication, repaymentPlan } =
+                await LoanApplicationService.createLoanApplication(userId, loanData, files);
+
+            if (!loanApplication || !repaymentPlan) {
+                return errorResponse(res, 500, "Failed to create loan application. Please try again.");
+            }
+            return successResponse(res, 201, "Loan application created successfully!", {
                 loanApplication,
                 repaymentPlan,
             });
@@ -62,6 +44,7 @@ module.exports = class LoanApplicationController{
             return errorResponse(res, 500, error.message);
         }
     }
+
 
     static async updateLoanApplication(req, res) {
         const { loanApplicationId } = req.params;
@@ -101,3 +84,26 @@ module.exports = class LoanApplicationController{
         }
     }
 }
+
+const validateRequiredFiles = (files) => {
+    const requiredGuarantorFiles = [
+        "guarantor.kyc_guarantor_form",
+        "guarantor.passport_form",
+        "guarantor.statement_of_net_worth",
+        "guarantor.security_cheque",
+    ];
+
+    const missingGuarantorFiles = requiredGuarantorFiles.filter(
+        (key) => !files[key] || !files[key][0]?.path
+    );
+
+    if (missingGuarantorFiles.length > 0) {
+        return `Missing required guarantor files: ${missingGuarantorFiles.join(", ")}`;
+    }
+
+    if (!files["statement_of_account"] || !files["statement_of_account"][0]?.path) {
+        return "Statement of account is required.";
+    }
+
+    return null;
+};
