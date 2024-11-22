@@ -73,7 +73,7 @@ app.use("/api/v1/user", user);
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/loanapp", loanApp);
 
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.PORT || 8000;
 sever.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });

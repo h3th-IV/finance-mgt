@@ -8,7 +8,7 @@ const LoanApplicationController = require('../controllers/loanApplicationControl
 router.post("/signup", UserController.createUser);
 router.post("/validate-otp/:userId", UserController.validateOTP);
 router.get("/all", UserController.getAllUsers);
-router.get("/single/:id", UserController.getAllUsers);
+router.get("/single/:id", UserController.getAllUser);
 router.post("/signin", UserController.login);
 router.post("/regenerate-otp/:userId", UserController.regenerateOTP);
 router.post("/forgot-password", UserController.forgotPasswordOTP);

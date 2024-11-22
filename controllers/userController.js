@@ -180,7 +180,6 @@ module.exports = class UserController {
         }
     }
 
-    //TODO: check if otp is expired
     static async resetPassword(req, res) {
         const { error } = resetPasswordValidator.validate(req.body);
         if (error) {
@@ -245,7 +244,26 @@ module.exports = class UserController {
             return errorResponse(res, 500, "Server error");
         }
     }
+    
+    static async getAllUser(req, res){
+        try {
+            const response = await UserService.getUserByID(req.params.id);
+            return successResponse(res, 200, "Users returned successfully", response);
+        } catch (error) {
+            return errorResponse(res, 500, "Server Error");
+        }
+    }
 };
+
+function validateEmail(email) {
+    const lower_email = email.toLowerCase();
+    const valid_email = lower_email.split("@");
+    //contains @ or domain part?
+    if (valid_email.length < 2 || !valid_email[1].includes(".")) {
+        return { success: false, message: "Email is not valid" };
+    }
+    return { success: true };
+}
 
 function generateOTP(){
     const characters = "0123456789";
