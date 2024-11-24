@@ -107,12 +107,14 @@ module.exports = class UserController {
         if (error) {
             return errorResponse(res, 400, error.details[0].message);
         }
-        const { email, password } = req.body;
+        const { identifier, password } = req.body;
         try {
-            const lower_email = email.toLowerCase();
-            const user = await UserService.getUserByEmail(lower_email);
+            const query = identifier.includes('@')
+            ? { email: identifier.toLowerCase() }
+            : { phone_number: identifier };
+            const user = await User.findOne(query).populate('kyc_verification');
             if (!user) {
-                return errorResponse(res, 401, "User with email not found");
+                return errorResponse(res, 401, `User with ${query.email ? "email" : "phone_number"} not found`);
             }
 
             const isPassword = await bcryptjs.compare(password, user.password);
@@ -201,9 +203,17 @@ module.exports = class UserController {
 
     static async updateKYC(req, res) {
         const { userId } = req.params;
-        const { error } = kycValidator.validate(req.body);
+        const { error } = kycValidator.validate(req.body, { abortEarly: false });
         if (error) {
-            return errorResponse(res, 400, error.details[0].message);
+            const errors = error.details.map((err) => ({
+                field: err.context.key,
+                message: err.message,
+            }));
+            return res.status(400).json({
+                success: false,
+                errors,
+                data: null,
+            });
         }
 
         const kycData = req.body;

@@ -13,8 +13,11 @@ const passwordSchema = Joi.string().min(8).required().messages({
 });
 
 const loginValidator = Joi.object({
-  email: emailSchema,
-  password: passwordSchema,
+  identifier: Joi.string().required().messages({
+        'any.required': 'Email or phone number is required.',
+        'string.empty': 'Identifier cannot be empty.',
+    }),
+    password: passwordSchema,
 });
 
 const resetPasswordValidator = Joi.object({

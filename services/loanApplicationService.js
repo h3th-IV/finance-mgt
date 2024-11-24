@@ -14,7 +14,7 @@ module.exports = class LoanApplicationService{
                     code: "NOT_FOUND",
                 };
             }
-            const compare = loanData.loan_amount < loanProduct.min || loanData.loan_amount > loanProduct.min;
+            const compare = loanData.loan_amount < loanProduct.min || loanData.loan_amount > loanProduct.max;
             if (compare === true) {
                 return {
                     success: false,
