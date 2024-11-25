@@ -59,6 +59,12 @@ const LoanApplication = new mongoose.Schema({
             type: Number
         }
     },
+    repayments: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Repayment",
+        },
+    ],
 }, {timestamps: true,});
 
 module.exports = mongoose.model("LoanApplication", LoanApplication)

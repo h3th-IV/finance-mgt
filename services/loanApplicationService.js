@@ -2,6 +2,7 @@ const LoanApplication = require('../models/loanApplication');
 const User = require("../models/user");
 const LoanProduct = require("../models/loanProduct");
 const { calculateRepaymentPlan } = require("../helpers/calcRepayment.helper");
+const Repayment = require('../models/repayment');
 
 module.exports = class LoanApplicationService{
     static async createLoanApplication(customerId, loanData, files) {
@@ -60,33 +61,103 @@ module.exports = class LoanApplicationService{
         }
     }
 
+    // static async updateLoanApplication(loanApplicationId, updateData) {
+    //     try {
+    //         const loanApplication = await LoanApplication.findById(loanApplicationId).populate('loan_product');
+    //         if (!loanApplication) {
+    //             return { success: false, message: "Loan application not found", code: "NOT_FOUND", };
+    //         }
+
+    //         if (updateData.loan_duration) {
+    //             const loanProduct = loanApplication.loan_product;
+
+    //             if (updateData.loan_duration <= 0) {
+    //                 return { success: false, message: "Loan duration must be greater than 0.", code: "INVALID_DURATION", };
+    //             }
+
+    //             loanApplication.loan_duration = updateData.loan_duration;
+    //             const repaymentPlan = calculateRepaymentPlan(loanApplication.loan_amount, loanApplication.loan_duration, loanProduct.interest);
+
+    //             loanApplication.repayment_plan = repaymentPlan;
+    //         }
+    //         if (updateData.status) {
+    //             loanApplication.status = updateData.status;
+    //         }
+    //         await loanApplication.save();
+    //         return { 
+    //             success: true, 
+    //             loanApplication, 
+    //             repaymentPlan: loanApplication.repayment_plan || null
+    //         };
+    //     } catch (error) {
+    //         console.error("Error updating loan application:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while updating the loan application.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
+
     static async updateLoanApplication(loanApplicationId, updateData) {
         try {
             const loanApplication = await LoanApplication.findById(loanApplicationId).populate('loan_product');
             if (!loanApplication) {
-                return { success: false, message: "Loan application not found", code: "NOT_FOUND", };
+                return { success: false, message: "Loan application not found", code: "NOT_FOUND" };
+            }
+
+            if (updateData.status === "approved" && loanApplication.status !== "approved") {
+                const currentDate = new Date();
+                loanApplication.status = "approved";
+                loanApplication.date_disbursed = currentDate;
+
+                // Generate repayments
+                const repaymentCount = updateData.loan_duration || loanApplication.loan_duration;
+                const repayments = [];
+                const lastRepayment = await Repayment.findOne().sort({ repayment_id: -1 });
+                let lastRepaymentId = lastRepayment ? parseInt(lastRepayment.repayment_id.slice(4)) : 123;
+
+                for (let i = 0; i < repaymentCount; i++) {
+                    const repaymentId = `CWRP${++lastRepaymentId}`;
+                    const dueDate = new Date(currentDate);
+                    dueDate.setMonth(dueDate.getMonth() + i + 1);
+
+                    const repayment = new Repayment({
+                        repayment_id: repaymentId,
+                        due_date: dueDate,
+                    });
+                    await repayment.save();
+                    repayments.push(repayment._id);
+                }
+
+                loanApplication.repayments = repayments;
             }
 
             if (updateData.loan_duration) {
-                const loanProduct = loanApplication.loan_product;
-
                 if (updateData.loan_duration <= 0) {
-                    return { success: false, message: "Loan duration must be greater than 0.", code: "INVALID_DURATION", };
+                    return { success: false, message: "Loan duration must be greater than 0.", code: "INVALID_DURATION" };
                 }
 
-                loanApplication.loan_duration = updateData.loan_duration;
-                const repaymentPlan = calculateRepaymentPlan(loanApplication.loan_amount, loanApplication.loan_duration, loanProduct.interest);
+                const loanProduct = loanApplication.loan_product;
+                const repaymentPlan = calculateRepaymentPlan(
+                    loanApplication.loan_amount,
+                    updateData.loan_duration,
+                    loanProduct.interest
+                );
 
+                loanApplication.loan_duration = updateData.loan_duration;
                 loanApplication.repayment_plan = repaymentPlan;
             }
-            if (updateData.status) {
-                loanApplication.status = updateData.status;
-            }
+
             await loanApplication.save();
-            return { 
-                success: true, 
-                loanApplication, 
-                repaymentPlan: loanApplication.repayment_plan || null
+            const updatedLoanApplication = await LoanApplication.findById(loanApplication._id)
+            .populate('loan_product')
+            .populate('repayments');
+
+            return {
+                success: true,
+                loanApplication: updatedLoanApplication,
+                repaymentPlan: loanApplication.repayment_plan || null,
             };
         } catch (error) {
             console.error("Error updating loan application:", error);
@@ -97,6 +168,7 @@ module.exports = class LoanApplicationService{
             };
         }
     }
+
 
     static async getAllLoanApplication(){
         try{
