@@ -3,6 +3,7 @@ const { successResponse, errorResponse } = require("../utils/responses");
 const { loanApplicationValidator, updateLoanApplicationValidator } = require("../validators/loanApplication.validator");
 const { validateRequiredFiles } = require('../helpers/validateFiles.helper');
 const { loanCalculatorValidator } = require('../validators/loanCalc.validator');
+const { calculateRepaymentPlan } = require('../helpers/calcRepayment.helper');
 
 module.exports = class LoanApplicationController{
     static async createLoanApplication(req, res) {
@@ -140,28 +141,12 @@ module.exports = class LoanApplicationController{
             }
 
             const { loan_amount, duration, interest } = value;
-            const result = calculateLoanDetails(loan_amount, duration, interest);
+            const result = calculateRepaymentPlan(loan_amount, duration, interest);
             return successResponse(res, 200, "Loan Calculated successfully", result);
         } catch (err) {
             console.error("Error in loan calculator:", err);
-            return res.status(500).json({
-                success: false,
-                message: "An unexpected error occurred.",
-            });
+            return errorResponse(res, 500, "An unexpected error occurred.");
         }
     }
 }
 
-function calculateLoanDetails(loanAmount, duration, interest) {
-    const monthlyInterestRate = interest / 100 / 12; // Convert annual interest to monthly interest
-    const totalMonths = duration;
-
-    // Formula for monthly payment (PMT in annuity formula)
-    const monthlyPayment = loanAmount * (monthlyInterestRate / (1 - Math.pow(1 + monthlyInterestRate, -totalMonths)));
-    const totalPayment = monthlyPayment * totalMonths;
-
-    return {
-        monthlyPayment: monthlyPayment.toFixed(2),
-        totalPayment: totalPayment.toFixed(2),
-    };
-}
