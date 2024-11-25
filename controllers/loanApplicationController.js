@@ -1,6 +1,9 @@
 const LoanApplicationService = require("../services/loanApplicationService");
 const { successResponse, errorResponse } = require("../utils/responses");
-
+const { loanApplicationValidator, updateLoanApplicationValidator } = require("../validators/loanApplication.validator");
+const { validateRequiredFiles } = require('../helpers/validateFiles.helper');
+const { loanCalculatorValidator } = require('../validators/loanCalc.validator');
+const { calculateRepaymentPlan } = require('../helpers/calcRepayment.helper');
 
 module.exports = class LoanApplicationController{
     static async createLoanApplication(req, res) {
@@ -9,77 +12,76 @@ module.exports = class LoanApplicationController{
         const files = req.files;
 
         try {
-            if (!userId) {
-                return errorResponse(res, 400, "Customer ID is required.");
-            }
-            if (!loan_product) {
-                return errorResponse(res, 400, "Loan product is required.");
-            }
-            if (!loan_amount) {
-                return errorResponse(res, 400, "Loan amount is required.");
-            }
-            if (!loan_duration) {
-                return errorResponse(res, 400, "Loan duration is required.");
+            const { error } = loanApplicationValidator.validate({
+                loan_product,
+                loan_amount,
+                loan_duration,
+            });
+            if (error) {
+                return errorResponse(res, 400, error.details[0].message);
             }
 
-            if (!files || Object.keys(files).length === 0) {
-                return errorResponse(res, 400, "Required files are missing.");
-            }
-            const requiredGuarantorFiles = [
-                "guarantor.kyc_guarantor_form",
-                "guarantor.passport_form",
-                "guarantor.statement_of_net_worth",
-                "guarantor.security_cheque",
-            ];
-            const missingGuarantorFiles = requiredGuarantorFiles.filter(
-                (key) => !files[key] || !files[key][0]?.path
-            );
-
-            if (missingGuarantorFiles.length > 0) {
-                return errorResponse(
-                    res,
-                    400,
-                    `Missing required guarantor files: ${missingGuarantorFiles.join(", ")}`
-                );
+            const fileError = validateRequiredFiles(files);
+            if (fileError) {
+                return errorResponse(res, 400, fileError);
             }
 
-            if (!files["statement_of_account"] || !files["statement_of_account"][0]?.path) {
-                return errorResponse(res, 400, "Statement of account is required.");
-            }
             const loanData = {
                 loan_product,
                 loan_amount: parseFloat(loan_amount),
                 loan_duration: parseInt(loan_duration, 10),
             };
 
-            const { loanApplication, repaymentPlan } = await LoanApplicationService.createLoanApplication(userId, loanData, files);
-            return successResponse(res, 201, "Loan application created successfully! Our team will review your application and notify you once a decision has been made regarding its approval.", {
-                loanApplication,
-                repaymentPlan,
-            });
+            const response = await LoanApplicationService.createLoanApplication(userId, loanData, files);
+            if (!response.success) {
+                switch (response.code) {
+                    case "NOT_FOUND":
+                        return errorResponse(res, 404, response.message);
+
+                    case "INVALID_AMOUNT":
+                        return errorResponse(res, 400, response.message);
+
+                    case "INTERNAL_ERROR":
+                    default:
+                        return errorResponse(res, 500, "An unexpected server error occurred", response);
+                }
+            }
+            return successResponse(res, 201, "Loan application created successfully!", response);
         } catch (error) {
             console.error("Error creating loan application:", error);
             return errorResponse(res, 500, error.message);
         }
     }
 
+
     static async updateLoanApplication(req, res) {
         const { loanApplicationId } = req.params;
-        const { loan_duration, status } = req.body;
+        const updateData = req.body;
 
-        if (!loan_duration && !status) {
-            return errorResponse(res, 400, "Please provide at least one field to update: 'loan_duration' or 'status'.");
+        const { error } = updateLoanApplicationValidator.validate(updateData);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
         }
 
+        if (!updateData.loan_duration && !updateData.status) {
+            return errorResponse(
+                res,
+                400,
+                "Please provide at least one field to update: 'loan_duration' or 'status'."
+            );
+        }
         try {
-            const updateData = {};
-            if (loan_duration) updateData.loan_duration = loan_duration;
-            if (status) updateData.status = status;
-
             const result = await LoanApplicationService.updateLoanApplication(loanApplicationId, updateData);
 
-            if (!result.success) {
-                return errorResponse(res, 404, result.message);
+            switch (result.code) {
+                case "NOT_FOUND":
+                    return errorResponse(res, 404, result.message);
+                case "INVALID_DURATION":
+                    return errorResponse(res, 400, result.message);
+                case "SERVER_ERROR":
+                    return errorResponse(res, 500, result.message);
+                default:
+                    break;
             }
 
             return successResponse(res, 200, "Loan application updated successfully", {
@@ -100,4 +102,51 @@ module.exports = class LoanApplicationController{
             return errorResponse(res, 500, "Server error");
         }
     }
+
+    static async getUserLoanApplications(req, res) {
+        const { userId } = req.params;
+        const { status, page, limit } = req.query;
+
+        try {
+            const filters = { status };
+            const pagination = {
+                page: parseInt(page, 10) || 1,
+                limit: parseInt(limit, 10) || 10,
+            };
+
+            const result = await LoanApplicationService.getUserLoanApplications(userId, filters, pagination);
+
+            if (!result.success) {
+                return errorResponse(res, 500, result.message);
+            }
+            return successResponse(res, 200, "Loan applications retrieved successfully", {
+                loanApplications: result.data.loanApplications,
+                pagination: {
+                    currentPage: result.data.currentPage,
+                    totalPages: result.data.totalPages,
+                    paginationLinks: result.data.paginationLinks,
+                }
+            });
+        } catch (error) {
+            console.error("Error fetching user loan applications:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
+
+    static async loanCalculator(req, res) {
+        try {
+            const { error, value } = loanCalculatorValidator.validate(req.body);
+            if (error) {
+                return res.status(400).json({ success: false, message: error.details[0].message });
+            }
+
+            const { loan_amount, duration, interest } = value;
+            const result = calculateRepaymentPlan(loan_amount, duration, interest);
+            return successResponse(res, 200, "Loan Calculated successfully", result);
+        } catch (err) {
+            console.error("Error in loan calculator:", err);
+            return errorResponse(res, 500, "An unexpected error occurred.");
+        }
+    }
 }
+

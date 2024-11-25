@@ -31,6 +31,7 @@ app.set("view engine", "ejs");
 const sever = http.createServer(app);
 
 const db = require("./config/db");
+const LoanApplicationController = require("./controllers/loanApplicationController");
 db.connectDB();
 // db.clearDatabase();
 
@@ -39,7 +40,6 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.send("capitalWise Backend is running");
 });
-
 app.get("/google-auth", function (req, res) {
   res.render("pages/auth");
 });
@@ -72,8 +72,8 @@ app.get("/logout", function (req, res, next) {
 app.use("/api/v1/user", user);
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/loanapp", loanApp);
-
-const PORT = process.env.PORT || 9000;
+app.post('/api/v1/loan-calculator', LoanApplicationController.loanCalculator);
+const PORT = process.env.PORT || 8000;
 sever.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });

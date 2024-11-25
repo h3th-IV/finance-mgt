@@ -24,11 +24,12 @@ exports.verifyToken = (req, res, next) => {
   if (req.headers["authorization"]) {
     const bearer = token.split(" ");
     token = bearer[1];
+
   }
   if (!token) return res.status(401).json({ msg: "No Permission" });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "thugnificient@lethalinterjections.com");
     req.user = decoded;
     next();
   } catch (e) {
@@ -36,3 +37,5 @@ exports.verifyToken = (req, res, next) => {
     res.status(400).json({ msg: "The token used has expired" });
   }
 };
+
+

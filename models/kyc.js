@@ -4,6 +4,7 @@ const KYCSchema = new mongoose.Schema({
     bank_verification_number: {
         bvn: {
             type: String,
+            unique: true,
         },
         dob: {
             type: Date,
@@ -29,6 +30,7 @@ const KYCSchema = new mongoose.Schema({
         },
         doc_no: {
             type: String,
+            unique: true,
         },
         doc: {
             type: String,

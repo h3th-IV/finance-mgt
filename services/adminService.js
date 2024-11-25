@@ -34,14 +34,12 @@ module.exports = class AdminService{
             if (!loanProduct) {
                 return { success: false, message: "Loan product not found" };
             }
-
             const updatableFields = ["interest", "max", "min"];
             updatableFields.forEach((field) => {
                 if (updateData[field] !== undefined) {
                     loanProduct[field] = updateData[field];
                 }
             });
-
             await loanProduct.save();
             return {
                 success: true,
