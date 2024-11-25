@@ -1,5 +1,7 @@
 const AdminService = require('../services/adminService');
-const { successResponse, errorResponse } = require('../utils/responses')
+const { successResponse, errorResponse } = require('../utils/responses');
+const { createLoanProductSchema, updateLoanProductSchema } = require('../validators/loanProduct.validator');
+
 module.exports = class AdminCOntroller{
     static async getAllkycs(req, res) {
         try{
@@ -10,8 +12,12 @@ module.exports = class AdminCOntroller{
         }
     }
 
-    static async createLoanProduct(req, res){
+    static async createLoanProduct(req, res) {
         const userId = req.params.userId;
+        const { error } = createLoanProductSchema.validate(req.body);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
+        }
         const { name, description, interest, max, min } = req.body;
         try {
             const product_data = {
@@ -20,8 +26,8 @@ module.exports = class AdminCOntroller{
                 interest: interest,
                 max: max,
                 min: min,
-                createdBy: userId
-            }
+                createdBy: userId,
+            };
             const loanProduct = await AdminService.createLoanProduct(product_data);
             return successResponse(res, 201, "Loan product created successfully", loanProduct);
         } catch (error) {
@@ -29,19 +35,20 @@ module.exports = class AdminCOntroller{
         }
     }
 
-    static async updateLoanProduct(req, res){
+    static async updateLoanProduct(req, res) {
         const productId = req.params.productId;
+        const { error } = updateLoanProductSchema.validate(req.body);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
+        }
         const updateData = req.body;
         try {
             if (!productId) {
                 return errorResponse(res, 400, "Loan productId is required");
             }
-            if (!updateData || Object.keys(updateData).length === 0){
-                return errorResponse(res, 400, "No update data was provided");
-            }
             const response = await AdminService.updateLoanProduct(productId, updateData);
             if (!response.success) {
-               return errorResponse(res, 400, "Error updating loan product", response); 
+                return errorResponse(res, 400, "Error updating loan product", response);
             }
             return successResponse(res, 200, "Loan product updated successfully", response);
         } catch (error) {
