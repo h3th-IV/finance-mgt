@@ -1,20 +1,25 @@
 const mongoose = require("mongoose");
+const User = require('./user');
+const Role = require('./role');
 
 const Staff = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
     name: {
         type: String,
+        required: true,
     },
     email: {
         type: String,
+        required: true,
     },
-    date_of_birth: {
-        type: Date,
-    },
-    address: {
-        type: String,
-    },
-    status: {
-        type: String,
+    role: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Role",
+        required: true,
     },
 });
 
