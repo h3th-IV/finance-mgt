@@ -1,9 +1,6 @@
 const AdminService = require('../services/adminService');
 const { successResponse, errorResponse } = require('../utils/responses');
 const { createLoanProductSchema, updateLoanProductSchema } = require('../validators/loanProduct.validator');
-const User = require('../models/user');
-const Staff = require('../models/staff');
-const Role = require('../models/role');
 
 module.exports = class AdminCOntroller{
     static async getAllkycs(req, res) {
@@ -62,29 +59,11 @@ module.exports = class AdminCOntroller{
 
     static async createStaff(req, res) {
         const { userId, roleId } = req.body;
-        try {
-            const user = await User.findById(userId);
-            if (!user) {
-                return errorResponse(res, 404, " User not found");
-            }
-            const role = await Role.findById(roleId);
-            if (!role) {
-                return errorResponse(res, 404, "Role not found");
-            }
-            const existingStaff = await Staff.findOne({ user: userId });
-            if (existingStaff) {
-                return errorResponse(res, 401, "User is already a staff member.");
-            }
-            const staff = new Staff({
-                user: userId,
-                name: user.first_name + " " + user.last_name,
-                email: user.email,
-                role: roleId,
-            });
-            await staff.save();
-            return successResponse(res, 201, "User designated as staff", staff);
-        } catch (error) {
-            return errorResponse(res, 500, "Server error");
+        const result = await AdminService.createStaff(userId, roleId);
+
+        if (!result.success) {
+            return errorResponse(res, 400, result.message);
         }
+        return successResponse(res, 201, "User designated as staff", result.staff);
     }
 }
