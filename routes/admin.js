@@ -9,6 +9,7 @@ router.post("/create-loanproduct/:userId", verifyToken, AdminController.createLo
 router.patch("/update-loanapp/:loanApplicationId", verifyToken, LoanApplicationController.updateLoanApplication);
 router.get("/get-loanApps", verifyToken, LoanApplicationController.getAllLoanApplication);
 router.patch("/update-product/:productId", verifyToken, AdminController.updateLoanProduct);
+router.get("/loanProducts", verifyToken, AdminController.getAllLoanProducts);
 
 
 module.exports = router;
