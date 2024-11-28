@@ -1,5 +1,9 @@
 const KYC  = require('../models/kyc');
 const LoanProduct = require('../models/loanProduct');
+const User = require('../models/user');
+const Staff = require('../models/staff');
+const Role = require('../models/role');
+const loanProduct = require('../models/loanProduct');
 
 module.exports = class AdminService{
     static async getAllkyc(){
@@ -50,5 +54,42 @@ module.exports = class AdminService{
             return { success: false, message: `Error updating loanProduct` };
         }
 
+    }
+
+    static async createStaff(userId, roleId) {
+        try {
+            const user = await User.findById(userId);
+            if (!user) {
+                return { success: false, message: "User not found" };
+            }
+            const role = await Role.findById(roleId);
+            if (!role) {
+                return { success: false, message: "Role not found" };
+            }
+            const existingStaff = await Staff.findOne({ user: userId });
+            if (existingStaff) {
+                return { success: false, message: "User is already a staff member." };
+            }
+            const staff = new Staff({
+                user: userId,
+                name: `${user.first_name} ${user.last_name}`,
+                email: user.email,
+                role: roleId,
+            });
+            await staff.save();
+            return { success: true, staff };
+        } catch (error) {
+            console.error("Error creating staff:", error);
+            return { success: false, message: "Server error" };
+        }
+    }
+
+    static async getAllLoanProducts(){
+        try {
+            const response = await loanProduct.find();
+            return response;
+        } catch (error) {
+            return error;
+        }
     }
 }

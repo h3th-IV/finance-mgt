@@ -1,21 +1,38 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 
-const Staff = new mongoose.Schema({
+const StaffSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
     name: {
         type: String,
+        required: true,
     },
     email: {
         type: String,
+        required: true,
     },
-    date_of_birth: {
-        type: Date,
+    role: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Role",
+        required: true,
     },
-    address: {
-        type: String,
-    },
-    status: {
-        type: String,
-    },
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model("Staff", Staff);
+
+StaffSchema.methods.generateStaffToken = function () {
+    return jwt.sign(
+        {
+            userId: this.user,
+            staffId: this._id,
+            role: this.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+    );
+};
+
+module.exports = mongoose.model("Staff", StaffSchema);
