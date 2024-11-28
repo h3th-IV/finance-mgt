@@ -3,6 +3,7 @@ const LoanProduct = require('../models/loanProduct');
 const User = require('../models/user');
 const Staff = require('../models/staff');
 const Role = require('../models/role');
+const loanProduct = require('../models/loanProduct');
 
 module.exports = class AdminService{
     static async getAllkyc(){
@@ -80,6 +81,15 @@ module.exports = class AdminService{
         } catch (error) {
             console.error("Error creating staff:", error);
             return { success: false, message: "Server error" };
+        }
+    }
+
+    static async getAllLoanProducts(){
+        try {
+            const response = await loanProduct.find();
+            return response;
+        } catch (error) {
+            return error;
         }
     }
 }
