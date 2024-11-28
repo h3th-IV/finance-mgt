@@ -4,6 +4,7 @@ const User = require('../models/user');
 const Staff = require('../models/staff');
 const Role = require('../models/role');
 const loanProduct = require('../models/loanProduct');
+const Permission = require('../models/permission');
 
 module.exports = class AdminService{
     static async getAllkyc(){
@@ -89,6 +90,25 @@ module.exports = class AdminService{
             const response = await loanProduct.find();
             return response;
         } catch (error) {
+            return error;
+        }
+    }
+
+    static async getAllPermission(){
+        try{
+            const permissions = await Permission.find();
+            return permissions;
+        } catch(error){
+            return error;
+        }
+    }
+
+    static async createRole(roleData){
+        try{
+            const role = new Role(roleData);
+            await role.save();
+            return role;
+        } catch(error){
             return error;
         }
     }

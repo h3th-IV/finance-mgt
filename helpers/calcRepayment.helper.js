@@ -17,4 +17,4 @@ const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate) => {
 
 module.exports = {
     calculateRepaymentPlan,
-}
+}; 

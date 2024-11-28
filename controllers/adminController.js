@@ -115,7 +115,13 @@ module.exports = class AdminCOntroller{
             const response = await AdminService.getAllLoanProducts();
             return successResponse(res, 200, "All loan product returned successfully", response);
         } catch (error) {
-            return errorResponse(res, 500, "Server error");
+            return errorResponse(res,   500, "Server error");
+        }
+    }
+
+    static async createLoanPermission(req, res){
+        try{
+        } catch(error) {
         }
     }
 }
