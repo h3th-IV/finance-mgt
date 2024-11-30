@@ -5,9 +5,13 @@ const { loginValidator } = require('../validators/user.validator');
 const User = require("../models/user")
 const bcryptjs = require("bcryptjs");
 const Staff = require('../models/staff');
+const { validateCreateRole } = require('../validators/rolePerm.validator');
+const { staffValidator } = require("../validators/staff.validator");
+const { generateOTP} = require('../helpers/otp');
+const mailer = require("../config/mailer");
 
 
-module.exports = class AdminCOntroller{
+module.exports = class AdminController{
     static async getAllkycs(req, res) {
         try{
             const kycs = await AdminService.getAllkyc();
@@ -63,13 +67,34 @@ module.exports = class AdminCOntroller{
     }
 
     static async createStaff(req, res) {
-        const { userId, roleId } = req.body;
-        const result = await AdminService.createStaff(userId, roleId);
+        try {
+            const { error } = staffValidator.validate(req.body, { abortEarly: false });
+            if (error) {
+                const errorMessages = error.details.map((err) => err.message);
+                return errorResponse(res, 400, "Validation error", { errors: errorMessages });
+            }
 
-        if (!result.success) {
-            return errorResponse(res, 400, result.message);
+            const { first_name, last_name, email, dob, role } = req.body;
+            const otp = generateOTP()
+
+            const response = await AdminService.createStaff({
+                first_name,
+                last_name,
+                email,
+                dob,
+                roleId: role,
+                otp,
+            });
+
+            if (!response.success) {
+                return errorResponse(res, 400, response.message);
+            }
+            mailer.sendStaffOTPEmail(email, first_name, otp, response.role_name);
+            return successResponse(res, 201, "Staff created successfully.", response.staff);
+        } catch (error) {
+            console.error("Error creating staff:", error);
+            return errorResponse(res, 500, "Server error");
         }
-        return successResponse(res, 201, "User designated as staff", result.staff);
     }
 
     //login for admin routes
@@ -81,16 +106,15 @@ module.exports = class AdminCOntroller{
         const { identifier, password } = req.body;
         try{
             const query = identifier.includes('@') ? { email: identifier.toLowerCase() } : { phone_number: identifier };
-            const user = await User.findOne(query);
-            if (!user) {
-                return errorResponse(res, 401, `User with ${query.email ? "email" : "phone_number"} not found`);
+            const staff = await Staff.findOne(query).populate('role');
+            if (!staff) {
+                return errorResponse(res, 401, `Staff with ${query.email ? "email" : "phone_number"} not found`);
             }
-            const isPassword = await bcryptjs.compare(password, user.password);
+            const isPassword = await bcryptjs.compare(password, staff.password);
             if(!isPassword) {
                 return errorResponse(res, 401, "Incorrect password");
             }
-            const staff = await Staff.findOne({ user: user._id }).populate('role');
-            if(!staff) {
+            if(!staff.role) {
                 return errorResponse(res, 403, "Access denied");
             }
             const token = staff.generateStaffToken();
@@ -115,7 +139,54 @@ module.exports = class AdminCOntroller{
             const response = await AdminService.getAllLoanProducts();
             return successResponse(res, 200, "All loan product returned successfully", response);
         } catch (error) {
-            return errorResponse(res, 500, "Server error");
+            return errorResponse(res,   500, "Server error");
         }
     }
-}
+
+    static async createRolePermission(req, res) {
+        const { name, permissions } = req.body;
+
+        try {
+            //get d valid permissions from the database
+            const validPermissions = await AdminService.getAllPermissions();
+            const permissionNames = validPermissions.map((perm) => perm.name);
+
+            const { error } = validateCreateRole({ name, permissions }, permissionNames);
+            if (error) {
+                const errors = error.details.map((detail) => detail.message);
+                return errorResponse(res, 400, "Validation error", errors);
+            }
+            const roleData = { name, permissions };
+            const role = await AdminService.createRole(roleData);
+            return successResponse(res, 201, "Role created successfully and permissions granted", role);
+        } catch (error) {
+            return errorResponse(res, 500, "Server error", error.message);
+        }
+    }
+
+    static async getAllPermissions(req, res) {
+        try {
+            const permissions = await AdminService.getAllPermissionsData();
+            if (!permissions || permissions.length === 0) {
+                return errorResponse(res, 404, "No permissions found");
+            }
+            return successResponse(res, 200, "Permissions fetched successfully", permissions);
+        } catch (error) {
+            console.error("Error fetching permissions:", error);
+            return errorResponse(res, 500, "Server error while fetching permissions");
+        }
+    }
+
+    static async getAllRoles(req, res) {
+        try {
+            const roles = await AdminService.getRoles();
+            if (!roles || roles.length === 0) {
+                return errorResponse(res, 404, "No roles found");
+            }
+            return successResponse(res, 200, "Roles fetched successfully", roles);
+        } catch (error) {
+            console.error("Error fetching roles:", error);
+            return errorResponse(res, 500, "Server error while fetching roles");
+        }
+    }
+}   

@@ -48,7 +48,7 @@ const LoanApplication = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["approved", "processing", "declined"],
+        enum: ["new", "processing", "disbursed", "overdue", "fully_paid", "closed", "ready_for_disbursement"],
         default: "processing",
     },
     repayment_plan: {

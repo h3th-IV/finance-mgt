@@ -9,7 +9,7 @@ const { loginValidator } = require('../validators/user.validator');
 const { resetPasswordValidator } = require('../validators/user.validator');
 const { kycValidator } = require('../validators/kyc.validator')
 const { fetchUserAndKYC, combineKYCData, calculateStatuses } = require('../helpers/kyc.helper');
-
+const { generateOTP} = require('../helpers/otp');
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -49,7 +49,7 @@ module.exports = class UserController {
             console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
         }
-        }
+    }
 
     static async validateOTP(req, res){
         const userId = req.params.userId;
@@ -265,22 +265,3 @@ module.exports = class UserController {
         }
     }
 };
-
-function validateEmail(email) {
-    const lower_email = email.toLowerCase();
-    const valid_email = lower_email.split("@");
-    //contains @ or domain part?
-    if (valid_email.length < 2 || !valid_email[1].includes(".")) {
-        return { success: false, message: "Email is not valid" };
-    }
-    return { success: true };
-}
-
-function generateOTP(){
-    const characters = "0123456789";
-    let otp = "";
-    for(let i=0; i<5; i++) {
-        otp += characters[Math.floor(Math.random() * 6)];
-    }
-    return otp;
-}

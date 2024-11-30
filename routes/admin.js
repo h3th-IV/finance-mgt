@@ -4,12 +4,16 @@ const AdminController = require('../controllers/adminController');
 const LoanApplicationController =require('../controllers/loanApplicationController');
 const { verifyToken } = require("../middleware/tokenGenerator");
 
+router.post("/createRole", verifyToken, AdminController.createRolePermission);
 router.get("/get-kycs", AdminController.getAllkycs);
 router.post("/create-loanproduct/:userId", verifyToken, AdminController.createLoanProduct);
 router.patch("/update-loanapp/:loanApplicationId", verifyToken, LoanApplicationController.updateLoanApplication);
-router.get("/get-loanApps", verifyToken, LoanApplicationController.getAllLoanApplication);
+router.get("/loan-apps", verifyToken, LoanApplicationController.getAllLoanApplication);
 router.patch("/update-product/:productId", verifyToken, AdminController.updateLoanProduct);
 router.get("/loanProducts", verifyToken, AdminController.getAllLoanProducts);
+router.post('/add-staff', verifyToken, AdminController.createStaff);
+router.get('/permissions', verifyToken, AdminController.getAllPermissions);
+router.get('/roles', verifyToken, AdminController.getAllRoles);
 
 
 module.exports = router;
