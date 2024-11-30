@@ -14,6 +14,7 @@ router.get("/loanProducts", verifyToken, AdminController.getAllLoanProducts);
 router.post('/add-staff', verifyToken, AdminController.createStaff);
 router.get('/permissions', verifyToken, AdminController.getAllPermissions);
 router.get('/roles', verifyToken, AdminController.getAllRoles);
+router.get('/staffs', verifyToken, AdminController.getAllStaffs);
 
 
 module.exports = router;

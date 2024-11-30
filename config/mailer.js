@@ -264,7 +264,7 @@ module.exports.sendLoginOTPEmail = (email, first_name, lastLogin, OTP) => {
     });
 };
 
-module.exports.sendStaffOTPEmail = (email, first_name, OTP, roleName) => {
+module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name) => {
     sender.sendMail({
         from: "Capitalwise Dynamic Pay",
         to: email,
@@ -334,7 +334,7 @@ module.exports.sendStaffOTPEmail = (email, first_name, OTP, roleName) => {
                 </div>
                 <div class="content">
                     <p>Hi ${first_name},</p>
-                    <p>You've been onboarded as a staff member with the role of <strong>${roleName}</strong>.</p>
+                    <p>You've been onboarded as a staff member with the role of <strong>${role_name}</strong>.</p>
                     <p>Use the OTP below to complete your onboarding:</p>
                     <div class="otp">${OTP}</div>
                     <p>This OTP is valid for a limited time only.</p>

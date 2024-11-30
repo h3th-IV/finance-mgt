@@ -73,7 +73,7 @@ module.exports = class AdminController{
                 const errorMessages = error.details.map((err) => err.message);
                 return errorResponse(res, 400, "Validation error", { errors: errorMessages });
             }
-
+            
             const { first_name, last_name, email, dob, role } = req.body;
             const otp = generateOTP()
 
@@ -89,8 +89,9 @@ module.exports = class AdminController{
             if (!response.success) {
                 return errorResponse(res, 400, response.message);
             }
-            mailer.sendStaffOTPEmail(email, first_name, otp, response.role_name);
-            return successResponse(res, 201, "Staff created successfully.", response.staff);
+            const role_name = response.staffData.role_name
+            mailer.sendStaffOTPEmail(email, first_name, otp, role_name);
+            return successResponse(res, 201, "Staff created successfully.", response.staffData);    
         } catch (error) {
             console.error("Error creating staff:", error);
             return errorResponse(res, 500, "Server error");
@@ -187,6 +188,15 @@ module.exports = class AdminController{
         } catch (error) {
             console.error("Error fetching roles:", error);
             return errorResponse(res, 500, "Server error while fetching roles");
+        }
+    }
+
+    static async getAllStaffs(req, res){
+        try{
+            const staffs = await AdminService.getStaffs();
+            return successResponse(res, 200, "Staff returned successfully", staffs);
+        } catch(error){
+            return errorResponse(res, 500, "Server error while fetching staffs");
         }
     }
 }   
