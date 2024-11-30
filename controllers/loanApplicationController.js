@@ -94,11 +94,27 @@ module.exports = class LoanApplicationController{
         }
     }
 
-    static async getAllLoanApplication(req, res){
-        try{
-            const response = await LoanApplicationService.getAllLoanApplication();
-            return successResponse(res, 200, "Loan applications returned successfully", response);
-        } catch(error) {
+    static async getAllLoanApplication(req, res) {
+        try {
+            const filters = {
+                status: req.query.status,
+            };
+
+            const pagination = {
+                page: parseInt(req.query.page, 10) || 1,
+                limit: parseInt(req.query.limit, 10) || 10,
+            };
+
+            const response = await LoanApplicationService.getAllLoanApplication(filters, pagination);
+
+            return successResponse(
+                res,
+                200,
+                "Loan applications returned successfully",
+                response
+            );
+        } catch (error) {
+            console.error("Error in getAllLoanApplication controller:", error);
             return errorResponse(res, 500, "Server error");
         }
     }

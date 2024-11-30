@@ -4,6 +4,7 @@ const User = require('../models/user');
 const Staff = require('../models/staff');
 const Role = require('../models/role');
 const loanProduct = require('../models/loanProduct');
+const Permission = require('../models/permission');
 
 module.exports = class AdminService{
     static async getAllkyc(){
@@ -56,33 +57,33 @@ module.exports = class AdminService{
 
     }
 
-    static async createStaff(userId, roleId) {
+//test commit here
+    static async createStaff({ first_name, last_name, email, dob, roleId, otp }) {
         try {
-            const user = await User.findById(userId);
-            if (!user) {
-                return { success: false, message: "User not found" };
-            }
             const role = await Role.findById(roleId);
             if (!role) {
                 return { success: false, message: "Role not found" };
             }
-            const existingStaff = await Staff.findOne({ user: userId });
+
+            const existingStaff = await Staff.findOne({ email });
             if (existingStaff) {
-                return { success: false, message: "User is already a staff member." };
+                return { success: false, message: "Staff with this email already exists." };
             }
-            const staff = new Staff({
-                user: userId,
-                name: `${user.first_name} ${user.last_name}`,
-                email: user.email,
-                role: roleId,
-            });
+
+            const staff = new Staff({ first_name, last_name, email, dob, role: roleId, otp });
+            const response = {
+                staff,
+                role_name: role.name,
+            }
             await staff.save();
-            return { success: true, staff };
+
+            return { success: true, response };
         } catch (error) {
             console.error("Error creating staff:", error);
             return { success: false, message: "Server error" };
         }
     }
+
 
     static async getAllLoanProducts(){
         try {
@@ -90,6 +91,40 @@ module.exports = class AdminService{
             return response;
         } catch (error) {
             return error;
+        }
+    }
+
+    static async getAllPermissions() {
+        try {
+            return await Permission.find({}, 'name').lean();
+        } catch (error) {
+            throw new Error("Error fetching permissions");
+        }
+    }
+
+    static async createRole(roleData) {
+        try {
+            const role = new Role(roleData);
+            await role.save();
+            return role;
+        } catch (error) {
+            throw new Error("Error creating role");
+        }
+    }
+
+    static async getAllPermissionsData() {
+        try {
+            return await Permission.find();
+        } catch (error) {
+            throw new Error("Error fetching permissions");
+        }
+    }
+
+    static async getRoles() {
+        try{
+            return await Role.find();
+        } catch(error){
+            throw new Error('Error fetching roles');
         }
     }
 }

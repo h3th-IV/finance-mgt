@@ -61,43 +61,6 @@ module.exports = class LoanApplicationService{
         }
     }
 
-    // static async updateLoanApplication(loanApplicationId, updateData) {
-    //     try {
-    //         const loanApplication = await LoanApplication.findById(loanApplicationId).populate('loan_product');
-    //         if (!loanApplication) {
-    //             return { success: false, message: "Loan application not found", code: "NOT_FOUND", };
-    //         }
-
-    //         if (updateData.loan_duration) {
-    //             const loanProduct = loanApplication.loan_product;
-
-    //             if (updateData.loan_duration <= 0) {
-    //                 return { success: false, message: "Loan duration must be greater than 0.", code: "INVALID_DURATION", };
-    //             }
-
-    //             loanApplication.loan_duration = updateData.loan_duration;
-    //             const repaymentPlan = calculateRepaymentPlan(loanApplication.loan_amount, loanApplication.loan_duration, loanProduct.interest);
-
-    //             loanApplication.repayment_plan = repaymentPlan;
-    //         }
-    //         if (updateData.status) {
-    //             loanApplication.status = updateData.status;
-    //         }
-    //         await loanApplication.save();
-    //         return { 
-    //             success: true, 
-    //             loanApplication, 
-    //             repaymentPlan: loanApplication.repayment_plan || null
-    //         };
-    //     } catch (error) {
-    //         console.error("Error updating loan application:", error);
-    //         return {
-    //             success: false,
-    //             message: "An unexpected error occurred while updating the loan application.",
-    //             code: "SERVER_ERROR",
-    //         };
-    //     }
-    // }
 
     static async updateLoanApplication(loanApplicationId, updateData) {
         try {
@@ -169,13 +132,55 @@ module.exports = class LoanApplicationService{
         }
     }
 
+    //for admin to get all loanApplication
+    static async getAllLoanApplication(filters, pagination) {
+        try {
+            const { status } = filters;
+            const { page = 1, limit = 10 } = pagination;
 
-    static async getAllLoanApplication(){
-        try{
-            const loanApps = await LoanApplication.find();
-            return loanApps;
-        } catch(error) {    
-            return error;
+            const query = {};
+            if (status) {
+                query.status = status;
+            }
+
+            const skip = (page - 1) * limit;
+
+            const loanApplications = await LoanApplication.find(query)
+                .populate('customer', 'first_name last_name email phone_number')
+                .skip(skip)
+                .limit(limit)
+                .sort({ createdAt: -1 });
+
+            const totalApplications = await LoanApplication.countDocuments(query);
+            const totalPages = Math.ceil(totalApplications / limit);
+
+            const paginationLinks = {
+                first: `/loan-apps?page=1&limit=${limit}${status ? `&status=${status}` : ''}`,
+                prev: page > 1 
+                    ? `/loan-apps?page=${page - 1}&limit=${limit}${status ? `&status=${status}` : ''}` 
+                    : null,
+                next: page < totalPages 
+                    ? `/loan-apps?page=${page + 1}&limit=${limit}${status ? `&status=${status}` : ''}` 
+                    : null,
+                last: `/loan-apps?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ''}`,
+            };
+
+            return {
+                success: true,
+                data: {
+                    loanApplications,
+                    total: totalApplications,
+                    currentPage: page,
+                    totalPages: totalPages,
+                    paginationLinks: paginationLinks,
+                },
+            };
+        } catch (error) {
+            console.error("Error fetching loan applications:", error);
+            return {
+                success: false,
+                message: "Could not fetch loan applications",
+            };
         }
     }
 

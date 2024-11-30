@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const KYC = require('./kyc');
+const { generateOTP} = require('../helpers/otp');
 
 const UsersSchema = new mongoose.Schema({
     first_name: {
@@ -73,11 +74,7 @@ UsersSchema.methods.clearOTPIfExpired = async function () {
 
 UsersSchema.methods.regenerateOTP = async function () {
   if (this.isOTPExpired()) {
-    const characters = "0123456789";
-    let newOTP = "";
-    for (let i = 0; i < 5; i++) {
-      newOTP += characters[Math.floor(Math.random() * 10)];
-    }
+    let newOTP = generateOTP()
     this.otp = newOTP;
     this.otpCreatedAt = Date.now();
     await this.save();
