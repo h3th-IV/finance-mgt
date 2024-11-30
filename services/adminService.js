@@ -71,13 +71,13 @@ module.exports = class AdminService{
             }
 
             const staff = new Staff({ first_name, last_name, email, dob, role: roleId, otp });
-            const response = {
+            const staffData = {
                 staff,
                 role_name: role.name,
             }
             await staff.save();
-
-            return { success: true, response };
+            const response = { success: true, staffData };
+            return response;
         } catch (error) {
             console.error("Error creating staff:", error);
             return { success: false, message: "Server error" };
@@ -125,6 +125,16 @@ module.exports = class AdminService{
             return await Role.find();
         } catch(error){
             throw new Error('Error fetching roles');
+        }
+    }
+
+    static async getStaffs(){
+        try{
+            const staff = await Staff.find().populate('role');
+            // await Staff.deleteMany();
+            return staff;
+        } catch(error){
+            throw new Error('Error fetching staffs');
         }
     }
 }
