@@ -264,7 +264,9 @@ module.exports.sendLoginOTPEmail = (email, first_name, lastLogin, OTP) => {
     });
 };
 
-module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name) => {
+module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name, staffId) => {
+    const magicLink = `https://your-platform.com/api/v1/admin/verify?staffId=${staffId}&otp=${OTP}`;
+
     sender.sendMail({
         from: "Capitalwise Dynamic Pay",
         to: email,
@@ -325,6 +327,16 @@ module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name) => {
                     font-size: 14px;
                     color: #666;
                 }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #7AC143;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
             </style>
         </head>
         <body>
@@ -337,6 +349,8 @@ module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name) => {
                     <p>You've been onboarded as a staff member with the role of <strong>${role_name}</strong>.</p>
                     <p>Use the OTP below to complete your onboarding:</p>
                     <div class="otp">${OTP}</div>
+                    <p>Alternatively, click the link below to set your password directly:</p>
+                    <a href="${magicLink}" class="btn">Complete Onboarding</a>
                     <p>This OTP is valid for a limited time only.</p>
                     <p>If you did not expect this email, please contact our support team.</p>
                 </div>
@@ -346,7 +360,7 @@ module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name) => {
             </div>
         </body>
         </html>
-        `
+        `,
     });
 };
 

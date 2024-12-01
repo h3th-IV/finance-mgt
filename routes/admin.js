@@ -15,6 +15,8 @@ router.post('/add-staff', verifyToken, AdminController.createStaff);
 router.get('/permissions', verifyToken, AdminController.getAllPermissions);
 router.get('/roles', verifyToken, AdminController.getAllRoles);
 router.get('/staffs', verifyToken, AdminController.getAllStaffs);
+router.patch('/verify', AdminController.updatePassword);
+router.post('/login', AdminController.login);
 
 
 module.exports = router;

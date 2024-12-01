@@ -137,4 +137,27 @@ module.exports = class AdminService{
             throw new Error('Error fetching staffs');
         }
     }
+
+    static async updatePassword(staffId, otp, pass) {
+        try {
+            const staff = await Staff.findById(staffId);
+            if (!staff) {
+                return { success: false, message: "Staff not found" };
+            }
+            if (staff.isOTPExpired()) {
+                await staff.clearOTPIfExpired();
+                return { success: false, message: "OTP has expired" };
+            }
+            if (staff.otp !== otp) {
+                return { success: false, message: "Invalid OTP" };
+            }
+            staff.password = pass;
+            staff.otp = "EXPIRED";
+            await staff.save();
+            return { success: true, message: "Password updated successfully", staff };
+        } catch (error) {
+            console.error("Error updating staff password:", error);
+            throw new Error("Error updating staff password");
+        }
+    }
 }
