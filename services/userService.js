@@ -99,13 +99,11 @@ module.exports = class UserService {
                 return { success: false, message: "User not found." };
             }
 
-            if (user.otp !== otp || user.otpExpired || user.isOTPExpired()) {
+            if (user.otp !== otp || user.isOTPExpired()) {
                 return { success: false, message: "Invalid or expired OTP." };
             }
-
-            user.otpExpired = true;
-            user.otp = null;
-            user.otpCreatedAt = null;
+            user.otp = "EXPIRED";
+            // user.otpCreatedAt = null;
 
             user.password = new_password;
             await user.save();
