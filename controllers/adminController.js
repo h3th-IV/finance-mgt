@@ -9,6 +9,7 @@ const { validateCreateRole } = require('../validators/rolePerm.validator');
 const { staffValidator } = require("../validators/staff.validator");
 const { generateOTP} = require('../helpers/otp');
 const mailer = require("../config/mailer");
+const { updatePasswordValidator } = require('../validators/staffUpdate.validator');
 
 
 module.exports = class AdminController{
@@ -89,12 +90,37 @@ module.exports = class AdminController{
             if (!response.success) {
                 return errorResponse(res, 400, response.message);
             }
+            const staffId = response.staffData.staff._id;
             const role_name = response.staffData.role_name
-            mailer.sendStaffOTPEmail(email, first_name, otp, role_name);
+            mailer.sendStaffOTPEmail(email, first_name, otp, role_name, staffId);
             return successResponse(res, 201, "Staff created successfully.", response.staffData);    
         } catch (error) {
             console.error("Error creating staff:", error);
             return errorResponse(res, 500, "Server error");
+        }
+    }
+
+    static async updatePassword(req, res) {
+        try {
+            const dataToValidate = {
+                staffId: req.query.staffId,
+                otp: req.query.otp || req.body.otp,
+                pass: req.body.pass,
+            };
+            const { error } = updatePasswordValidator.validate(dataToValidate, { abortEarly: false });
+            if (error) {
+                const errorMessages = error.details.map((err) => err.message);
+                return errorResponse(res, 400, "Validation error", { errors: errorMessages });
+            }
+
+            const { staffId, otp, pass } = dataToValidate;
+            const response = await AdminService.updatePassword(staffId, otp, pass);
+            if (!response.success){
+                return errorResponse(res, 400, response.message)
+            }
+            return successResponse(res, 200, "Password has been updated successfully", response.staff);
+        } catch (error) {
+            return errorResponse(res, 500, "Server error")
         }
     }
 

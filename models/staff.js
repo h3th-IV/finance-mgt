@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const { generateOTP} = require('../helpers/otp');
+const bcrypt = require("bcrypt");
+
 
 const StaffSchema = new mongoose.Schema({
     first_name: {
@@ -62,6 +64,13 @@ StaffSchema.methods.regenerateOTP = async function () {
   return null;
 };
 
+StaffSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next();
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
 StaffSchema.methods.generateStaffToken = function () {
     return jwt.sign(
         {
@@ -73,11 +82,5 @@ StaffSchema.methods.generateStaffToken = function () {
     );
 };
 
-StaffSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-});
 
 module.exports = mongoose.model("Staff", StaffSchema);
