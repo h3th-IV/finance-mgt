@@ -265,7 +265,7 @@ module.exports.sendLoginOTPEmail = (email, first_name, lastLogin, OTP) => {
 };
 
 module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name, staffId) => {
-    const magicLink = `https://your-platform.com/api/v1/admin/verify?staffId=${staffId}&otp=${OTP}`;
+    const magicLink = `https://capitalwise.com/api/v1/admin/verify?staffId=${staffId}&otp=${OTP}`; //will update this
 
     sender.sendMail({
         from: "Capitalwise Dynamic Pay",
