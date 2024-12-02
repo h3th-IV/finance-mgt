@@ -36,8 +36,6 @@ const kycValidator = Joi.object({
         'string.base': '"Home address" must be a valid string.',
     }),
 });
-
-
 module.exports = {
     kycValidator,
 };

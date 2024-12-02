@@ -15,10 +15,12 @@ module.exports = class UserController {
     static async createUser(req, res) {
         const { error, value } = userValidationSchema.validate(req.body, { abortEarly: false });
         if (error) {
-            const errorMessages = error.details.map((err) => err.message);
-            return errorResponse(res, 400, "Validation error", { errors: errorMessages });
+            const errors = error.details.reduce((acc, err) => {
+                acc[err.context.key] = err.message;
+                return acc;
+            }, {});
+            return errorResponse(res, 400, "Validation error", { errors });
         }
-
         const { first_name, last_name, email, number, password } = value;
 
         try {
@@ -205,17 +207,16 @@ module.exports = class UserController {
         const { userId } = req.params;
         const { error } = kycValidator.validate(req.body, { abortEarly: false });
         if (error) {
-            const errors = error.details.map((err) => ({
-                field: err.context.key,
-                message: err.message,
-            }));
+            const errors = error.details.reduce((acc, err) => {
+            acc[err.context.key] = err.message;
+            return acc;
+        }, {});
             return res.status(400).json({
                 success: false,
                 errors,
                 data: null,
             });
         }
-
         const kycData = req.body;
 
         try {
