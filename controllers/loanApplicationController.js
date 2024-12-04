@@ -164,5 +164,42 @@ module.exports = class LoanApplicationController{
             return errorResponse(res, 500, "An unexpected error occurred.");
         }
     }
+
+    static async calculatorLoan(req, res){
+            const { loan_product, loan_amount, loan_duration } = req.body;
+        try{
+            const { error } = loanApplicationValidator.validate({
+                loan_product,
+                loan_amount,
+                loan_duration,
+            });
+            if (error) {
+                return errorResponse(res, 400, error.details[0].message);
+            }
+
+            const loanData = {
+                loan_product,
+                loan_amount: parseFloat(loan_amount),
+                loan_duration: parseInt(loan_duration, 10),
+            };
+            const response = await LoanApplicationService.calculateLoanApp(loanData);
+            if (!response.success) {
+                switch (response.code) {
+                    case "NOT_FOUND":
+                        return errorResponse(res, 404, response.message);
+
+                    case "INVALID_AMOUNT":
+                        return errorResponse(res, 400, response.message);
+
+                    case "INTERNAL_ERROR":
+                    default:
+                        return errorResponse(res, 500, "An unexpected server error occurred", response);
+                }
+            }
+            return successResponse(res, 200, "Preview loan application.", response);
+        } catch(error){
+            return errorResponse(res, 500, "Server error");
+        }
+    }
 }
 

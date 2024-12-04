@@ -16,5 +16,6 @@ router.post(
         { name: "guarantor.security_cheque", maxCount: 1 },
     ]),
     LoanApplicationController.createLoanApplication);
+router.post('/calc-loan', verifyToken, LoanApplicationController.calculatorLoan);
 
 module.exports = router;

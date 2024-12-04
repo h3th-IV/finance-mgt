@@ -18,6 +18,4 @@ router.patch("/kyc/:userId", verifyToken, parser.fields([
     { name: 'document_verification.doc', maxCount: 1 }
   ]),  UserController.updateKYC);
 router.get("/loans/:userId", verifyToken, LoanApplicationController.getUserLoanApplications);
-
-
 module.exports = router;
