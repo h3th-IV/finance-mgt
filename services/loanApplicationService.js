@@ -234,4 +234,36 @@ module.exports = class LoanApplicationService{
             };
         }
     }
+
+    static async calculateLoanApp(loanData){
+        try{
+            const loanProduct = await LoanProduct.findById(loanData.loan_product);
+            if(!loanProduct){
+                return {
+                    success: false,
+                    message: "Loan product not found",
+                    code: "NOT_FOUND",
+                };
+            }
+            const compare = loanData.loan_amount < loanProduct.min || loanData.loan_amount > loanProduct.max;
+            if (compare === true) {
+                return {
+                    success: false,
+                    message: `Loan amount for ${loanProduct.name} must be between ${loanProduct.min} and ${loanProduct.max}`,
+                    code: "INVALID_AMOUNT",
+                };
+            }
+            const interestRate = loanProduct.interest;
+            const repaymentPlan = calculateRepaymentPlan(loanData.loan_amount, loanData.loan_duration, interestRate);
+            return {
+                success: true,
+                repaymentPlan,
+            };
+        }catch(error){
+            return{
+                success: false,
+                message: "Error Calculating Loan Data",
+            };
+        }
+    }
 }
