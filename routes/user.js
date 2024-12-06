@@ -13,8 +13,9 @@ router.post("/signin", UserController.login);
 router.post("/regenerate-otp/:userId", UserController.regenerateOTP);
 router.post("/forgot-password", UserController.forgotPasswordOTP);
 router.patch("/reset-password", UserController.resetPassword);
+router.patch("/kyc-email/:userId", verifyToken, UserController.kycEmailOTPValidation);
 router.patch("/kyc/:userId", verifyToken, parser.fields([
-    { name: 'facial_verification.pic', maxCount: 1 }, 
+    { name: 'utility_bill.doc', maxCount: 1 }, 
     { name: 'document_verification.doc', maxCount: 1 }
   ]),  UserController.updateKYC);
 router.get("/loans/:userId", verifyToken, LoanApplicationController.getUserLoanApplications);

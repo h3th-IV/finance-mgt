@@ -1,6 +1,12 @@
 const Joi = require('joi');
 
 const kycValidator = Joi.object({
+    'email.address': Joi.string()
+        .email()
+        .optional()
+        .messages({
+            'string.email': '"Email" must be a valid email address.',
+        }),
     'bank_verification_number.bvn': Joi.string()
         .length(11)
         .pattern(/^\d+$/)
@@ -12,9 +18,9 @@ const kycValidator = Joi.object({
     'bank_verification_number.dob': Joi.date().optional().messages({
         'date.base': '"Date of Birth" must be a valid date.',
     }),
-    'facial_verification.pic': Joi.string().optional().messages({
-        'string.base': '"Facial verification picture" must be a valid string.',
-    }),
+    // 'facial_verification.pic': Joi.string().optional().messages({
+    //     'string.base': '"Facial verification picture" must be a valid string.',
+    // }),
     'document_verification.doc_type': Joi.string()
         .valid("NIN", "INTL_PASSPORT", "DRIVERS_LICENSE")
         .optional()
