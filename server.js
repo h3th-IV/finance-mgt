@@ -32,6 +32,7 @@ const sever = http.createServer(app);
 
 const db = require("./config/db");
 const LoanApplicationController = require("./controllers/loanApplicationController");
+const AdminController = require("./controllers/adminController");
 db.connectDB();
 // db.clearDatabase();
 
@@ -73,6 +74,7 @@ app.use("/api/v1/user", user);
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/loanapp", loanApp);
 app.post('/api/v1/loan-calculator', LoanApplicationController.loanCalculator);
+app.post('/api/v1/sms', AdminController.sendSMS);
 const PORT = process.env.PORT || 8000;
 sever.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);

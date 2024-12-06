@@ -15,12 +15,12 @@ const UsersSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
+        required: false,
         unique: true,
     },
     phone_number: {
         type: String,
-        required: false,
+        required: true,
     },
     password: {
         type: String,
@@ -74,7 +74,7 @@ UsersSchema.methods.clearOTPIfExpired = async function () {
 
 UsersSchema.methods.regenerateOTP = async function () {
   if (this.isOTPExpired()) {
-    let newOTP = generateOTP()
+    let newOTP = generateOTP();
     this.otp = newOTP;
     this.otpCreatedAt = Date.now();
     await this.save();
@@ -82,7 +82,6 @@ UsersSchema.methods.regenerateOTP = async function () {
   }
   return null;
 };
-
 
 UsersSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next(); // To avoid rehashing an already hashed password

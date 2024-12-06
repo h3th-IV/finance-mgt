@@ -17,9 +17,9 @@ const fetchUserAndKYC = async (userId) => {
 const combineKYCData = (kycData, files, kycRecord) => {
     return {
         ...kycData,
-        'facial_verification.pic': files['facial_verification.pic']
-            ? files['facial_verification.pic'][0].path
-            : kycRecord?.facial_verification?.pic,
+        'utility_bill.doc': files['utility_bill.doc']
+            ? files['utility_bill.doc'][0].path
+            : kycRecord?.utility_bill?.doc,
         'document_verification.doc': files['document_verification.doc']
             ? files['document_verification.doc'][0].path
             : kycRecord?.document_verification?.doc,
@@ -27,12 +27,14 @@ const combineKYCData = (kycData, files, kycRecord) => {
 };
 
 const calculateStatuses = (kycData, files, kycRecord) => {
+    const emailVerified = Boolean(kycRecord?.email?.address && kycRecord?.email?.status === true);
+
     const bankVerified =
         Boolean(kycData['bank_verification_number.bvn'] || kycRecord?.bank_verification_number?.bvn) &&
         Boolean(kycData['bank_verification_number.dob'] || kycRecord?.bank_verification_number?.dob);
 
-    const facialVerified =
-        Boolean(files['facial_verification.pic'] || kycRecord?.facial_verification?.pic);
+    const utilityBillVerified =
+        Boolean(files['utility_bill.doc'] || kycRecord?.utility_bill?.doc);
 
     const documentVerified =
         Boolean(kycData['document_verification.doc_type'] || kycRecord?.document_verification?.doc_type) &&
@@ -40,7 +42,7 @@ const calculateStatuses = (kycData, files, kycRecord) => {
         Boolean(files['document_verification.doc'] || kycRecord?.document_verification?.doc) &&
         Boolean(kycData['document_verification.home_address'] || kycRecord?.document_verification?.home_address);
 
-    return { bankVerified, facialVerified, documentVerified };
+    return { emailVerified, bankVerified, utilityBillVerified, documentVerified };
 };
 
 module.exports = {
