@@ -7,7 +7,6 @@ module.exports = class UserService {
             const newUser = {
                 first_name: data.first_name,
                 last_name: data.last_name,
-                email: data.email,
                 phone_number: data.number,
                 password: data.password,
                 otp: data.otp
@@ -19,9 +18,9 @@ module.exports = class UserService {
         }
     }
 
-    static async getUserByEmail(email){
+    static async getUserByPhone(number){
         try {
-            const user = await User.findOne({ email: email }).populate('kyc_verification');
+            const user = await User.findOne({ phone_number: number }).populate('kyc_verification');
             return user;
         } catch (error) {
             return error;
@@ -40,6 +39,7 @@ module.exports = class UserService {
     static async getUsers(){
         try {
             const users = await User.find().populate('kyc_verification');
+            // await User.deleteMany();
             return users;
         } catch (error) {
             return error;
@@ -112,6 +112,37 @@ module.exports = class UserService {
         } catch (error) {
             console.error("Error resetting password:", error);
             return { success: false, message: "An error occurred while resetting the password.", error };
+        }
+    }
+
+    static async kycOTPValidation(userId, inputOTP){
+        try{
+            const user = await User.findById(userId).populate('kyc_verification');
+            if(!user){
+                return { success: false, message: "User not found."};
+            }
+            const kyc = user.kyc_verification;
+            if(!kyc || !kyc.email || !kyc.email.otp){
+                return { success: false, message: "No email found for verification"}
+            }
+
+            const { otp, otpCreatedAt } = kyc.email;
+
+            if (otp !== inputOTP) {
+                return { success: false, message: "Invalid OTP." };
+            }
+            const otpExpiryTime = 5 * 60 * 1000;
+            const currentTime = Date.now();
+            if (currentTime - new Date(otpCreatedAt).getTime() > otpExpiryTime) {
+                return { success: false, message: "OTP has expired." };
+            }
+            kyc.email.otp = "EXPIRED";
+            kyc.email.status = true;
+            await kyc.save();
+            return { success: true, message: "OTP validated successfully." };
+        }catch (error){
+            console.error("Error validating OTP: ", error);
+            return{ success: false, message: "An unexpected error occurred during OTP validation." }
         }
     }
 };

@@ -21,32 +21,28 @@ module.exports = class UserController {
             }, {});
             return errorResponse(res, 400, "Validation error", { errors });
         }
-        const { first_name, last_name, email, number, password } = value;
-
+        const { first_name, last_name, number, password } = value;
         try {
-            const lower_email = email.toLowerCase();
-            const user_exist = await UserService.getUserByEmail(lower_email);
+            const user_exist = await UserService.getUserByPhone(number);
             if (user_exist) {
-            return errorResponse(res, 409, "User with this email already exists");
+            return errorResponse(res, 409, "User with this phone number already exists");
             }
-
             const otp = generateOTP();
             const user = {
             first_name,
             last_name,
-            email: lower_email,
             number,
             password,
             otp,
             };
-
             const response = await UserService.createUser(user);
             if (response?.errors) {
             return errorResponse(res, 500, "An error occurred", response);
             }
 
-            mailer.sendOTPEmail(email, first_name, otp);
-            return successResponse(res, 201, "User created successfully. Please check your email for OTP verification.", response);
+            //send otp to phone number
+            // mailer.sendOTPEmail(email, first_name, otp);
+            return successResponse(res, 201, "User created successfully. We sent an OTP to your phone number.", response);
         } catch (error) {
             console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
@@ -205,22 +201,39 @@ module.exports = class UserController {
 
     static async updateKYC(req, res) {
         const { userId } = req.params;
+
         const { error } = kycValidator.validate(req.body, { abortEarly: false });
         if (error) {
             const errors = error.details.reduce((acc, err) => {
-            acc[err.context.key] = err.message;
-            return acc;
-        }, {});
+                acc[err.context.key] = err.message;
+                return acc;
+            }, {});
             return res.status(400).json({
                 success: false,
                 errors,
                 data: null,
             });
         }
+
         const kycData = req.body;
+        let otpSent = false;
 
         try {
             const { user, kycRecord } = await fetchUserAndKYC(userId);
+            if (kycData['email.address']) {
+                const otp = generateOTP();
+                const firstName = user.first_name;
+
+                await mailer.sendOTPEmail(kycData['email.address'], firstName, otp);
+
+                kycData.email = {
+                    address: kycData['email.address'],
+                    otp,
+                    otpCreatedAt: Date.now(),
+                };
+                otpSent = true;
+            }
+            user.email = kycData['email.address'];
 
             const updateData = combineKYCData(kycData, req.files, kycRecord);
 
@@ -236,19 +249,24 @@ module.exports = class UserController {
                 user.kyc_verification = updatedKYC._id;
             }
 
-            const { bankVerified, facialVerified, documentVerified } = calculateStatuses(kycData, req.files, updatedKYC);
+            const { emailVerified, bankVerified, utilityBillVerified, documentVerified } = calculateStatuses(kycData, req.files, updatedKYC);
 
+            updatedKYC.email.status = emailVerified;
             updatedKYC.bank_verification_number.status = bankVerified;
-            updatedKYC.facial_verification.status = facialVerified;
+            updatedKYC.utility_bill.status = utilityBillVerified;
             updatedKYC.document_verification.status = documentVerified;
             await updatedKYC.save();
 
-            user.is_verified = bankVerified && facialVerified && documentVerified;
+            user.is_verified = emailVerified && bankVerified && utilityBillVerified && documentVerified;
             await user.save();
 
             const updatedUser = await User.findById(userId).populate('kyc_verification');
-            // console.log("Response data:", updatedUser);
-            return successResponse(res, 200, "KYC information updated successfully", {
+
+            const message = otpSent
+                ? "KYC information updated successfully. An OTP has been sent to your email."
+                : "KYC information updated successfully.";
+
+            return successResponse(res, 200, message, {
                 user: updatedUser,
             });
         } catch (error) {
@@ -256,6 +274,7 @@ module.exports = class UserController {
             return errorResponse(res, 500, "Server error");
         }
     }
+
     
     static async getAllUser(req, res){
         try {
@@ -265,4 +284,33 @@ module.exports = class UserController {
             return errorResponse(res, 500, "Server Error");
         }
     }
+
+   static async kycEmailOTPValidation(req, res) {
+        const { userId } = req.params;
+        const { inputOTP } = req.body;
+
+        if (!userId) {
+            return errorResponse(res, 400, "Missing user ID.");
+        }
+        if (!inputOTP || inputOTP.trim() === "") {
+            return errorResponse(res, 400, "Please provide the OTP.");
+        }
+
+        try {
+            const result = await UserService.kycOTPValidation(userId, inputOTP);
+
+            if (!result.success) {
+                return errorResponse(res, 400, result.message);
+            }
+            return successResponse(res, 200, result.message, null);
+        } catch (error) {
+            console.error("Error in kycEmailOTPValidation:", error.message);
+            return errorResponse(res, 500, "An unexpected server error occurred.", error);
+        }
+    }
+
+    static async kycRegenEmailOTP(req, res){
+
+    }
+
 };

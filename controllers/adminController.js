@@ -10,6 +10,7 @@ const { staffValidator } = require("../validators/staff.validator");
 const { generateOTP} = require('../helpers/otp');
 const mailer = require("../config/mailer");
 const { updatePasswordValidator } = require('../validators/staffUpdate.validator');
+const { smsOTP } = require('../config/messenger');
 
 
 module.exports = class AdminController{
@@ -223,6 +224,18 @@ module.exports = class AdminController{
             return successResponse(res, 200, "Staff returned successfully", staffs);
         } catch(error){
             return errorResponse(res, 500, "Server error while fetching staffs");
+        }
+    }
+
+    static async sendSMS(req, res){
+        try{
+            const response = await smsOTP('2347035643850', '44444');
+            if (!response.success){
+                return successResponse(res, 400, "Error", response.message);
+            }
+            return successResponse(res, 200, "Success", response.message);
+        } catch(error){
+            return errorResponse(res, 500, 'Server error');
         }
     }
 }   
