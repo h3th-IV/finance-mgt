@@ -5,12 +5,13 @@ const baseURL = process.env.NVB_URL;
 const token = process.env.NVB_YEK;
 
 const headers = {
-    Authorization: `Bearer ${token}`,
+    "token": `${token}`,
     "Content-Type": "application/json"
 };
+console.log(headers);
 
 /**
- * verify BVN using YouVerify API
+ * verify BVN --uVerify  @p1
  * @param {string} bvn -the Bank Verification Number to verify
  * @returns {Promise<Object>} -the response payload from the API
  * @throws {Error} -trows error if API call fails
@@ -38,5 +39,7 @@ async function verifyBVN(bvn) {
         throw new Error(`BVN Verification failed: ${errorDetails}`);
     }
 }
+
+
 
 module.exports = verifyBVN;

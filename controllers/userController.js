@@ -10,6 +10,7 @@ const { resetPasswordValidator } = require('../validators/user.validator');
 const { kycValidator } = require('../validators/kyc.validator')
 const { fetchUserAndKYC, combineKYCData, calculateStatuses } = require('../helpers/kyc.helper');
 const { generateOTP} = require('../helpers/otp');
+const verifyBVN = require("../helpers/verifyBVN");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -316,7 +317,7 @@ module.exports = class UserController {
             if(!user){
                 return errorResponse(res, 404, "User not found");
             }
-            const newOTP = await user.regenerateOTP();
+            const newOTP = generateOTP();
             if (newOTP){
                 mailer.sendOTPEmail(user.email, user.first_name, newOTP);
                 return successResponse(res, 200, 'A new OTP has been sent to your email');
@@ -327,6 +328,73 @@ module.exports = class UserController {
             console.log(error);
             return errorResponse(res, 500, "An error occurred while regenerating OTP", error);
         }
+    }   
+
+    //TODO move this to the kyc verification controller
+    static async verifyBVN(req, res) {
+        const userId = req.params.userId;
+        const { bvn } = req.body; // Expect BVN to come in the request body.
+
+        try {
+            if (!userId) {
+                return errorResponse(res, 400, "Missing user ID.");
+            }
+            if (!bvn) {
+                return errorResponse(res, 400, "BVN is required.");
+            }
+
+            const bvnData = await verifyBVN(bvn);
+            if (!bvnData || !bvnData.data) {
+                return errorResponse(res, 404, "BVN verification failed.");
+            }
+
+            const { firstName, lastName, idNumber, dateOfBirth, mobile } = bvnData.data;
+
+            const data = {
+                first_name: firstName,
+                last_name: lastName,
+                otp: generateOTP(),
+                bvn: idNumber,
+                dob: dateOfBirth,
+            };
+
+            const response = await UserService.updateUserDetailsBVN(userId, data);
+
+            if (!response.success) {
+                return errorResponse(res, 500, response.message);
+            }
+            // Send OTP to user's mobile number
+            // if (mobile) {
+            //     await sendOTP(mobile, data.otp); // Assuming you have a sendOTP helper.
+            // }
+            return successResponse(res, 200, "BVN details updated successfully.", {
+                user: response.user,
+            });
+        } catch (error) {
+            console.error("BVN Verification Error:", error);
+            return errorResponse(res, 500, "An error occurred during BVN verification.", error.message);
+        }
     }
 
+    static async bvnOTPValidation(req, res){
+        const { userId } = req.params;
+        const { inputOTP } = req.body;
+         if (!userId) {
+            return errorResponse(res, 400, "Missing user ID.");
+        }
+        if (!inputOTP || inputOTP.trim() === "") {
+            return errorResponse(res, 400, "Please provide the OTP.");
+        }
+
+        try{
+            const result = await UserService.bvnOTPValidation(userId, inputOTP);
+            if (!result.success){
+                return errorResponse(res, 400, result.message);
+            }
+            return successResponse(res, 200, result.message);
+        }catch(error){
+            console.error("Error validating OTP: ", error);
+            return errorResponse(res, 500, "An unexpected server error occurred", error);
+        }
+    }
 };

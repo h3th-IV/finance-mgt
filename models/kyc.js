@@ -27,6 +27,13 @@ const KYCSchema = new mongoose.Schema({
         dob: {
             type: Date,
         },
+        otp: {
+            type: String
+        },
+        otpCreatedAt: {
+            type: Date,
+            default: Date.now,
+        },
         status: {
             type: Boolean,
             default: false,
