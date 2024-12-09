@@ -310,7 +310,23 @@ module.exports = class UserController {
     }
 
     static async kycRegenEmailOTP(req, res){
-
+        const userId = req.params.userId
+        try{
+            const user = await UserService.getUserByID(userId);
+            if(!user){
+                return errorResponse(res, 404, "User not found");
+            }
+            const newOTP = await user.regenerateOTP();
+            if (newOTP){
+                mailer.sendOTPEmail(user.email, user.first_name, newOTP);
+                return successResponse(res, 200, 'A new OTP has been sent to your email');
+            } else{
+                return errorResponse(res, 400, "OTP is still valid. Please try again later.");
+            }
+        }catch(error){
+            console.log(error);
+            return errorResponse(res, 500, "An error occurred while regenerating OTP", error);
+        }
     }
 
 };

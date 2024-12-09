@@ -10,10 +10,11 @@ router.post("/validate-otp/:userId", UserController.validateOTP);
 router.get("/all", UserController.getAllUsers);
 router.get("/single/:id", UserController.getAllUser);
 router.post("/signin", UserController.login);
-router.post("/regenerate-otp/:userId", UserController.regenerateOTP);
+// router.post("/regenerate-otp/:userId", UserController.regenerateOTP);
 router.post("/forgot-password", UserController.forgotPasswordOTP);
 router.patch("/reset-password", UserController.resetPassword);
 router.patch("/kyc-email/:userId", verifyToken, UserController.kycEmailOTPValidation);
+router.post("/regen-otp/:userId", verifyToken, UserController.kycRegenEmailOTP);
 router.patch("/kyc/:userId", verifyToken, parser.fields([
     { name: 'utility_bill.doc', maxCount: 1 }, 
     { name: 'document_verification.doc', maxCount: 1 }
