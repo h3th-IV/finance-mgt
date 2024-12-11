@@ -11,6 +11,9 @@ const { kycValidator } = require('../validators/kyc.validator')
 const { fetchUserAndKYC, combineKYCData, calculateStatuses } = require('../helpers/kyc.helper');
 const { generateOTP} = require('../helpers/otp');
 const verifyBVN = require("../helpers/verifyBVN");
+const sendOtp = require("../helpers/messenger");
+const sendSMSOTP = require("../helpers/messenger");
+const formatMobileNumber = require("../helpers/formatPhone");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -363,10 +366,14 @@ module.exports = class UserController {
             if (!response.success) {
                 return errorResponse(res, 500, response.message);
             }
-            // Send OTP to user's mobile number
-            // if (mobile) {
-            //     await sendOTP(mobile, data.otp); // Assuming you have a sendOTP helper.
-            // }
+            try {
+                if (mobile) {
+                    const tel = formatMobileNumber(mobile);
+                    await sendSMSOTP(tel, data.otp);
+                }
+            } catch (smsError) {
+                console.warn("Failed to send OTP SMS:", smsError.message);
+            }
             return successResponse(res, 200, "BVN details updated successfully.", {
                 user: response.user,
             });
