@@ -119,11 +119,11 @@ module.exports = class UserService {
         try{
             const user = await User.findById(userId).populate('kyc_verification');
             if(!user){
-                return { success: false, message: "User not found."};
+                return { success: false, message: "User not found." };
             }
             const kyc = user.kyc_verification;
             if(!kyc || !kyc.email || !kyc.email.otp){
-                return { success: false, message: "No email found for verification"}
+                return { success: false, message: "No kyc data found for this user"}
             }
 
             const { otp, otpCreatedAt } = kyc.email;
@@ -141,6 +141,63 @@ module.exports = class UserService {
             await kyc.save();
             return { success: true, message: "OTP validated successfully." };
         }catch (error){
+            console.error("Error validating OTP: ", error);
+            return{ success: false, message: "An unexpected error occurred during OTP validation." }
+        }
+    }
+
+    static async updateUserDetailsBVN(userId, data) {
+        try {
+            const user = await User.findById(userId).populate('kyc_verification');
+            if (!user) {
+                return { success: false, message: "User not found." };
+            }
+
+            const kyc = user.kyc_verification;
+            if (!kyc) {
+                return { success: false, message: "KYC details not found for this user." };
+            }
+
+            kyc.bank_verification_number.bvn = data.bvn;
+            kyc.bank_verification_number.otp = data.otp;
+            kyc.bank_verification_number.dob = data.dob;
+            kyc.bank_verification_number.otpCreatedAt = Date.now();
+
+            user.first_name = data.first_name;
+            user.last_name = data.last_name;
+
+            await kyc.save();
+            await user.save();
+            return { success: true, message: "BVN details updated successfully.", user };
+        } catch (error) {
+            console.error("Update User BVN Error:", error);
+            return { success: false, message: "An error occurred while updating BVN details.", error };
+        }
+    }
+
+    static async bvnOTPValidation(userId, inputOTP){
+        try {
+            const user = await User.findById(userId).populate('kyc_verification')
+            if(!user){
+                return { success: true, message: "User not found." };
+            }
+            const kyc = user.kyc_verification;
+            if(!kyc){
+                return { success: false, message: "No kyc data found for this user" };
+            }
+            const { otp, otpCreatedAt } = kyc.bank_verification_number;
+            if(otp !== inputOTP){
+                return { success: false, message: "Invalid OTP." };
+            }
+            const otpExpiryTime = 5 * 60 * 1000;
+            const currentTime = Date.now();
+            if (currentTime - new Date(otpCreatedAt).getTime() > otpExpiryTime) {
+                return { success: false, message: "OTP has expired." };
+            }
+            kyc.bank_verification_number.otp = "EXPIRED";
+            kyc.bank_verification_number.status = true;
+            await kyc.save();
+        } catch (error) {
             console.error("Error validating OTP: ", error);
             return{ success: false, message: "An unexpected error occurred during OTP validation." }
         }
