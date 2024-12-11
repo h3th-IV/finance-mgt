@@ -271,7 +271,6 @@ module.exports = class UserController {
                     }
                 } catch (smsError) {
                     console.warn("Failed to send OTP SMS:", smsError.message);
-                    return errorResponse(res, 404, 'Unable to send sms otp');
                 }
                 otpBVN = true;
             }
