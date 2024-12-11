@@ -24,7 +24,7 @@ async function sendSMSOTP(recipients, otp) {
     try {
         const response = await axios.post(url, payload, {
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/jsonk'
             }
         });
         console.log('SMS sent successfully:', response.data);

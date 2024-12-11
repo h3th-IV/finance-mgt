@@ -45,8 +45,15 @@ module.exports = class UserController {
             }
 
             //send otp to phone number
-            // mailer.sendOTPEmail(email, first_name, otp);
-            return successResponse(res, 201, "User created successfully. We sent an OTP to your phone number.", response);
+            try {
+                if (user.number) {
+                    const tel = formatMobileNumber(user.number);
+                    await sendSMSOTP(tel, user.otp);
+                }
+            } catch (smsError) {
+                console.warn("Failed to send OTP SMS:", smsError.message);
+            }
+            return successResponse(res, 201, "Your account has been successfully created. An OTP has been sent to your phone number for verification.", response);
         } catch (error) {
             console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
@@ -221,6 +228,8 @@ module.exports = class UserController {
 
         const kycData = req.body;
         let otpSent = false;
+        let otpBVN = false;
+        let otpNUm = ''
 
         try {
             const { user, kycRecord } = await fetchUserAndKYC(userId);
@@ -236,6 +245,35 @@ module.exports = class UserController {
                     otpCreatedAt: Date.now(),
                 };
                 otpSent = true;
+            }
+            if(kycData['bank_verification_number.bvn']){
+                const bvnData = await verifyBVN (kycData['bank_verification_number.bvn']);
+                if(!bvnData || !bvnData.data){
+                    return errorResponse(res, 404, "BVN verification failed.");
+                }
+                const { firstName, lastName, idNumber, dateOfBirth, mobile } = bvnData.data;
+                const data = {
+                    first_name: firstName,
+                    last_name: lastName,
+                    otp: generateOTP(),
+                    bvn: idNumber,
+                    dob: dateOfBirth,
+                };
+                const response = await UserService.updateUserDetailsBVN(userId, data);
+                if (!response.success) {
+                    return errorResponse(res, 500, response.message);
+                }
+                try {
+                    if (mobile) {
+                        const tel = formatMobileNumber(mobile);
+                        otpNUm = tel.slice(-4);
+                        await sendSMSOTP(tel, data.otp);
+                    }
+                } catch (smsError) {
+                    console.warn("Failed to send OTP SMS:", smsError.message);
+                    return errorResponse(res, 404, 'Unable to send sms otp');
+                }
+                otpBVN = true;
             }
             user.email = kycData['email.address'];
 
@@ -266,9 +304,9 @@ module.exports = class UserController {
 
             const updatedUser = await User.findById(userId).populate('kyc_verification');
 
-            const message = otpSent
-                ? "KYC information updated successfully. An OTP has been sent to your email."
-                : "KYC information updated successfully.";
+            let message = "KYC information updated successfully.";
+            if (otpSent) message += " An OTP has been sent to your email.";
+            if (otpBVN) message += ` An OTP has also been sent to the phone number associated with your BVN ending with ${otpNUm}.`;
 
             return successResponse(res, 200, message, {
                 user: updatedUser,
