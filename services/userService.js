@@ -39,7 +39,7 @@ module.exports = class UserService {
     static async getUsers(){
         try {
             const users = await User.find().populate('kyc_verification');
-            await User.deleteMany();
+            // await User.deleteMany();
             // await User.syncIndexes();
             return users;   
         } catch (error) {
