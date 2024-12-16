@@ -234,9 +234,13 @@ module.exports = class UserController {
         try {
             const { user, kycRecord } = await fetchUserAndKYC(userId);
             if (kycData['email.address']) {
-                const existEmailKYC = await KYC.findOne({ "email.address": kycData['email.address'] })
-                if (existEmailKYC){
-                    return errorResponse(res, 400, "The provided email address has been used");
+                const existEmailKYC = await KYC.findOne({ "email.address": kycData['email.address'] });
+                if (existEmailKYC && (!kycRecord || kycRecord.email.address !== kycData['email.address'])) {
+                    return errorResponse(res, 400, "The provided email address has already been used.");
+                }
+
+                if (kycRecord?.email?.address === kycData['email.address']) {
+                    return successResponse(res, 200, "This email address is already associated with your account. Please proceed to OTP validation.");
                 }
 
                 const otp = generateOTP();
@@ -254,7 +258,7 @@ module.exports = class UserController {
             if(kycData['bank_verification_number.bvn']){
                 const existBVNKYC = await KYC.findOne({ "bank_verification_number.bvn": kycData['bank_verification_number.bvn'] })
                 if (existBVNKYC){
-                    return errorResponse(res, "The provided bvn has been used");
+                    return errorResponse(res, 400, "The provided bvn has been used");
                 }
                 const bvnData = await verifyBVN (kycData['bank_verification_number.bvn']);
                 if(!bvnData || !bvnData.data){
