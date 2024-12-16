@@ -8,6 +8,7 @@
         "loanapp",
         "loanproduct",
         "newloan",
+        "NOKYC",
         "signin"
     ]
 }

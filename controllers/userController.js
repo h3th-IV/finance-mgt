@@ -252,6 +252,10 @@ module.exports = class UserController {
                 otpSent = true;
             }
             if(kycData['bank_verification_number.bvn']){
+                const existBVNKYC = await KYC.findOne({ "bank_verification_number.bvn": kycData['bank_verification_number.bvn'] })
+                if (existBVNKYC){
+                    return errorResponse(res, "The provided bvn has been used");
+                }
                 const bvnData = await verifyBVN (kycData['bank_verification_number.bvn']);
                 if(!bvnData || !bvnData.data){
                     return errorResponse(res, 404, "BVN verification failed.");
@@ -279,8 +283,13 @@ module.exports = class UserController {
                 }
                 otpBVN = true;
             }
+            if(kycData['document_verification.doc_no']){
+                const existDOC_NO_KYC = await KYC.findOne({ "document_verification.doc_no": kycData['document_verification.doc_no'] })
+                if (existDOC_NO_KYC){
+                    return errorResponse(res, 400, "The provided document number has been used")
+                }
+            }
             user.email = kycData['email.address'];
-
             const updateData = combineKYCData(kycData, req.files, kycRecord);
 
             let updatedKYC;
