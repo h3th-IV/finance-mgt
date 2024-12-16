@@ -234,6 +234,11 @@ module.exports = class UserController {
         try {
             const { user, kycRecord } = await fetchUserAndKYC(userId);
             if (kycData['email.address']) {
+                const existEmailKYC = await KYC.findOne({ "email.address": kycData['email.address'] })
+                if (existEmailKYC){
+                    return errorResponse(res, 400, "The provided email address has been used");
+                }
+
                 const otp = generateOTP();
                 const firstName = user.first_name;
 
