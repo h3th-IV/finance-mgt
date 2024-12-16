@@ -19,5 +19,6 @@ router.patch("/kyc/:userId", verifyToken, parser.fields([
     { name: 'utility_bill.doc', maxCount: 1 }, 
     { name: 'document_verification.doc', maxCount: 1 }
   ]),  UserController.updateKYC);
+router.post("/bvn-otp/:userId", verifyToken, UserController.bvnOTPValidation);
 router.get("/loans/:userId", verifyToken, LoanApplicationController.getUserLoanApplications);
 module.exports = router;
