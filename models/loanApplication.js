@@ -27,20 +27,20 @@ const LoanApplication = new mongoose.Schema({
         type: Number,
     },
     statement_of_account: {
-        type: String, //this is file that will be uploaded
+        type: String,
     },
     guarantor: {
         kyc_guarantor_form: {
-            type: String, //this a file too
+            type: String,
         },
         passport_form: {
-            type: String, //this a file too
+            type: String,
         },
         statement_of_net_worth: {
-            type: String, //this a file too
+            type: String,
         },
         security_cheque: {
-            type: String, //this a file too
+            type: String,
         },
     },
     date_disbursed: {

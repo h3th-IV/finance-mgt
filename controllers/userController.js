@@ -357,9 +357,10 @@ module.exports = class UserController {
             if(!user){
                 return errorResponse(res, 404, "User not found");
             }
-            const newOTP = generateOTP();
-            if (newOTP){
-                mailer.sendOTPEmail(user.email, user.first_name, newOTP);
+            const otp = generateOTP();
+            if (otp){
+                await UserService.updateKYCEmailOTP(userId, otp);
+                mailer.sendOTPEmail(user.email, user.first_name, otp);
                 return successResponse(res, 200, 'A new OTP has been sent to your email');
             } else{
                 return errorResponse(res, 400, "OTP is still valid. Please try again later.");
@@ -373,7 +374,7 @@ module.exports = class UserController {
     //TODO move this to the kyc verification controller
     static async verifyBVN(req, res) {
         const userId = req.params.userId;
-        const { bvn } = req.body; // Expect BVN to come in the request body.
+        const { bvn } = req.body; 
 
         try {
             if (!userId) {

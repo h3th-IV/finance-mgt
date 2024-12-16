@@ -39,7 +39,8 @@ module.exports = class UserService {
     static async getUsers(){
         try {
             const users = await User.find().populate('kyc_verification');
-            // await User.deleteMany();
+            await User.deleteMany();
+            // await User.syncIndexes();
             return users;
         } catch (error) {
             return error;
@@ -146,6 +147,26 @@ module.exports = class UserService {
         }
     }
 
+    static async updateKYCEmailOTP(userId, otp){
+        try{
+            const user = await User.findById(userId).populate('kyc_verification');
+            if (!user){
+                return { success: false, message: "User not found." };
+            }
+            const kyc = user.kyc_verification;
+            if (!kyc) {
+                return { success: false, message: "KYC details not found for this user." };
+            }
+            kyc.email.otp = otp;
+            kyc.email.otpCreatedAt = Date.now();
+            await kyc.save();
+            return { success: true, message: "KYC email otp updated successfully" };
+        }catch(error){
+            console.error('Error: ', error);
+            return { success: false, message: "An unexpected error occurred" }
+        }
+    }
+
     static async updateUserDetailsBVN(userId, data) {
         try {
             const user = await User.findById(userId).populate('kyc_verification');
@@ -189,14 +210,15 @@ module.exports = class UserService {
             if(otp !== inputOTP){
                 return { success: false, message: "Invalid OTP." };
             }
-            const otpExpiryTime = 5 * 60 * 1000;
-            const currentTime = Date.now();
-            if (currentTime - new Date(otpCreatedAt).getTime() > otpExpiryTime) {
-                return { success: false, message: "OTP has expired." };
-            }
+            // const otpExpiryTime = 5 * 60 * 1000;
+            // const currentTime = Date.now();
+            // if (currentTime - new Date(otpCreatedAt).getTime() > otpExpiryTime) {
+            //     return { success: false, message: "OTP has expired." };
+            // }
             kyc.bank_verification_number.otp = "EXPIRED";
             kyc.bank_verification_number.status = true;
             await kyc.save();
+            return { success: true, message: "OTP validated successfully." }
         } catch (error) {
             console.error("Error validating OTP: ", error);
             return{ success: false, message: "An unexpected error occurred during OTP validation." }
