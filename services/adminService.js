@@ -11,6 +11,7 @@ module.exports = class AdminService{
         try {
             const kycs = await KYC.find();
             // await KYC.deleteMany();
+            // await KYC.syncIndexes();
             return kycs;
         } catch (error) {
             return error;
