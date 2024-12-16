@@ -8,7 +8,7 @@ const headers = {
     "token": `${token}`,
     "Content-Type": "application/json"
 };
-console.log(headers);
+// console.log(headers);
 
 /**
  * verify BVN --uVerify  @p1

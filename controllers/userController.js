@@ -11,8 +11,8 @@ const { kycValidator } = require('../validators/kyc.validator')
 const { fetchUserAndKYC, combineKYCData, calculateStatuses } = require('../helpers/kyc.helper');
 const { generateOTP} = require('../helpers/otp');
 const verifyBVN = require("../helpers/verifyBVN");
-const sendOtp = require("../helpers/messenger");
-const sendSMSOTP = require("../helpers/messenger");
+// const sendOtp = require("../helpers/messenger");
+// const sendSMSOTP = require("../helpers/messenger");
 const formatMobileNumber = require("../helpers/formatPhone");
 
 module.exports = class UserController {
@@ -48,7 +48,7 @@ module.exports = class UserController {
             try {
                 if (user.number) {
                     const tel = formatMobileNumber(user.number);
-                    await sendSMSOTP(tel, user.otp);
+                    // await sendSMSOTP(tel, user.otp);
                 }
             } catch (smsError) {
                 console.warn("Failed to send OTP SMS:", smsError.message);
@@ -280,7 +280,7 @@ module.exports = class UserController {
                     if (mobile) {
                         const tel = formatMobileNumber(mobile);
                         otpNUm = tel.slice(-4);
-                        await sendSMSOTP(tel, data.otp);
+                        // await sendSMSOTP(tel, data.otp);
                     }
                 } catch (smsError) {
                     console.warn("Failed to send OTP SMS:", smsError.message);

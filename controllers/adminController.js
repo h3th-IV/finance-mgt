@@ -10,7 +10,7 @@ const { staffValidator } = require("../validators/staff.validator");
 const { generateOTP} = require('../helpers/otp');
 const mailer = require("../config/mailer");
 const { updatePasswordValidator } = require('../validators/staffUpdate.validator');
-const { smsOTP } = require('../config/messenger');
+// const { smsOTP } = require('../config/messenger');
 
 
 module.exports = class AdminController{
