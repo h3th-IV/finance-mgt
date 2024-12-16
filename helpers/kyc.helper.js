@@ -4,7 +4,11 @@ const KYC = require('../models/kyc.js')
 
 const fetchUserAndKYC = async (userId) => {
     const user = await User.findById(userId).populate('kyc_verification');
-    if (!user) throw new Error("User not found");
+    if (!user) {
+        const error = new Error("User not found");
+        error.statusCode = 404;
+        throw error;
+    }
 
     const kycRecord = user.kyc_verification
         ? await KYC.findById(user.kyc_verification._id)
