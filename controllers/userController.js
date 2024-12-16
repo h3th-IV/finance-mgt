@@ -326,6 +326,9 @@ module.exports = class UserController {
             });
         } catch (error) {
             console.error("Error updating KYC:", error.message);
+            if (error.statusCode === 404) {
+                return errorResponse(res, 404, error.message);
+            }
             return errorResponse(res, 500, "Server error");
         }
     }
