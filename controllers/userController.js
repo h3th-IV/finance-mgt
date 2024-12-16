@@ -258,7 +258,7 @@ module.exports = class UserController {
             if(kycData['bank_verification_number.bvn']){
                 const existBVNKYC = await KYC.findOne({ "bank_verification_number.bvn": kycData['bank_verification_number.bvn'] })
                 if (existBVNKYC){
-                    return errorResponse(res, "The provided bvn has been used");
+                    return errorResponse(res, 400, "The provided bvn has been used");
                 }
                 const bvnData = await verifyBVN (kycData['bank_verification_number.bvn']);
                 if(!bvnData || !bvnData.data){
