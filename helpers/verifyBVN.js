@@ -16,11 +16,11 @@ const headers = {
  * @returns {Promise<Object>} -the response payload from the API
  * @throws {Error} -trows error if API call fails
  */
+
 async function verifyBVN(bvn) {
     if (!bvn) {
         throw new Error('BVN is required to perform verification');
     }
-
     const body = {
         id: bvn,
         metadata: {
@@ -37,6 +37,7 @@ async function verifyBVN(bvn) {
         const errorDetails = error.response ? error.response.data : error.message;
         console.error('Error verifying BVN:', errorDetails);
         throw new Error(`BVN Verification failed: ${errorDetails}`);
+        // return { success: false, message: error }
     }
 }
 
