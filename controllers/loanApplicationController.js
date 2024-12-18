@@ -98,6 +98,7 @@ module.exports = class LoanApplicationController{
         try {
             const filters = {
                 status: req.query.status,
+                search: req.query.search, // Add search parameter
             };
 
             const pagination = {
@@ -118,6 +119,7 @@ module.exports = class LoanApplicationController{
             return errorResponse(res, 500, "Server error");
         }
     }
+
 
     static async getUserLoanApplications(req, res) {
         const { userId } = req.params;

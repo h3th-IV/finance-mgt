@@ -10,6 +10,7 @@ module.exports = class AdminService{
     static async getAllkyc(){
         try {
             const kycs = await KYC.find();
+            // await KYC.findByIdAndDelete("");
             // await KYC.deleteMany();
             // await KYC.syncIndexes();
             return kycs;
