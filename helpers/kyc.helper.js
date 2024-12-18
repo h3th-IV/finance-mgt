@@ -33,18 +33,14 @@ const combineKYCData = (kycData, files, kycRecord) => {
 const calculateStatuses = (kycData, files, kycRecord) => {
     const emailVerified = Boolean(kycRecord?.email?.address && kycRecord?.email?.status === true);
 
-    const bankVerified =
-        Boolean(kycData['bank_verification_number.bvn'] || kycRecord?.bank_verification_number?.bvn) &&
-        Boolean(kycData['bank_verification_number.dob'] || kycRecord?.bank_verification_number?.dob);
+    const bankVerified = Boolean(kycData['bank_verification_number.bvn'] || kycRecord?.bank_verification_number?.bvn) &&
+    Boolean(kycData['bank_verification_number.dob'] || kycRecord?.bank_verification_number?.dob) &&
+    ((kycData['bank_verification_number.otp'] === "EXPIRED") || (kycRecord?.bank_verification_number?.otp === "EXPIRED"));
 
-    const utilityBillVerified =
-        Boolean(files['utility_bill.doc'] || kycRecord?.utility_bill?.doc);
 
-    const documentVerified =
-        Boolean(kycData['document_verification.doc_type'] || kycRecord?.document_verification?.doc_type) &&
-        Boolean(kycData['document_verification.doc_no'] || kycRecord?.document_verification?.doc_no) &&
-        Boolean(files['document_verification.doc'] || kycRecord?.document_verification?.doc) &&
-        Boolean(kycData['document_verification.home_address'] || kycRecord?.document_verification?.home_address);
+    const utilityBillVerified = Boolean(files['utility_bill.doc'] || kycRecord?.utility_bill?.doc) && Boolean(kycData['utility_bill.home_address'] || kycRecord?.utility_bill?.home_address);
+
+    const documentVerified = Boolean(kycData['document_verification.doc_type'] || kycRecord?.document_verification?.doc_type) && Boolean(kycData['document_verification.doc_no'] || kycRecord?.document_verification?.doc_no) && Boolean(files['document_verification.doc'] || kycRecord?.document_verification?.doc) && Boolean(kycData['document_verification.home_address'] || kycRecord?.document_verification?.home_address);
 
     return { emailVerified, bankVerified, utilityBillVerified, documentVerified };
 };

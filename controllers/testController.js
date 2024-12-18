@@ -11,31 +11,31 @@ async function test() {
         console.error('Error:', error.message);
     }
 }
-// test();
+test();
 
 
-async function smstest(){
-    try{
-        console.log('blue');
-        const otp = generateOTP()
-        const response = await sendOtp('2347035643850', otp)
-        console.log('verification successfull: ', response);
-    } catch(error){
-        console.error('Error: ', error);
-    }
-}
+// async function smstest(){
+//     try{
+//         console.log('blue');
+//         const otp = generateOTP()
+//         const response = await sendOtp('2347035643850', otp)
+//         console.log('verification successfull: ', response);
+//     } catch(error){
+//         console.error('Error: ', error);
+//     }
+// }
 
-// smstest();
+// // smstest();
 
-const mobile = '09045647830'
-let tel;
-if (mobile[0]==='0'){
-    console.log('has 0')
-    tel = '234' + mobile.slice(1);
-    console.log(tel);
-}else{
-    console.log('has not 0')
-    tel = mobile;
-    console.log(tel);
-}
-console.log(tel);
+// const mobile = '09045647830'
+// let tel;
+// if (mobile[0]==='0'){
+//     console.log('has 0')
+//     tel = '234' + mobile.slice(1);
+//     console.log(tel);
+// }else{
+//     console.log('has not 0')
+//     tel = mobile;
+//     console.log(tel);
+// }
+// console.log(tel);

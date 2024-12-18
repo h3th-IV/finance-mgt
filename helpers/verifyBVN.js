@@ -21,6 +21,7 @@ async function verifyBVN(bvn) {
     if (!bvn) {
         throw new Error('BVN is required to perform verification');
     }
+
     const body = {
         id: bvn,
         metadata: {
@@ -32,12 +33,48 @@ async function verifyBVN(bvn) {
 
     try {
         const response = await axios.post(baseURL, body, { headers });
-        return response.data;//return data only
+        return response.data; //on success retunr data
     } catch (error) {
-        const errorDetails = error.response ? error.response.data : error.message;
-        console.error('Error verifying BVN:', errorDetails);
-        throw new Error(`BVN Verification failed: ${errorDetails}`);
-        // return { success: false, message: error }
+        const errorResponse = error.response?.data;
+
+        if (errorResponse) {
+            switch (errorResponse.statusCode) {
+                case 402:
+                    throw {
+                        statusCode: 402,
+                        text: "insufficient funds. Please top up your account",
+                        message: "We are currently unable to complete your request. Please try again later.",
+                    };
+
+                case 403:
+                    throw {
+                        statusCode: 403,
+                        text: "permission error, check access token",
+                        message: "We are unable to verify your information at the moment. Please contact support for assistance.",
+                    };
+
+                case 503:
+                    throw {
+                        statusCode: 503,
+                        message: "Third-party service is currently unavailable. Please try again later.",
+                    };
+                case 500:
+                    throw {
+                        statusCode: 500,
+                        message: "Internal server error. Please contact support.",
+                    };
+                default:
+                    throw {
+                        statusCode: errorResponse.statusCode || 500,
+                        message: errorResponse.message || "An unknown error occurred during BVN verification.",
+                    };
+            }
+        } else {
+            throw {
+                statusCode: 500,
+                message: error.message || "An unexpected error occurred during BVN verification.",
+            };
+        }
     }
 }
 
