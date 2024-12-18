@@ -217,93 +217,97 @@ module.exports = class LoanApplicationService {
     }
   }
 
-    //for admin to get all loanApplication
     static async getAllLoanApplication(filters, pagination) {
-        const { status, search } = filters;
-        const { page = 1, limit = 10 } = pagination;
-        try {
-            const queryFilter = {};
+      const { status, search } = filters;
+      const { page = 1, limit = 10 } = pagination;
 
-            const documentQuery = LoanApplication.find();
-            const documentCountQuery = LoanApplication.find();
-            
+      try {
+          const queryFilter = {};
 
-            
-            if (search) {
-                const searchRegex = new RegExp(search, "i");
+          if (status) {
+              queryFilter.status = status;
+          }
 
-                documentQuery.or([
-                    { loan_id: searchRegex },
-                    { "customer.first_name": searchRegex },
-                    { "customer.last_name": searchRegex },
-                    { "customer.phone_number": searchRegex },
-                    { "customer.email": searchRegex },
-                ]);
-                documentCountQuery.or([
-                    { loan_id: searchRegex },
-                    { "customer.first_name": searchRegex },
-                    { "customer.last_name": searchRegex },
-                    { "customer.phone_number": searchRegex },
-                    { "customer.email": searchRegex },
-                ]);
-            }
+         
+          const searchRegex = search ? new RegExp(search, "i") : null;
 
-            if (status) {
-                queryFilter.status = status;
-            }
+         
+          const skip = (page - 1) * limit;
 
-      const skip = (page - 1) * limit;
+         
+          const loanApplications = await LoanApplication.find(queryFilter)
+              .populate({
+                  path: "customer",
+                  match: searchRegex
+                      ? {
+                            $or: [
+                                { first_name: searchRegex },
+                                { last_name: searchRegex },
+                                { phone_number: searchRegex },
+                                { email: searchRegex },
+                            ],
+                        }
+                      : {}, //nein filtering if search is not provided
+              })
+              .skip(skip)
+              .limit(limit)
+              .sort({ createdAt: -1 });
 
-            const loanApplications = await documentQuery.populate('customer').skip(skip).limit(limit).sort({ createdAt: -1 }).exec();
+          //filter out loan applications with null `customer` due to the `math` filter
+          const filteredApplications = loanApplications.filter(
+              (app) => app.customer
+          );
 
-            const totalApplications = await documentCountQuery.countDocuments();
-            const totalPages = Math.ceil(totalApplications / limit);
+          const totalApplications = await LoanApplication.countDocuments(queryFilter);
 
-      const paginationLinks = {
-        first: `/loan-apps?page=1&limit=${limit}${
-          status ? `&status=${status}` : ""
-        }${search ? `&search=${search}` : ""}`,
-        prev:
-          page > 1
-            ? `/loan-apps?page=${page - 1}&limit=${limit}${
-                status ? `&status=${status}` : ""
-              }${search ? `&search=${search}` : ""}`
-            : null,
-        next:
-          page < totalPages
-            ? `/loan-apps?page=${page + 1}&limit=${limit}${
-                status ? `&status=${status}` : ""
-              }${search ? `&search=${search}` : ""}`
-            : null,
-        last: `/loan-apps?page=${totalPages}&limit=${limit}${
-          status ? `&status=${status}` : ""
-        }${search ? `&search=${search}` : ""}`,
-      };
+          const totalPages = Math.ceil(totalApplications / limit);
 
-            return {
-                success: true,
-                data: {
-                    loanApplications,
-                    links: {
-                        first: paginationLinks.first,
-                        prev: paginationLinks.prev,
-                        next: paginationLinks.next,
-                        last: paginationLinks.last,
-                        currentPage: page,
-                        totalPages: totalPages,
-                        totalPerPage: limit,
-                        total: totalApplications,
-                    },
-                },
-            };
-        } catch (error) {
-            console.error("Error fetching loan applications:", error);
-            return {
-                success: false,
-                message: "Could not fetch loan applications",
-            };
-        }
-    }
+          const paginationLinks = {
+              first: `/loan-apps?page=1&limit=${limit}${
+                  status ? `&status=${status}` : ""
+              }${search ? `&search=${search}` : ""}`,
+              prev:
+                  page > 1
+                      ? `/loan-apps?page=${page - 1}&limit=${limit}${
+                            status ? `&status=${status}` : ""
+                        }${search ? `&search=${search}` : ""}`
+                      : null,
+              next:
+                  page < totalPages
+                      ? `/loan-apps?page=${page + 1}&limit=${limit}${
+                            status ? `&status=${status}` : ""
+                        }${search ? `&search=${search}` : ""}`
+                      : null,
+              last: `/loan-apps?page=${totalPages}&limit=${limit}${
+                  status ? `&status=${status}` : ""
+              }${search ? `&search=${search}` : ""}`,
+          };
+
+          return {
+              success: true,
+              data: {
+                  loanApplications: filteredApplications,
+                  links: {
+                      first: paginationLinks.first,
+                      prev: paginationLinks.prev,
+                      next: paginationLinks.next,
+                      last: paginationLinks.last,
+                      currentPage: page,
+                      totalPages: totalPages,
+                      totalPerPage: limit,
+                      total: totalApplications,
+                  },
+              },
+          };
+      } catch (error) {
+          console.error("Error fetching loan applications:", error);
+          return {
+              success: false,
+              message: "Could not fetch loan applications",
+          };
+      }
+  }
+
 
 
   static async getUserLoanApplications(userId, filters, pagination) {
