@@ -10,10 +10,10 @@ router.post(
     verifyToken,
     parser.fields([
         { name: "statement_of_account", maxCount: 1 },
-        { name: "guarantor.kyc_guarantor_form", maxCount: 1 },
-        { name: "guarantor.passport_form", maxCount: 1 },
-        { name: "guarantor.statement_of_net_worth", maxCount: 1 },
-        { name: "guarantor.security_cheque", maxCount: 1 },
+        // { name: "guarantor.kyc_guarantor_form", maxCount: 1 },
+        // { name: "guarantor.passport_form", maxCount: 1 },
+        { name: "statement_of_networth", maxCount: 1 },
+        { name: "security_cheque", maxCount: 1 },
     ]),
     LoanApplicationController.createLoanApplication);
 router.post('/calc-loan', verifyToken, LoanApplicationController.calculatorLoan);

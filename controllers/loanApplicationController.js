@@ -1,22 +1,27 @@
 const LoanApplicationService = require("../services/loanApplicationService");
 const { successResponse, errorResponse } = require("../utils/responses");
-const { loanApplicationValidator, updateLoanApplicationValidator } = require("../validators/loanApplication.validator");
+const { loanApplicationValidator, updateLoanApplicationValidator, loanApplicationCalcValidator } = require("../validators/loanApplication.validator");
 const { validateRequiredFiles } = require('../helpers/validateFiles.helper');
 const { loanCalculatorValidator } = require('../validators/loanCalc.validator');
 const { calculateRepaymentPlan } = require('../helpers/calcRepayment.helper');
 
-module.exports = class LoanApplicationController{
+module.exports = class LoanApplicationController {
     static async createLoanApplication(req, res) {
         const { userId } = req.params;
+        console.log({userId});
+        
         const { loan_product, loan_amount, loan_duration } = req.body;
         const files = req.files;
+        console.log({files});
+        
 
         try {
-            const { error } = loanApplicationValidator.validate({
-                loan_product,
-                loan_amount,
-                loan_duration,
-            });
+            const { error, value } = loanApplicationValidator.validate(
+              req.body
+            );
+
+            console.log({value});
+            
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
             }
@@ -28,9 +33,18 @@ module.exports = class LoanApplicationController{
 
             const loanData = {
                 loan_product,
-                loan_amount: parseFloat(loan_amount),
-                loan_duration: parseInt(loan_duration, 10),
+                loan_amount: parseFloat(value.loan_amount),
+                loan_duration: parseInt(value.loan_duration, 10),
+                guarantor1: {
+                    name: value["guarantor1.name"],
+                    email: value["guarantor1.email"],
+                },
+                guarantor2: {
+                    name: value["guarantor2.name"],
+                    email: value["guarantor2.email"],
+                }
             };
+            console.log({ userId, loanData, files });
 
             const response = await LoanApplicationService.createLoanApplication(userId, loanData, files);
             if (!response.success) {
@@ -167,10 +181,10 @@ module.exports = class LoanApplicationController{
         }
     }
 
-    static async calculatorLoan(req, res){
-            const { loan_product, loan_amount, loan_duration } = req.body;
-        try{
-            const { error } = loanApplicationValidator.validate({
+    static async calculatorLoan(req, res) {
+        const { loan_product, loan_amount, loan_duration } = req.body;
+        try {
+            const { error } =  loanApplicationCalcValidator.validate({
                 loan_product,
                 loan_amount,
                 loan_duration,
@@ -199,7 +213,7 @@ module.exports = class LoanApplicationController{
                 }
             }
             return successResponse(res, 200, "Preview loan application.", response);
-        } catch(error){
+        } catch (error) {
             return errorResponse(res, 500, "Server error");
         }
     }
