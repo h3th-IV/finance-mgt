@@ -15,16 +15,32 @@ module.exports = class LoanApplicationService{
                     code: "NOT_FOUND",
                 };
             }
+
             const compare = loanData.loan_amount < loanProduct.min || loanData.loan_amount > loanProduct.max;
-            if (compare === true) {
+            if (compare) {
                 return {
                     success: false,
                     message: `Loan amount for ${loanProduct.name} must be between ${loanProduct.min} and ${loanProduct.max}`,
                     code: "INVALID_AMOUNT",
                 };
             }
+
+            const lastLoan = await LoanApplication.findOne({}, { loan_id: 1 })
+                .sort({ createdAt: -1 }) // Sort by newest first
+                .limit(1);
+
+            let newLoanId = "CWLN-1024";
+            if (lastLoan && lastLoan.loan_id) {
+                
+                const lastLoanNumber = parseInt(lastLoan.loan_id.split("-")[1], 10);
+                newLoanId = `CWLN-${lastLoanNumber + 1}`;
+            }
+
+            //calc repayment plan
             const interestRate = loanProduct.interest;
             const repaymentPlan = calculateRepaymentPlan(loanData.loan_amount, loanData.loan_duration, interestRate);
+
+            //uarantor files
             const guarantor = {
                 kyc_guarantor_form: files["guarantor.kyc_guarantor_form"]?.[0]?.path || null,
                 passport_form: files["guarantor.passport_form"]?.[0]?.path || null,
@@ -33,9 +49,11 @@ module.exports = class LoanApplicationService{
             };
 
             const statementOfAccount = files["statement_of_account"]?.[0]?.path || null;
+
+            
             const loanApplication = new LoanApplication({
                 customer: customerId,
-                loan_id: `CWLN-${Date.now()}`,
+                loan_id: newLoanId,
                 loan_product: loanData.loan_product,
                 interest_rate: interestRate,
                 loan_amount: loanData.loan_amount,
@@ -47,6 +65,7 @@ module.exports = class LoanApplicationService{
             });
 
             await loanApplication.save();
+
             return {
                 success: true,
                 loanApplication,
@@ -60,6 +79,7 @@ module.exports = class LoanApplicationService{
             };
         }
     }
+
 
 
     static async updateLoanApplication(loanApplicationId, updateData) {
@@ -135,18 +155,33 @@ module.exports = class LoanApplicationService{
     //for admin to get all loanApplication
     static async getAllLoanApplication(filters, pagination) {
         try {
-            const { status } = filters;
+            const { status, search } = filters;
             const { page = 1, limit = 10 } = pagination;
 
             const query = {};
             if (status) {
                 query.status = status;
             }
+            const test = await LoanApplication.find({ "customer.first_name": /TITILOPE/i })
+            console.log("test search: ", test);
+            // Search logic: Look for matching fields in loan_id or customer details
+            if (search) {
+                const searchRegex = new RegExp(search, "i"); // Case-insensitive search
+                query.$or = [
+                    { loan_id: searchRegex },
+                    { "customer.first_name": searchRegex },
+                    { "customer.last_name": searchRegex },
+                    { "customer.phone_number": searchRegex },
+                    { "customer.email": searchRegex },
+                ];
+            }
+            console.log("Search term:", search);
+            console.log("Query:", query);
 
             const skip = (page - 1) * limit;
 
             const loanApplications = await LoanApplication.find(query)
-                .populate('customer', 'first_name last_name email phone_number')
+                .populate('customer', 'first_name last_name phone_number')
                 .skip(skip)
                 .limit(limit)
                 .sort({ createdAt: -1 });
@@ -155,14 +190,14 @@ module.exports = class LoanApplicationService{
             const totalPages = Math.ceil(totalApplications / limit);
 
             const paginationLinks = {
-                first: `/loan-apps?page=1&limit=${limit}${status ? `&status=${status}` : ''}`,
+                first: `/loan-apps?page=1&limit=${limit}${status ? `&status=${status}` : ''}${search ? `&search=${search}` : ''}`,
                 prev: page > 1 
-                    ? `/loan-apps?page=${page - 1}&limit=${limit}${status ? `&status=${status}` : ''}` 
+                    ? `/loan-apps?page=${page - 1}&limit=${limit}${status ? `&status=${status}` : ''}${search ? `&search=${search}` : ''}` 
                     : null,
                 next: page < totalPages 
-                    ? `/loan-apps?page=${page + 1}&limit=${limit}${status ? `&status=${status}` : ''}` 
+                    ? `/loan-apps?page=${page + 1}&limit=${limit}${status ? `&status=${status}` : ''}${search ? `&search=${search}` : ''}` 
                     : null,
-                last: `/loan-apps?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ''}`,
+                last: `/loan-apps?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ''}${search ? `&search=${search}` : ''}`,
             };
 
             return {
@@ -183,6 +218,7 @@ module.exports = class LoanApplicationService{
             };
         }
     }
+
 
     static async getUserLoanApplications(userId, filters, pagination) {
         try {
