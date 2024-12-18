@@ -35,9 +35,9 @@ const kycValidator = Joi.object({
     'document_verification.doc': Joi.string().optional().messages({
         'string.base': '"Document file" must be a valid string.',
     }),
-    'document_verification.home_address': Joi.string().optional().messages({
-        'string.base': '"Home address" must be a valid string.',
-    }),
+    // 'document_verification.home_address': Joi.string().optional().messages({
+    //     'string.base': '"Home address" must be a valid string.',
+    // }),
     'utility_bill.doc': Joi.string().optional().messages({
         'string.base': '"Utility bill document" must be a valid string.',
     }),
