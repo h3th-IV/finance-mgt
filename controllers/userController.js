@@ -14,6 +14,7 @@ const verifyBVN = require("../helpers/verifyBVN");
 // const sendOtp = require("../helpers/messenger");
 // const sendSMSOTP = require("../helpers/messenger");
 const formatMobileNumber = require("../helpers/formatPhone");
+const BVNDataService = require("../services/bvnDataService");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -260,32 +261,41 @@ module.exports = class UserController {
                 if (existBVNKYC){
                     return errorResponse(res, 400, "The provided bvn has been used");
                 }
-                const bvnData = await verifyBVN (kycData['bank_verification_number.bvn']);
-                if(!bvnData || !bvnData.data){
-                    return errorResponse(res, 404, "BVN verification failed.");
-                }
-                const { firstName, lastName, idNumber, dateOfBirth, mobile } = bvnData.data;
-                const data = {
-                    first_name: firstName,
-                    last_name: lastName,
-                    otp: generateOTP(),
-                    bvn: idNumber,
-                    dob: dateOfBirth,
-                };
-                const response = await UserService.updateUserDetailsBVN(userId, data);
-                if (!response.success) {
-                    return errorResponse(res, 500, response.message);
-                }
                 try {
+                    const bvnData = await verifyBVN(kycData['bank_verification_number.bvn']);
+                    if (!bvnData || !bvnData.data || bvnData.data.status !== 'found') {
+                        return errorResponse(res, 400, "BVN verification failed. Please check the BVN provided.");
+                    }
+                    bvnData.data.userId = userId;
+                    const saveBVN = await BVNDataService.createBVNData(bvnData.data);
+                    if (!saveBVN.success){
+                        return errorResponse(res, 500, saveBVN.message);
+                    }
+                    const { firstName, lastName, idNumber, dateOfBirth, mobile } = bvnData.data;
+                    const data = {
+                        first_name: firstName,
+                        last_name: lastName,
+                        otp: generateOTP(),
+                        bvn: idNumber,
+                        dob: dateOfBirth,
+                    };
+                    const response = await UserService.updateUserDetailsBVN(userId, data);
+
+                    if (!response.success) {
+                        return errorResponse(res, 500, response.message);
+                    }
+
                     if (mobile) {
                         const tel = formatMobileNumber(mobile);
                         otpNUm = tel.slice(-4);
                         // await sendSMSOTP(tel, data.otp);
                     }
-                } catch (smsError) {
-                    console.warn("Failed to send OTP SMS:", smsError.message);
+
+                    otpBVN = true;
+                } catch (bvnError) {
+                    console.error("BVN Verification Error:", bvnError.text);
+                    return errorResponse(res, bvnError.statusCode || 500, bvnError.message);
                 }
-                otpBVN = true;
             }
             if(kycData['document_verification.doc_no']){
                 const existDOC_NO_KYC = await KYC.findOne({ "document_verification.doc_no": kycData['document_verification.doc_no'] })

@@ -42,6 +42,9 @@ const KYCSchema = new mongoose.Schema({
         doc: {
             type: String,
         },
+        home_address: {
+            type: String,
+        },
         status: {
             type: Boolean,
             default: false,

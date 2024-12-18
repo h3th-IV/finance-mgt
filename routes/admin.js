@@ -17,6 +17,7 @@ router.get('/roles', verifyToken, AdminController.getAllRoles);
 router.get('/staffs', verifyToken, AdminController.getAllStaffs);
 router.patch('/verify', AdminController.updatePassword);
 router.post('/login', AdminController.login);
+router.get('/bvnData', verifyToken, AdminController.getAllBVNData);
 
 
 module.exports = router;

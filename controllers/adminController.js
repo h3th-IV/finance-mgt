@@ -10,6 +10,7 @@ const { staffValidator } = require("../validators/staff.validator");
 const { generateOTP} = require('../helpers/otp');
 const mailer = require("../config/mailer");
 const { updatePasswordValidator } = require('../validators/staffUpdate.validator');
+const BVNDataService = require('../services/bvnDataService');
 // const { smsOTP } = require('../config/messenger');
 
 
@@ -235,6 +236,18 @@ module.exports = class AdminController{
             }
             return successResponse(res, 200, "Success", response.message);
         } catch(error){
+            return errorResponse(res, 500, 'Server error');
+        }
+    }
+
+    static async getAllBVNData(req, res){
+        try{
+            const response = await BVNDataService.getAllBVNData();
+            if (!response.success){
+                return errorResponse(res, 400, "Error", response.message);
+            }
+            return successResponse(res, 200, response.message, response.bvnData);
+        }catch(error){
             return errorResponse(res, 500, 'Server error');
         }
     }
