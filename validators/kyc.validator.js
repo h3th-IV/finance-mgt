@@ -15,9 +15,6 @@ const kycValidator = Joi.object({
             'string.length': '"BVN" must be exactly 11 digits.',
             'string.pattern.base': '"BVN" must only contain numbers.',
         }),
-    'bank_verification_number.dob': Joi.date().optional().messages({
-        'date.base': '"Date of Birth" must be a valid date.',
-    }),
     // 'facial_verification.pic': Joi.string().optional().messages({
     //     'string.base': '"Facial verification picture" must be a valid string.',
     // }),
@@ -43,6 +40,9 @@ const kycValidator = Joi.object({
     }),
     'utility_bill.doc': Joi.string().optional().messages({
         'string.base': '"Utility bill document" must be a valid string.',
+    }),
+    'utility_bill.home_address': Joi.string().optional().messages({
+        'string.base': '"Home address" must be a valid string.',
     }),
 });
 module.exports = {
