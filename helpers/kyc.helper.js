@@ -40,7 +40,7 @@ const calculateStatuses = (kycData, files, kycRecord) => {
 
     const utilityBillVerified = Boolean(files['utility_bill.doc'] || kycRecord?.utility_bill?.doc) && Boolean(kycData['utility_bill.home_address'] || kycRecord?.utility_bill?.home_address);
 
-    const documentVerified = Boolean(kycData['document_verification.doc_type'] || kycRecord?.document_verification?.doc_type) && Boolean(kycData['document_verification.doc_no'] || kycRecord?.document_verification?.doc_no) && Boolean(files['document_verification.doc'] || kycRecord?.document_verification?.doc) && Boolean(kycData['document_verification.home_address'] || kycRecord?.document_verification?.home_address);
+    const documentVerified = Boolean(kycData['document_verification.doc_type'] || kycRecord?.document_verification?.doc_type) && Boolean(kycData['document_verification.doc_no'] || kycRecord?.document_verification?.doc_no) && Boolean(files['document_verification.doc'] || kycRecord?.document_verification?.doc);
 
     return { emailVerified, bankVerified, utilityBillVerified, documentVerified };
 };

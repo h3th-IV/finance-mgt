@@ -112,7 +112,7 @@ module.exports = class LoanApplicationController{
                 res,
                 200,
                 "Loan applications returned successfully",
-                response
+                response.data
             );
         } catch (error) {
             console.error("Error in getAllLoanApplication controller:", error);
