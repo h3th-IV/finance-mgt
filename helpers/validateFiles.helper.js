@@ -1,9 +1,9 @@
 const validateRequiredFiles = (files) => {
     const requiredGuarantorFiles = [
-        "guarantor.kyc_guarantor_form",
-        "guarantor.passport_form",
-        "guarantor.statement_of_net_worth",
-        "guarantor.security_cheque",
+        // "guarantor.kyc_guarantor_form",
+        // "guarantor.passport_form",
+        "statement_of_networth",
+        "security_cheque",
     ];
 
     const missingGuarantorFiles = requiredGuarantorFiles.filter(

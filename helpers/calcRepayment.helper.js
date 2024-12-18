@@ -11,6 +11,7 @@ const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate) => {
         totalCapital: totalCapital.toFixed(2),
         totalInterest: totalInterest.toFixed(2),
         duration: loanDuration,
+        interestRate: interestRate
     };
 };
 

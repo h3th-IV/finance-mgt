@@ -3,68 +3,145 @@ const User = require("./user");
 const LoanProduct = require("./loanProduct");
 const Staff = require("./staff");
 
-const LoanApplication = new mongoose.Schema({
-    customer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-    },
-    loan_id: {
-        type: String,
-    },
-    loan_product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "LoanProduct",
-        required: true,
-    },
-    interest_rate: {
-        type: Number,
-    },
-    loan_amount: {
-        type: Number,
-    },
-    loan_duration: {
-        type: Number,
-    },
-    statement_of_account: {
-        type: String,
-    },
-    guarantor: {
-        kyc_guarantor_form: {
+// const LoanApplication = new mongoose.Schema({
+//     customer: {
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: "User",
+//         required: true,
+//     },
+//     loan_id: {
+//         type: String,
+//     },
+//     loan_product: {
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: "LoanProduct",
+//         required: true,
+//     },
+//     interest_rate: {
+//         type: Number,
+//     },
+//     loan_amount: {
+//         type: Number,
+//     },
+//     loan_duration: {
+//         type: Number,
+//     },
+//     statement_of_account: {
+//         type: String,
+//     },
+//     guarantor: {
+//         kyc_guarantor_form: {
+//             type: String,
+//         },
+//         passport_form: {
+//             type: String,
+//         },
+//         statement_of_net_worth: {
+//             type: String,
+//         },
+//         security_cheque: {
+//             type: String,
+//         },
+//     },
+//     date_disbursed: {
+//         type: Date,
+//     },
+//     status: {
+//         type: String,
+//         enum: ["new", "processing", "disbursed", "overdue", "fully_paid", "closed", "ready_for_disbursement"],
+//         default: "processing",
+//     },
+//     repayment_plan: {
+//         monthly_payment: {
+//                 type: Number,
+//         },
+//         total_payment: {
+//             type: Number
+//         }
+//     },
+//     repayments: [
+//         {
+//             type: mongoose.Schema.Types.ObjectId,
+//             ref: "Repayment",
+//         },
+//     ],
+// }, {timestamps: true,});
+
+// module.exports = mongoose.model("LoanApplication", LoanApplication)
+
+const LoanApplication = new mongoose.Schema(
+    {
+        customer: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        loan_id: {
             type: String,
         },
-        passport_form: {
+        loan_product: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "LoanProduct",
+            required: true,
+        },
+        interest_rate: {
+            type: Number,
+        },
+        loan_amount: {
+            type: Number,
+        },
+        loan_duration: {
+            type: Number,
+        },
+        statement_of_account: {
             type: String,
         },
-        statement_of_net_worth: {
+        statement_of_networth: {
             type: String,
         },
         security_cheque: {
             type: String,
         },
-    },
-    date_disbursed: {
-        type: Date,
-    },
-    status: {
-        type: String,
-        enum: ["new", "processing", "disbursed", "overdue", "fully_paid", "closed", "ready_for_disbursement"],
-        default: "processing",
-    },
-    repayment_plan: {
-        monthly_payment: {
+        guarantor1: {
+            name: { type: String, required: true },
+            email: { type: String, required: true },
+        },
+        guarantor2: {
+            name: { type: String, required: true },
+            email: { type: String, required: true },
+        },
+        date_disbursed: {
+            type: Date,
+        },
+        status: {
+            type: String,
+            enum: [
+                "new",
+                "processing",
+                "disbursed",
+                "overdue",
+                "fully_paid",
+                "closed",
+                "ready_for_disbursement",
+            ],
+            default: "processing",
+        },
+        repayment_plan: {
+            monthly_payment: {
                 type: Number,
+            },
+            total_payment: {
+                type: Number,
+            },
         },
-        total_payment: {
-            type: Number
-        }
+        repayments: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Repayment",
+            },
+        ],
     },
-    repayments: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Repayment",
-        },
-    ],
-}, {timestamps: true,});
+    { timestamps: true }
+);
 
-module.exports = mongoose.model("LoanApplication", LoanApplication)
+module.exports = mongoose.model("LoanApplication", LoanApplication);
