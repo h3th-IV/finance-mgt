@@ -146,19 +146,17 @@ module.exports = class LoanApplicationController {
                 limit: parseInt(limit, 10) || 10,
             };
 
-            const result = await LoanApplicationService.getUserLoanApplications(userId, filters, pagination);
+            const response = await LoanApplicationService.getUserLoanApplications(userId, filters, pagination);
 
-            if (!result.success) {
-                return errorResponse(res, 500, result.message);
+            if (!response.success) {
+                return errorResponse(res, 500, response.message);
             }
-            return successResponse(res, 200, "Loan applications retrieved successfully", {
-                loanApplications: result.data.loanApplications,
-                pagination: {
-                    currentPage: result.data.currentPage,
-                    totalPages: result.data.totalPages,
-                    paginationLinks: result.data.paginationLinks,
-                }
-            });
+            return successResponse(
+                res,
+                200,
+                "Loan applications returned successfully",
+                response.data
+            );
         } catch (error) {
             console.error("Error fetching user loan applications:", error);
             return errorResponse(res, 500, "Server error");

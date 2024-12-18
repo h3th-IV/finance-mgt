@@ -307,9 +307,9 @@ module.exports = class LoanApplicationService {
 
 
   static async getUserLoanApplications(userId, filters, pagination) {
+    const { status } = filters;
+    const { page = 1, limit = 10 } = pagination;
     try {
-      const { status } = filters;
-      const { page = 1, limit = 10 } = pagination;
 
       const query = { customer: userId };
       if (status) {
@@ -349,15 +349,21 @@ module.exports = class LoanApplicationService {
       };
 
       return {
-        success: true,
-        data: {
-          loanApplications,
-          total: totalApplications,
-          currentPage: page,
-          totalPages: totalPages,
-          paginationLinks: paginationLinks,
-        },
-      };
+                success: true,
+                data: {
+                    loanApplications,
+                    links: {
+                        first: paginationLinks.first,
+                        prev: paginationLinks.prev,
+                        next: paginationLinks.next,
+                        last: paginationLinks.last,
+                        currentPage: page,
+                        totalPages: totalPages,
+                        totalPerPage: limit,
+                        total: totalApplications,
+                    },
+                },
+            };
     } catch (error) {
       console.error("Error fetching loan applications:", error);
       return {
