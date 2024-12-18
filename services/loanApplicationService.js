@@ -154,39 +154,44 @@ module.exports = class LoanApplicationService{
 
     //for admin to get all loanApplication
     static async getAllLoanApplication(filters, pagination) {
+        const { status, search } = filters;
+        const { page = 1, limit = 10 } = pagination;
         try {
-            const { status, search } = filters;
-            const { page = 1, limit = 10 } = pagination;
+            const queryFilter = {};
 
-            const query = {};
-            if (status) {
-                query.status = status;
-            }
-            const test = await LoanApplication.find({ "customer.first_name": /TITILOPE/i })
-            console.log("test search: ", test);
-            // Search logic: Look for matching fields in loan_id or customer details
+            const documentQuery = LoanApplication.find();
+            const documentCountQuery = LoanApplication.find();
+            
+
+            
             if (search) {
-                const searchRegex = new RegExp(search, "i"); // Case-insensitive search
-                query.$or = [
+                const searchRegex = new RegExp(search, "i");
+
+                documentQuery.or([
                     { loan_id: searchRegex },
                     { "customer.first_name": searchRegex },
                     { "customer.last_name": searchRegex },
                     { "customer.phone_number": searchRegex },
                     { "customer.email": searchRegex },
-                ];
+                ]);
+                documentCountQuery.or([
+                    { loan_id: searchRegex },
+                    { "customer.first_name": searchRegex },
+                    { "customer.last_name": searchRegex },
+                    { "customer.phone_number": searchRegex },
+                    { "customer.email": searchRegex },
+                ]);
             }
-            console.log("Search term:", search);
-            console.log("Query:", query);
+
+            if (status) {
+                queryFilter.status = status;
+            }
 
             const skip = (page - 1) * limit;
 
-            const loanApplications = await LoanApplication.find(query)
-                .populate('customer', 'first_name last_name phone_number')
-                .skip(skip)
-                .limit(limit)
-                .sort({ createdAt: -1 });
+            const loanApplications = await documentQuery.populate('customer').skip(skip).limit(limit).sort({ createdAt: -1 }).exec();
 
-            const totalApplications = await LoanApplication.countDocuments(query);
+            const totalApplications = await documentCountQuery.countDocuments();
             const totalPages = Math.ceil(totalApplications / limit);
 
             const paginationLinks = {
@@ -204,10 +209,16 @@ module.exports = class LoanApplicationService{
                 success: true,
                 data: {
                     loanApplications,
-                    total: totalApplications,
-                    currentPage: page,
-                    totalPages: totalPages,
-                    paginationLinks: paginationLinks,
+                    links: {
+                        first: paginationLinks.first,
+                        prev: paginationLinks.prev,
+                        next: paginationLinks.next,
+                        last: paginationLinks.last,
+                        currentPage: page,
+                        totalPages: totalPages,
+                        totalPerPage: limit,
+                        total: totalApplications,
+                    },
                 },
             };
         } catch (error) {
