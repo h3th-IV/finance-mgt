@@ -10,7 +10,7 @@ router.post("/create-loanproduct/:userId", verifyToken, AdminController.createLo
 router.patch("/update-loanapp/:loanApplicationId", verifyToken, LoanApplicationController.updateLoanApplication);
 router.get("/loan-apps", verifyToken, LoanApplicationController.getAllLoanApplication);
 router.patch("/update-product/:productId", verifyToken, AdminController.updateLoanProduct);
-router.get("/loanProducts", verifyToken, AdminController.getAllLoanProducts);
+router.get("/loanProducts", AdminController.getAllLoanProducts);
 router.post('/add-staff', verifyToken, AdminController.createStaff);
 router.get('/permissions', verifyToken, AdminController.getAllPermissions);
 router.get('/roles', verifyToken, AdminController.getAllRoles);
