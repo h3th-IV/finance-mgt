@@ -1,4 +1,4 @@
-// const axios = require('axios');
+const axios = require('axios');
 // require("dotenv").config();
 
 
@@ -36,3 +36,36 @@
 // }
 
 // module.exports = sendSMSOTP;
+
+
+async function sendMMSOtp(phoneNumber, message) {
+    try {
+        const tel = `234${phoneNumber.slice(1, 11)}`
+        const apiUrl = 'https://portal.nigeriabulksms.com/api/';
+        const username = encodeURIComponent('info@capitalwisepayment.com');
+        const password = encodeURIComponent('Dynamicpayment@321');
+        const sender = encodeURIComponent('Capitalwise');
+        const mobile = encodeURIComponent(tel);
+        const encodedMessage = encodeURIComponent(message);
+
+        const url = `${apiUrl}?username=${username}&password=${password}&message=${encodedMessage}&sender=${sender}&mobiles=${mobile}`;
+
+        const response = await axios.get(url);
+
+        if (response.data.status === 'OK') {
+            console.log('OTP sent successfully:', response.data);
+            return { success: true, message: 'OTP sent successfully.' };
+        } else {
+            console.error('Failed to send OTP:', response.data);
+            return { success: false, message: 'Failed to send OTP.', details: response.data };
+        }
+    } catch (error) {
+        console.error('Error while sending OTP:', error.message);
+        return { success: false, message: 'Error while sending OTP.', error: error.message };
+    }
+}
+
+module.exports = sendMMSOtp;
+// sendMMSOtp('07035643850', "TETST OTP STUFF");
+
+
