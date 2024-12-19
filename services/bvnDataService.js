@@ -33,7 +33,7 @@ module.exports = class BVNDataService{
         try{
             const bvnData = await BVNData.find()
             // await BVNData.deleteMany();
-            // await BVNData.findByIdAndDelete('6763d867221eae78eb3ae337');
+            // await BVNData.findByIdAndDelete('');
             return { success: true, bvnData};
         }catch(error){
             console.error('Error fetching all BVN data:', error);

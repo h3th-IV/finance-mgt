@@ -16,6 +16,7 @@ const verifyBVN = require("../helpers/verifyBVN");
 const formatMobileNumber = require("../helpers/formatPhone");
 const BVNDataService = require("../services/bvnDataService");
 const BVNData = require('../models/bvnData');
+const { sendOtp } = require("../config/messenger");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -283,7 +284,7 @@ module.exports = class UserController {
                     if (mobile) {
                         const tel = formatMobileNumber(mobile);
                         otpNUm = tel.slice(-4);
-                        // await sendSMSOTP(tel, data.otp);
+                        await sendOtp(mobile, data.otp);
                     }
 
                     otpBVN = true;
@@ -316,7 +317,8 @@ module.exports = class UserController {
                         if (mobile) {
                             const tel = formatMobileNumber(mobile);
                             otpNUm = tel.slice(-4);
-                            // await sendSMSOTP(tel, data.otp);
+                            await sendOtp(mobile, data.otp);
+                            
                         }
 
                         otpBVN = true;
