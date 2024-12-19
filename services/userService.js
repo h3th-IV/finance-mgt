@@ -89,26 +89,26 @@ module.exports = class UserService {
     }
 
     //update the OTP for a user
-    static async updateOTP(email, otp) {
+    static async updateOTP(phone_number, otp) {
         try {
             const updateUser = await User.findOneAndUpdate(
-                { email: email },
+                { phone_number: phone_number },
                 { otp: otp, otpCreatedAt: Date.now() },
                 { new: true }
             );
             if (!updateUser) {
-                throw new Error("User not found.");
+                return { success: false, message: "User not found." };
             }
-            return updateUser;
+            return { success: true, data: updateUser };
         } catch (error) {
-            console.log(error);
-            return error;
+            console.error("Error in updateOTP service:", error.message);
+            return { success: false, message: "Error updating OTP." };
         }
     }
 
-    static async resetPassword(email, otp, new_password) {
+    static async resetPassword(phone_number, otp, new_password) {
         try {
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ phone_number: phone_number });
 
             if (!user) {
                 return { success: false, message: "User not found." };
@@ -130,7 +130,7 @@ module.exports = class UserService {
         }
     }
 
-    static async kycOTPValidation(userId, inputOTP){
+    static async kycEmailOTPValidation(userId, inputOTP){
         try{
             const user = await User.findById(userId).populate('kyc_verification');
             if(!user){
@@ -203,7 +203,7 @@ module.exports = class UserService {
 
             await kyc.save();
             await user.save();
-            const bvnMessage = `Dear user, your OTP for BVN verification with Capitalwise is ${kyc.bank_verification_number.otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
+            const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${kyc.bank_verification_number.otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
             await sendMMSOtp(data.number, bvnMessage);
             return { success: true, message: "BVN details updated successfully.", user };
         } catch (error) {
@@ -226,11 +226,11 @@ module.exports = class UserService {
             if(otp !== inputOTP){
                 return { success: false, message: "Invalid OTP." };
             }
-            // const otpExpiryTime = 5 * 60 * 1000;
-            // const currentTime = Date.now();
-            // if (currentTime - new Date(otpCreatedAt).getTime() > otpExpiryTime) {
-            //     return { success: false, message: "OTP has expired." };
-            // }
+            const otpExpiryTime = 5 * 60 * 1000;
+            const currentTime = Date.now();
+            if (currentTime - new Date(otpCreatedAt).getTime() > otpExpiryTime) {
+                return { success: false, message: "OTP has expired." };
+            }
             kyc.bank_verification_number.otp = "VERIFIED";
             kyc.bank_verification_number.status = true;
             await kyc.save();

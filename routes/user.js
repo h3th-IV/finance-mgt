@@ -10,7 +10,7 @@ router.post("/validate-otp/:userId", UserController.validateOTP);
 router.get("/all", UserController.getAllUsers);
 router.get("/single/:id", UserController.getAllUser);
 router.post("/signin", UserController.login);
-// router.post("/regenerate-otp/:userId", UserController.regenerateOTP);
+router.post("/regenerate-otp/:userId", UserController.regenerateOTP);
 router.post("/forgot-password", UserController.forgotPasswordOTP);
 router.patch("/reset-password", UserController.resetPassword);
 router.patch("/kyc-email/:userId", verifyToken, UserController.kycEmailOTPValidation);
@@ -20,5 +20,6 @@ router.patch("/kyc/:userId", verifyToken, parser.fields([
     { name: 'document_verification.doc', maxCount: 1 }
   ]),  UserController.updateKYC);
 router.post("/bvn-otp/:userId", verifyToken, UserController.bvnOTPValidation);
+router.patch("/regen-bvn-otp/:userId", verifyToken, UserController.bvnOTPRegen);
 router.get("/loans/:userId", verifyToken, LoanApplicationController.getUserLoanApplications);
 module.exports = router;

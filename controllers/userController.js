@@ -17,6 +17,8 @@ const formatMobileNumber = require("../helpers/formatPhone");
 const BVNDataService = require("../services/bvnDataService");
 const BVNData = require('../models/bvnData');
 const { sendOtp } = require("../config/messenger");
+const sendMMSOtp = require("../helpers/messenger");
+const user = require("../models/user");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -87,14 +89,19 @@ module.exports = class UserController {
     static async regenerateOTP(req, res) {
         const userId = req.params.userId;
         try {
-            const user = await UserService.getUserByID(userId);
+            const user = await User.findById(userId);
             if (!user) {
                 return errorResponse(res, 404, "User not found");
             }
             const newOTP = await user.regenerateOTP();
             if (newOTP) {
-                mailer.sendOTPEmail(user.email, user.first_name, newOTP);
-                return successResponse(res, 200, "A new OTP has been sent to your email");
+                // mailer.sendOTPEmail(user.email, user.first_name, newOTP);
+                const message = `Your OTP for completing signup is ${newOTP}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
+               const response = await sendMMSOtp(user.phone_number, message)
+               if (!response.success){
+                return errorResponse(res, 200, response.message);
+               }
+                return successResponse(res, 200, "A new OTP has been sent to your phone number");
             } else {
                 return errorResponse(res, 400, "OTP is still valid. Please try again later");
             }
@@ -175,15 +182,25 @@ module.exports = class UserController {
         }
     }
 
-    static async forgotPasswordOTP(req, res){
-        const { email } = req.body;
-        const otp = generateOTP()
+    static async forgotPasswordOTP(req, res) {
+        const { phone_number } = req.body;
+        const otp = generateOTP();
+
         try {
-            const response = await UserService.updateOTP(email, otp);
-            mailer.sendForgotPassword(email, otp);
-            return successResponse(res, 200, "Password reset email sent!");
+            const response = await UserService.updateOTP(phone_number, otp);
+            if (!response.success) {
+                return errorResponse(res, 404, response.message);
+            }
+
+            const message = `Dear user, your OTP for resetting your Capitalwise account password is ${otp}. This OTP is valid for 5 minutes. If you did not request a password reset, please ignore this message.`;
+            await sendMMSOtp(phone_number, message);
+
+            // await mailer.sendForgotPassword(email, otp);
+
+            return successResponse(res, 200, "Password reset OTP sent successfully!");
         } catch (error) {
-            return errorResponse(res, 500, "Unable to send password reset email");
+            console.error("Error in forgotPasswordOTP controller:", error.message);
+            return errorResponse(res, 500, "Unable to send password reset OTP.");
         }
     }
 
@@ -193,9 +210,9 @@ module.exports = class UserController {
             return errorResponse(res, 400, error.details[0].message);
         }
 
-        const { email, otp, new_password } = req.body;
+        const { phone_number, otp, new_password } = req.body;
         try {
-            const response = await UserService.resetPassword(email, otp, new_password);
+            const response = await UserService.resetPassword(phone_number, otp, new_password);
             if (response.success) {
                 return successResponse(res, 200, response.message);
             } else {
@@ -280,6 +297,7 @@ module.exports = class UserController {
                         dob: dateOfBirth,
                         number: mobile,
                     };
+                    otpNUm = mobile.slice(-4);
                     const response = await UserService.updateUserDetailsBVN(userId, data);
                     if (!response.success) {
                         return errorResponse(res, 500, response.message);
@@ -306,19 +324,12 @@ module.exports = class UserController {
                             dob: dateOfBirth,
                             number: mobile,
                         };
+                        otpNUm = mobile.slice(-4);
                         const response = await UserService.updateUserDetailsBVN(userId, data);
 
                         if (!response.success) {
                             return errorResponse(res, 500, response.message);
                         }
-
-                        if (mobile) {
-                            const tel = formatMobileNumber(mobile);
-                            otpNUm = tel.slice(-4);
-                            await sendOtp(mobile, data.otp);
-                            
-                        }
-
                         otpBVN = true;
                     } catch (bvnError) {
                         console.error("BVN Verification Error:", bvnError.text);
@@ -399,7 +410,7 @@ module.exports = class UserController {
         }
 
         try {
-            const result = await UserService.kycOTPValidation(userId, inputOTP);
+            const result = await UserService.kycEmailOTPValidation(userId, inputOTP);
 
             if (!result.success) {
                 return errorResponse(res, 400, result.message);
@@ -432,56 +443,6 @@ module.exports = class UserController {
         }
     }   
 
-    //TODO move this to the kyc verification controller
-    static async verifyBVN(req, res) {
-        const userId = req.params.userId;
-        const { bvn } = req.body; 
-
-        try {
-            if (!userId) {
-                return errorResponse(res, 400, "Missing user ID.");
-            }
-            if (!bvn) {
-                return errorResponse(res, 400, "BVN is required.");
-            }
-
-            const bvnData = await verifyBVN(bvn);
-            if (!bvnData || !bvnData.data) {
-                return errorResponse(res, 404, "BVN verification failed.");
-            }
-
-            const { firstName, lastName, idNumber, dateOfBirth, mobile } = bvnData.data;
-
-            const data = {
-                first_name: firstName,
-                last_name: lastName,
-                otp: generateOTP(),
-                bvn: idNumber,
-                dob: dateOfBirth,
-            };
-
-            const response = await UserService.updateUserDetailsBVN(userId, data);
-
-            if (!response.success) {
-                return errorResponse(res, 500, response.message);
-            }
-            try {
-                if (mobile) {
-                    const tel = formatMobileNumber(mobile);
-                    await sendSMSOTP(tel, data.otp);
-                }
-            } catch (smsError) {
-                console.warn("Failed to send OTP SMS:", smsError.message);
-            }
-            return successResponse(res, 200, "BVN details updated successfully.", {
-                user: response.user,
-            });
-        } catch (error) {
-            console.error("BVN Verification Error:", error);
-            return errorResponse(res, 500, "An error occurred during BVN verification.", error.message);
-        }
-    }
-
     static async bvnOTPValidation(req, res){
         const { userId } = req.params;
         const { inputOTP } = req.body;
@@ -501,6 +462,21 @@ module.exports = class UserController {
         }catch(error){
             console.error("Error validating OTP: ", error);
             return errorResponse(res, 500, "An unexpected server error occurred", error);
+        }
+    }
+
+    static async bvnOTPRegen(req, res) {
+        const { userId } = req.params;
+        try {
+            const result = await BVNDataService.bvnOTPRegeneration(userId);
+            if (!result.success) {
+                return errorResponse(res, 500, result.message);
+            }
+
+            return successResponse(res, 200, result.message);
+        } catch (error) {
+            console.error("Error in BVN OTP Regeneration:", error);
+            return errorResponse(res, 500, 'Internal Server Error');
         }
     }
 };
