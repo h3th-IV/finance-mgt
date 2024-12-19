@@ -1,22 +1,36 @@
+const { sendOtp } = require("../config/messenger");
 const kyc = require("../models/kyc");
 const User = require("../models/user");
 
 module.exports = class UserService {
-    static async createUser(data){
+    static async createUser(data) {
         try {
+            // Step 1: Prepare and save user
             const newUser = {
                 first_name: data.first_name,
                 last_name: data.last_name,
                 phone_number: data.number,
                 password: data.password,
-                otp: data.otp
-            }
+                otp: data.otp,
+            };
             const response = await new User(newUser).save();
+            console.log("User saved successfully:", response);
+    
+            // Step 2: Send OTP
+            try {
+                await sendOtp(data.number, data.otp);
+                console.log("OTP sent successfully.");
+            } catch (otpError) {
+                console.error("Failed to send OTP:", otpError);
+            }
+    
             return response;
         } catch (error) {
-            return error;
+            console.error("Error in createUser:", error);
+            return { error: "Failed to create user.", details: error };
         }
     }
+    
 
     static async getUserByPhone(number){
         try {
