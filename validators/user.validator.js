@@ -21,7 +21,10 @@ const loginValidator = Joi.object({
 });
 
 const resetPasswordValidator = Joi.object({
-  email: emailSchema,
+  phone_number: Joi.string().pattern(/^[0-9]+$/).required().messages({
+    "string.empty": "Please provide your phone number",
+    "string.pattern.base": "Phone number must only contain digits",
+  }),
   otp: Joi.string().length(6).required().messages({
     'string.length': 'OTP must be 6 characters.',
     'string.empty': 'OTP is required.',
