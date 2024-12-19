@@ -7,7 +7,7 @@ const API_KEY = "910dbdc83940d92db6aed715b27f221a-b9499642-d4bd-4095-98bd-39233a
 // Function to send SMS with a dynamic OTP
 module.exports.sendOtp = async (recipientPhone, otpCode) => {
     console.log({recipientPhone, otpCode});
-    
+    console.log(`+234${recipientPhone.slice(1, 11)}`)
   const payload = {
     messages: [
       {
