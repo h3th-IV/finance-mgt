@@ -33,10 +33,20 @@ module.exports = class BVNDataService{
         try{
             const bvnData = await BVNData.find()
             // await BVNData.deleteMany();
+            // await BVNData.findByIdAndDelete('6763d867221eae78eb3ae337');
             return { success: true, bvnData};
         }catch(error){
             console.error('Error fetching all BVN data:', error);
             return { success: false, message: 'Error fetching all BVN data.', error: error.message };
+        }
+    }
+
+    static async getSingleBVNData(bvn){
+        try {
+            const bvnDatum = await BVNData.findOne({ bvn: bvn })
+            return { success: true, message: 'BVN datum returned successfully', bvnDatum };
+        } catch (error) {
+            return { success: false, message: 'Error fetching single BVN data.', error: error.message };
         }
     }
 }
