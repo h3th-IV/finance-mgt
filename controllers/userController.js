@@ -46,16 +46,6 @@ module.exports = class UserController {
             if (response?.errors) {
             return errorResponse(res, 500, "An error occurred", response);
             }
-
-            //send otp to phone number
-            try {
-                if (user.number) {
-                    const tel = formatMobileNumber(user.number);
-                    // await sendSMSOTP(tel, user.otp);
-                }
-            } catch (smsError) {
-                console.warn("Failed to send OTP SMS:", smsError.message);
-            }
             return successResponse(res, 201, "Your account has been successfully created. An OTP has been sent to your phone number for verification.", response);
         } catch (error) {
             console.log(error);
@@ -148,6 +138,9 @@ module.exports = class UserController {
                     user,
                     jwToken: token,
                 }
+            if (user.otp && user.otp !== 'VERIFIED'){
+                return errorResponse(res, 400, "Sign up OTP verification is pending verification. Please verify the OTP sent to your phone number.");
+            }
             return successResponse(res, 200, "Please complete your KYC verification to continue.", response);
             }
             // user.last_login = Date.now();
@@ -236,6 +229,16 @@ module.exports = class UserController {
 
         try {
             const { user, kycRecord } = await fetchUserAndKYC(userId);
+            if (kycRecord){
+                if (kycRecord.email.otp && kycRecord.email.otp !== 'VERIFIED') {
+                    return errorResponse(res, 400, "Email OTP is pending verification. Please verify the OTP sent to your email.");
+                }
+
+                if (kycRecord.bank_verification_number.otp && kycRecord.bank_verification_number.otp !== 'VERIFIED') {
+                    return errorResponse(res, 400, "BVN OTP is pending verification. Please verify the OTP sent to the associated phone number.");
+                }
+            }
+
             if (kycData['email.address']) {
                 const existEmailKYC = await KYC.findOne({ "email.address": kycData['email.address'] });
                 if (existEmailKYC && (!kycRecord || kycRecord.email.address !== kycData['email.address'])) {
@@ -275,18 +278,12 @@ module.exports = class UserController {
                         otp: generateOTP(),
                         bvn: idNumber,
                         dob: dateOfBirth,
+                        number: mobile,
                     };
                     const response = await UserService.updateUserDetailsBVN(userId, data);
                     if (!response.success) {
                         return errorResponse(res, 500, response.message);
                     }
-
-                    if (mobile) {
-                        const tel = formatMobileNumber(mobile);
-                        otpNUm = tel.slice(-4);
-                        await sendOtp(mobile, data.otp);
-                    }
-
                     otpBVN = true;
                 } else{
                     console.log('bvnData not exist in database');
@@ -307,6 +304,7 @@ module.exports = class UserController {
                             otp: generateOTP(),
                             bvn: idNumber,
                             dob: dateOfBirth,
+                            number: mobile,
                         };
                         const response = await UserService.updateUserDetailsBVN(userId, data);
 

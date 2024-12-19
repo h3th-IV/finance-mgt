@@ -2,7 +2,7 @@ const validateRequiredFiles = (files) => {
     const requiredGuarantorFiles = [
         // "guarantor.kyc_guarantor_form",
         // "guarantor.passport_form",
-        "statement_of_net_worth",
+        "statement_of_networth",
         "security_cheque",
     ];
 

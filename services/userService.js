@@ -1,11 +1,11 @@
 const { sendOtp } = require("../config/messenger");
+const sendMMSOtp = require("../helpers/messenger");
 const kyc = require("../models/kyc");
 const User = require("../models/user");
 
 module.exports = class UserService {
     static async createUser(data) {
         try {
-            // Step 1: Prepare and save user
             const newUser = {
                 first_name: data.first_name,
                 last_name: data.last_name,
@@ -16,14 +16,13 @@ module.exports = class UserService {
             const response = await new User(newUser).save();
             console.log("User saved successfully:", response);
     
-            // Step 2: Send OTP
             try {
-                await sendOtp(data.number, data.otp);
+                const message = `Welcome to Capitalwise! Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
+                await sendMMSOtp(response.phone_number, message);
                 console.log("OTP sent successfully.");
             } catch (otpError) {
                 console.error("Failed to send OTP:", otpError);
             }
-    
             return response;
         } catch (error) {
             console.error("Error in createUser:", error);
@@ -76,7 +75,7 @@ module.exports = class UserService {
             }
 
             if (user.otp === inputOTP) {
-                user.otp = "EXPIRED";
+                user.otp = "VERIFIED";
                 // user.otpCreatedAt = null;
                 await user.save();
                 return { success: true, message: "OTP validated successfully.", User: user};
@@ -118,7 +117,7 @@ module.exports = class UserService {
             if (user.otp !== otp || user.isOTPExpired()) {
                 return { success: false, message: "Invalid or expired OTP." };
             }
-            user.otp = "EXPIRED";
+            user.otp = "VERIFIED";
             // user.otpCreatedAt = null;
 
             user.password = new_password;
@@ -152,7 +151,7 @@ module.exports = class UserService {
             if (currentTime - new Date(otpCreatedAt).getTime() > otpExpiryTime) {
                 return { success: false, message: "OTP has expired." };
             }
-            kyc.email.otp = "EXPIRED";
+            kyc.email.otp = "VERIFIED";
             kyc.email.status = true;
             await kyc.save();
             return { success: true, message: "OTP validated successfully." };
@@ -204,6 +203,8 @@ module.exports = class UserService {
 
             await kyc.save();
             await user.save();
+            const bvnMessage = `Dear user, your OTP for BVN verification with Capitalwise is ${kyc.bank_verification_number.otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
+            await sendMMSOtp(data.number, bvnMessage);
             return { success: true, message: "BVN details updated successfully.", user };
         } catch (error) {
             console.error("Update User BVN Error:", error);
@@ -230,7 +231,7 @@ module.exports = class UserService {
             // if (currentTime - new Date(otpCreatedAt).getTime() > otpExpiryTime) {
             //     return { success: false, message: "OTP has expired." };
             // }
-            kyc.bank_verification_number.otp = "EXPIRED";
+            kyc.bank_verification_number.otp = "VERIFIED";
             kyc.bank_verification_number.status = true;
             await kyc.save();
             return { success: true, message: "OTP validated successfully." }
