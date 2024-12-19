@@ -39,4 +39,3 @@ module.exports.sendOtp = async (recipientPhone, otpCode) => {
   }
 };
 
-
