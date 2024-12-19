@@ -9,11 +9,7 @@ const fetchUserAndKYC = async (userId) => {
         error.statusCode = 404;
         throw error;
     }
-
-    const kycRecord = user.kyc_verification
-        ? await KYC.findById(user.kyc_verification._id)
-        : null;
-
+    const kycRecord = user.kyc_verification ? await KYC.findById(user.kyc_verification._id): null;
     return { user, kycRecord };
 };
 
@@ -35,7 +31,7 @@ const calculateStatuses = (kycData, files, kycRecord) => {
 
     const bankVerified = Boolean(kycData['bank_verification_number.bvn'] || kycRecord?.bank_verification_number?.bvn) &&
     Boolean(kycData['bank_verification_number.dob'] || kycRecord?.bank_verification_number?.dob) &&
-    ((kycData['bank_verification_number.otp'] === "EXPIRED") || (kycRecord?.bank_verification_number?.otp === "EXPIRED"));
+    ((kycData['bank_verification_number.otp'] === "VERIFIED") || (kycRecord?.bank_verification_number?.otp === "VERIFIED"));
 
 
     const utilityBillVerified = Boolean(files['utility_bill.doc'] || kycRecord?.utility_bill?.doc) && Boolean(kycData['utility_bill.home_address'] || kycRecord?.utility_bill?.home_address);
