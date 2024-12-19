@@ -251,4 +251,17 @@ module.exports = class AdminController{
             return errorResponse(res, 500, 'Server error');
         }
     }
+
+    static async getSingleBVNData(req, res) {
+        const bvn = req.body.bvn;
+        try {
+            const response = await BVNDataService.getSingleBVNData(bvn);
+            if(!response.success){
+                return errorResponse(res, 400, "Error", response.message)
+            }
+            return successResponse(res, 200, response.message, response.bvnDatum);
+        } catch (error) {
+            return errorResponse(res, 500, 'Server error');
+        }
+    }
 }   

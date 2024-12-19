@@ -1,38 +1,41 @@
-// const axios = require("axios");
-// require("dotenv").config();
+const axios = require('axios');
 
-// /**
-//  * Send OTP SMS via Kudi SMS
-//  * @param {string} phoneNumber - Recipient phone number (e.g., +234XXXXXXXXXX).
-//  * @param {string} otp - The OTP to send.
-//  * @returns {Promise<object>} - API response or error.
-//  */
-// const smsOTP = async (phoneNumber, otp) => {
-//     try {
-//         const payload = {
-//             token: process.env.KUDI_SMS_TOKEN,
-//             senderId: "CapitalWisPayment",
-//             recipients: phoneNumber.replace("+", ""),//strip off any +
-//             otp,
-//             appnamecode: process.env.KUDI_APPNAME_CODE,
-//             templatecode: process.env.KUDI_TEMPLATE_CODE,
-//         };
+// Replace with your Infobip API base URL and API key
+const API_BASE_URL = "https://api.infobip.com";
+const API_KEY = "910dbdc83940d92db6aed715b27f221a-b9499642-d4bd-4095-98bd-39233a85784d";
 
-//         const response = await axios.post(
-//             `${process.env.KUDI_SMS_URL}/otp`,
-//             payload,
-//             { maxBodyLength: Infinity }
-//         );
+// Function to send SMS with a dynamic OTP
+module.exports.sendOtp = async (recipientPhone, otpCode) => {
+    console.log({recipientPhone, otpCode});
+    
+  const payload = {
+    messages: [
+      {
+        from: "InfoSender", // Replace with your registered alphanumeric sender ID or Infobip-provided number
+        destinations: [
+          {
+            to: `+234${recipientPhone.slice(1, 11)}`, // Replace with the recipient's phone number
+          },
+        ],
+        text: `Your OTP code is: ${otpCode}. It is valid for 10 minutes.`,
+      },
+    ],
+  };
 
-//         if (response.data.status === "success") {
-//             return { success: true, message: "SMS sent successfully" };
-//         } else {
-//             return { success: false, message: response.data.message };
-//         }
-//     } catch (error) {
-//         console.error("Error sending SMS:", error.message);
-//         return { success: false, message: "Failed to send SMS" };
-//     }
-// };
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/sms/2/text/advanced`,
+      payload,
+      {
+        headers: {
+          Authorization: `App ${API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(`Message sent successfully to ${recipientPhone}:`, response.data);
+  } catch (error) {
+    console.error(`Error sending message to ${recipientPhone}:`, error.response?.data || error.message);
+  }
+};
 
-// module.exports = { smsOTP };
