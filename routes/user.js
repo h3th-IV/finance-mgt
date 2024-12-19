@@ -20,5 +20,6 @@ router.patch("/kyc/:userId", verifyToken, parser.fields([
     { name: 'document_verification.doc', maxCount: 1 }
   ]),  UserController.updateKYC);
 router.post("/bvn-otp/:userId", verifyToken, UserController.bvnOTPValidation);
+router.patch("/regen-bvn-otp/:userId", verifyToken, UserController.bvnOTPRegen);
 router.get("/loans/:userId", verifyToken, LoanApplicationController.getUserLoanApplications);
 module.exports = router;

@@ -1,4 +1,8 @@
+const { generateOTP } = require('../helpers/otp');
 const BVNData = require('../models/bvnData');
+const UserService = require('./userService');
+const User = require("../models/user");
+
 
 module.exports = class BVNDataService{
     static async createBVNData(bvnDataObject) {
@@ -49,4 +53,42 @@ module.exports = class BVNDataService{
             return { success: false, message: 'Error fetching single BVN data.', error: error.message };
         }
     }
+
+    static async bvnOTPRegeneration(userId) {
+        try {
+            const user = await User.findById(userId).populate('kyc_verification');
+            if (!user){
+                return { success: false, message: "User not found" }
+            };
+            const userBVNDatum = await BVNData.findOne({ customer: userId });
+            if (!userBVNDatum) {
+                return { success: false, message: "No BVN data found for this user." };
+            }
+
+            const otpTel = userBVNDatum.mobile.slice(-4);
+            const otp = generateOTP();
+            const kyc = user.kyc_verification;
+            if (!kyc || !kyc.bank_verification_number) {
+                return { success: false, message: "KYC record not found or incomplete for this user." };
+            }
+
+            kyc.bank_verification_number.otp = otp;
+            kyc.bank_verification_number.otpCreatedAt = new Date();
+            await kyc.save();
+            await user.save();
+
+            const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
+
+            await sendMMSOtp(userBVNDatum.mobile, bvnMessage);
+
+            return { 
+                success: true, 
+                message: `A new OTP has been sent to the verification number associated with your BVN ending with ${otpTel}.` 
+            };
+        } catch (error) {
+            console.error("Error in BVN OTP Regeneration Logic:", error);
+            return { success: false, message: 'Error generating new OTP.' };
+        }
+    }
+
 }
