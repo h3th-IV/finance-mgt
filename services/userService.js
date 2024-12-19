@@ -89,26 +89,26 @@ module.exports = class UserService {
     }
 
     //update the OTP for a user
-    static async updateOTP(email, otp) {
+    static async updateOTP(phone_number, otp) {
         try {
             const updateUser = await User.findOneAndUpdate(
-                { email: email },
+                { phone_number: phone_number },
                 { otp: otp, otpCreatedAt: Date.now() },
                 { new: true }
             );
             if (!updateUser) {
-                throw new Error("User not found.");
+                return { success: false, message: "User not found." };
             }
-            return updateUser;
+            return { success: true, data: updateUser };
         } catch (error) {
-            console.log(error);
-            return error;
+            console.error("Error in updateOTP service:", error.message);
+            return { success: false, message: "Error updating OTP." };
         }
     }
 
-    static async resetPassword(email, otp, new_password) {
+    static async resetPassword(phone_number, otp, new_password) {
         try {
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ phone_number: phone_number });
 
             if (!user) {
                 return { success: false, message: "User not found." };

@@ -2,6 +2,7 @@ const { generateOTP } = require('../helpers/otp');
 const BVNData = require('../models/bvnData');
 const UserService = require('./userService');
 const User = require("../models/user");
+const sendMMSOtp = require('../helpers/messenger');
 
 
 module.exports = class BVNDataService{
@@ -36,7 +37,7 @@ module.exports = class BVNDataService{
     static async getAllBVNData(){
         try{
             const bvnData = await BVNData.find()
-            // await BVNData.deleteMany();
+            await BVNData.deleteMany();
             // await BVNData.findByIdAndDelete('');
             return { success: true, bvnData};
         }catch(error){
@@ -78,7 +79,7 @@ module.exports = class BVNDataService{
             await user.save();
 
             const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
-
+            
             await sendMMSOtp(userBVNDatum.mobile, bvnMessage);
 
             return { 
