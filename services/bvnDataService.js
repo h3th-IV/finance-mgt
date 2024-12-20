@@ -9,7 +9,6 @@ module.exports = class BVNDataService{
     static async createBVNData(bvnDataObject) {
         try {
             const bvnData = new BVNData({
-                customer: bvnDataObject.userId,
                 bvn: bvnDataObject.idNumber,
                 firstName: bvnDataObject.firstName,
                 middleName: bvnDataObject.middleName || '',
@@ -37,8 +36,8 @@ module.exports = class BVNDataService{
     static async getAllBVNData(){
         try{
             const bvnData = await BVNData.find()
-            await BVNData.deleteMany();
-            // await BVNData.findByIdAndDelete('');
+            // await BVNData.deleteMany();
+            await BVNData.findByIdAndDelete('676586159dfbd076c2aa7162');
             return { success: true, bvnData};
         }catch(error){
             console.error('Error fetching all BVN data:', error);
@@ -79,7 +78,7 @@ module.exports = class BVNDataService{
             await user.save();
 
             const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
-            
+
             await sendMMSOtp(userBVNDatum.mobile, bvnMessage);
 
             return { 
