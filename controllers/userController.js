@@ -123,7 +123,7 @@ module.exports = class UserController {
             : { phone_number: identifier };
             const user = await User.findOne(query).populate('kyc_verification');
             if (!user) {
-                return errorResponse(res, 401, `User with ${query.email ? "email" : "phone_number"} not found`);
+                return errorResponse(res, 401, `User with ${query.email ? "email" : "Phone Number"} not found`);
             }
 
             const isPassword = await bcryptjs.compare(password, user.password);
