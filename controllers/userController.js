@@ -287,7 +287,6 @@ module.exports = class UserController {
                 const existBVNData = await BVNData.findOne({ bvn: kycData['bank_verification_number.bvn'] })
                 if (existBVNData){
                     console.log('bvnData exist in database');
-                    // return errorResponse(res, 400, "The provided bvn has been used");
                     const { firstName, lastName, idNumber, dateOfBirth, mobile } = existBVNData
                     const data = {
                         first_name: firstName,
@@ -310,7 +309,6 @@ module.exports = class UserController {
                         if (!bvnData || !bvnData.data || bvnData.data.status !== 'found') {
                             return errorResponse(res, 400, "BVN verification failed. Please check the BVN provided.");
                         }
-                        bvnData.data.userId = userId;
                         const saveBVN = await BVNDataService.createBVNData(bvnData.data);
                         if (!saveBVN.success){
                             return errorResponse(res, 500, saveBVN.message);
