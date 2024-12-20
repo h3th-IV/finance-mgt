@@ -2,11 +2,6 @@ const mongoose = require('mongoose');
 
 // Step 1: Define the BVN Data Schema
 const BVNData = new mongoose.Schema({
-    customer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-    },
     bvn: { 
         type: String,
         required: true,
