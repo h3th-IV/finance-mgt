@@ -81,7 +81,7 @@ module.exports = class LoanApplicationController {
             return errorResponse(
                 res,
                 400,
-                "Please provide at least one field to update: 'loan_duration' or 'status'."
+                "Please provide at least one field to update: 'Loan Duration' or 'Status'."
             );
         }
         try {

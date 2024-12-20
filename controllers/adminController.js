@@ -137,7 +137,7 @@ module.exports = class AdminController{
             const query = identifier.includes('@') ? { email: identifier.toLowerCase() } : { phone_number: identifier };
             const staff = await Staff.findOne(query).populate('role');
             if (!staff) {
-                return errorResponse(res, 401, `Staff with ${query.email ? "email" : "phone_number"} not found`);
+                return errorResponse(res, 401, `Staff with ${query.email ? "email" : "Phone Number"} not found`);
             }
             const isPassword = await bcryptjs.compare(password, staff.password);
             if(!isPassword) {
