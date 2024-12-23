@@ -264,4 +264,18 @@ module.exports = class AdminController{
             return errorResponse(res, 500, 'Server error');
         }
     }
+
+    static async archiveLoanProduct(req, res){
+        try{
+            const { productId } = req.params;
+            const response = await AdminService.archiveLoanProduct(productId);
+            if(!response.success){
+                return errorResponse(res, 404, response.message);
+            }
+            return successResponse(res, 200, response.message, response.data);
+        }catch(error){
+            console.error("Error in archive LoanProduct controller: ", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
 }   
