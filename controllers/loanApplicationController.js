@@ -215,5 +215,22 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, "Server error");
         }
     }
+
+    static async deleteLoanApplication(req, res) {
+        try {
+            const { loanAppId } = req.params;
+            
+            const response = await LoanApplicationService.deleteLoanApplication(loanAppId);
+
+            if (response.success) {
+                return successResponse(res, 200, response.message);
+            } else {
+                return errorResponse(res, 404, response.message);
+            }
+        } catch (error) {
+            console.error("Error in deleteLoanApplication controller:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
 }
 

@@ -18,6 +18,9 @@ router.get('/staffs', verifyToken, AdminController.getAllStaffs);
 router.patch('/verify', AdminController.updatePassword);
 router.post('/login', AdminController.login);
 router.get('/bvnData', verifyToken, AdminController.getAllBVNData);
+router.delete('/delete/:loanAppId', verifyToken, LoanApplicationController.deleteLoanApplication);
+router.patch("/archive-loanproduct/:productId", verifyToken, AdminController.archiveLoanProduct);
+
 
 
 module.exports = router;
