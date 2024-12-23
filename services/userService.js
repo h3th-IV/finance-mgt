@@ -17,7 +17,8 @@ module.exports = class UserService {
             console.log("User saved successfully:", response);
     
             try {
-                const message = `Welcome to Capitalwise! Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
+                // const message = `Welcome to Capitalwise! Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
+                const message = `${response.otp}`;
                 await sendMMSOtp(response.phone_number, message);
                 console.log("OTP sent successfully.");
             } catch (otpError) {

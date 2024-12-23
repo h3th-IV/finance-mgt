@@ -91,6 +91,7 @@ module.exports = class AdminService{
     static async getAllLoanProducts(){
         try {
             const response = await loanProduct.find();
+            // await loanProduct.deleteMany();
             return response;
         } catch (error) {
             return error;
@@ -161,6 +162,27 @@ module.exports = class AdminService{
         } catch (error) {
             console.error("Error updating staff password:", error);
             throw new Error("Error updating staff password");
+        }
+    }
+
+    static async archiveLoanProduct(productId) {
+        try {
+            const loanProduct = await LoanProduct.findByIdAndUpdate(
+                productId,
+                { status: "archived" },
+                { new: true }
+            );
+            if (!loanProduct) {
+                return { success: false, message: "Loan product not found" };
+            }
+            return {
+                success: true,
+                message: "Loan product archived successfully",
+                data: loanProduct,
+            };
+        } catch (error) {
+            console.error("Error archiving loan product:", error);
+            return { success: false, message: "Error archiving loan product" };
         }
     }
 }

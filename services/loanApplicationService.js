@@ -416,4 +416,24 @@ module.exports = class LoanApplicationService {
       };
     }
   }
+
+  static async deleteLoanApplication(loanAppId) {
+        try {
+            const loanApplication = await LoanApplication.findById(loanAppId);
+
+            if (!loanApplication) {
+                return { success: false, message: "Loan application not found" };
+            }
+
+            await loanApplication.deleteOne();
+
+            return {
+                success: true,
+                message: "Loan application deleted successfully",
+            };
+        } catch (error) {
+            console.error("Error deleting loan application:", error);
+            return { success: false, message: "Error deleting loan application" };
+        }
+  }
 };
