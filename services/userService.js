@@ -50,6 +50,7 @@ module.exports = class UserService {
         }
     }
 
+    //to test if commits works
     static async getUsers(){
         try {
             const users = await User.find().populate('kyc_verification');
