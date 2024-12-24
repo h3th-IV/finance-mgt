@@ -204,7 +204,8 @@ module.exports = class UserService {
 
             await kyc.save();
             await user.save();
-            const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${kyc.bank_verification_number.otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
+            // const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${kyc.bank_verification_number.otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
+            const bvnMessage = `${kyc.bank_verification_number.otp}`;
             await sendMMSOtp(data.number, bvnMessage);
             return { success: true, message: "BVN details updated successfully.", user };
         } catch (error) {

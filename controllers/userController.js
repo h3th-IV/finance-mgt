@@ -96,8 +96,9 @@ module.exports = class UserController {
             const newOTP = await user.regenerateOTP();
             if (newOTP) {
                 // mailer.sendOTPEmail(user.email, user.first_name, newOTP);
-                const message = `Your OTP for completing signup is ${newOTP}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
-               const response = await sendMMSOtp(user.phone_number, message)
+                // const message = `Your OTP for completing signup is ${newOTP}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
+                const message = `${newOTP}`;
+               const response = await sendMMSOtp(user.phone_number, message);
                if (!response.success){
                 return errorResponse(res, 200, response.message);
                }
@@ -192,7 +193,8 @@ module.exports = class UserController {
                 return errorResponse(res, 404, response.message);
             }
 
-            const message = `Dear user, your OTP for resetting your Capitalwise account password is ${otp}. This OTP is valid for 5 minutes. If you did not request a password reset, please ignore this message.`;
+            // const message = `Dear user, your OTP for resetting your Capitalwise account password is ${otp}. This OTP is valid for 5 minutes. If you did not request a password reset, please ignore this message.`;
+            const message = `${otp}`;
             await sendMMSOtp(phone_number, message);
 
             // await mailer.sendForgotPassword(email, otp);
