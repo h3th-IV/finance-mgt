@@ -2,17 +2,18 @@ const mongoose = require('mongoose');
 const Permission = require('../models/permission');
 
 const permissions = [
-    { name: "getloanApplications", description: "View loan applications" },
-    { name: "createloanProduct", description: "Create loan products" },
-    { name: "approveloanApplication", description: "Approve loan applications" },
-    { name: "declineloanApplication", description: "Decline loan applications" },
-    { name: "updateloanApplication", description: "Update loan applications" },
-    { name: "disburseLoanApplication", description: "Disburse loan applications" },
-    { name: "updateLoanProduct", description: "Update loan products" },
-    { name: "deleteLoanProduct", description: "Delete loan products" },
-    { name: "deleteLoanApplication", description: "Delete loan applications" },
-    { name: "createRole", description: "Admin create new role and assign permissions" },
-    {name: "verifyDocs", description: "Document verification officers" }
+    { name: "VIEW_LOAN_APP", description: "View loan applications" },
+    { name: "CREATE_LOAN_PRODUCT", description: "Create loan products" },
+    { name: "CREATE_LOAN_APP", description: "Create loan application" },
+    { name: "APPROVE_LOAN_APP", description: "Approve loan applications" },
+    { name: "DECLINE_LOAN_APP", description: "Decline loan applications" },
+    { name: "UPDATE_LOAN_APP", description: "Update loan applications" },
+    { name: "DISBURSE_LOAN_APP", description: "Disburse loan applications" },
+    { name: "UPDATE_LOAN_PRODUCT", description: "Update loan products" },
+    { name: "DELETE_LOAN_PRODUCT", description: "Delete loan products" },
+    { name: "DELETE_LOAN_APP", description: "Delete loan applications" },
+    { name: "CREATE_ROLE", description: "Admin create new role and assign permissions" },
+    {name: "VERIFY_DOCS", description: "Document verification officers" }
 ]
 
 const seedPermissions = async () => {
