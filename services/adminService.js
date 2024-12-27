@@ -27,7 +27,9 @@ module.exports = class AdminService{
                 interest: product_data.interest,
                 max: product_data.max,
                 min: product_data.min,
-                createdBy: product_data.createdBy
+                createdBy: product_data.createdBy,
+                interest_type: product_data.interest_type,
+                duration: product_data.duration,
             }
             const loanProduct = await new LoanProduct(newloanProduct).save();
             return loanProduct;
@@ -126,6 +128,7 @@ module.exports = class AdminService{
 
     static async getRoles() {
         try{
+            // await Role.deleteMany();
             return await Role.find();
         } catch(error){
             throw new Error('Error fetching roles');

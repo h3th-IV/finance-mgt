@@ -6,16 +6,14 @@ const { verifyToken } = require('../middleware/tokenGenerator');
 
 
 router.post(
-    "/loan-application/:userId",
+    "/loan-application/:customerId",
     verifyToken,
     parser.fields([
         { name: "statement_of_account", maxCount: 1 },
-        // { name: "guarantor.kyc_guarantor_form", maxCount: 1 },
-        // { name: "guarantor.passport_form", maxCount: 1 },
         { name: "statement_of_networth", maxCount: 1 },
         { name: "security_cheque", maxCount: 1 },
     ]),
     LoanApplicationController.createLoanApplication);
-router.post('/calc-loan', verifyToken, LoanApplicationController.calculatorLoan);
+router.post('/calc-loan', LoanApplicationController.calculatorLoan);
 
 module.exports = router;
