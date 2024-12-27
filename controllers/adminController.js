@@ -25,12 +25,12 @@ module.exports = class AdminController{
     }
 
     static async createLoanProduct(req, res) {
-        const userId = req.params.userId;
+        const staffId = req.params.staffId;
         const { error } = createLoanProductSchema.validate(req.body);
         if (error) {
             return errorResponse(res, 400, error.details[0].message);
         }
-        const { name, description, interest, max, min } = req.body;
+        const { name, description, interest, max, min, interest_type, duration } = req.body;
         try {
             const product_data = {
                 name: name,
@@ -38,9 +38,12 @@ module.exports = class AdminController{
                 interest: interest,
                 max: max,
                 min: min,
-                createdBy: userId,
+                createdBy: staffId,
+                interest_type: interest_type,
+                duration: duration,
             };
             const loanProduct = await AdminService.createLoanProduct(product_data);
+            console.log(loanProduct);
             return successResponse(res, 201, "Loan product created successfully", loanProduct);
         } catch (error) {
             return errorResponse(res, 500, "Server error");
@@ -126,7 +129,7 @@ module.exports = class AdminController{
         }
     }
 
-    //login for admin routes
+    //login for admin routes for staffs
     static async login(req, res){
         const { error } = loginValidator.validate(req.body);
         if (error) {

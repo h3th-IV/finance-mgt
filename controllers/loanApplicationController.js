@@ -7,8 +7,9 @@ const { calculateRepaymentPlan } = require('../helpers/calcRepayment.helper');
 
 module.exports = class LoanApplicationController {
     static async createLoanApplication(req, res) {
-        const { userId } = req.params;
-        console.log({userId});
+        const { id, isStaff } = req.user;
+        const { customerId } = req.params; //customer id
+        console.log({customerId});
         
         const { loan_product, loan_amount, loan_duration } = req.body;
         const files = req.files;
@@ -30,8 +31,11 @@ module.exports = class LoanApplicationController {
             if (fileError) {
                 return errorResponse(res, 400, fileError);
             }
-
+            const createdByType = isStaff ? "Staff" : "User";
+            const createdBy = id;
+            const processingFee = parseFloat(value.loan_amount) * 0.01;
             const loanData = {
+                customer: customerId,
                 loan_product,
                 loan_amount: parseFloat(value.loan_amount),
                 loan_duration: parseInt(value.loan_duration, 10),
@@ -42,11 +46,15 @@ module.exports = class LoanApplicationController {
                 guarantor2: {
                     name: value["guarantor2.name"],
                     email: value["guarantor2.email"],
-                }
-            };
-            console.log({ userId, loanData, files });
+                },
+                createdByType,
+                createdBy,
+                processing_fee: processingFee,
 
-            const response = await LoanApplicationService.createLoanApplication(userId, loanData, files);
+            };
+            console.log('data', { customerId, loanData, files });
+
+            const response = await LoanApplicationService.createLoanApplication(loanData, files);
             if (!response.success) {
                 switch (response.code) {
                     case "NOT_FOUND":

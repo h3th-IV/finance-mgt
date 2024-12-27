@@ -18,13 +18,21 @@ const LoanProduct = new mongoose.Schema({
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "Staff",
         required: true,
     },
     status: {
         type: String,
         enum: ["active", "archived"],
         default: "active",
+    },
+    interest_type: {
+        type: String,
+        enum: ["flat_rate", "reducing_balance"]
+    },
+    duration: {
+        type: [Number], //a list of numbers csv
+        required: true,
     }
 }, {timestamps: true,});
 

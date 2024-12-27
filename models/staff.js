@@ -74,8 +74,9 @@ StaffSchema.pre("save", async function (next) {
 StaffSchema.methods.generateStaffToken = function () {
     return jwt.sign(
         {
-            staffId: this._id,
+            id: this._id,
             role: this.role,
+            isStaff: true,
         },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }

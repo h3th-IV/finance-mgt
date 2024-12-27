@@ -6,9 +6,9 @@ const Repayment = require("../models/repayment");
 const { sendGuarantorMail } = require("../config/mailer");
 
 module.exports = class LoanApplicationService {
-  static async createLoanApplication(customerId, loanData, files) {
+  static async createLoanApplication(loanData, files) {
     try {
-        console.log({customerId});
+        console.log('product', loanData.loan_product);
         
       const loanProduct = await LoanProduct.findById(loanData.loan_product);
       if (!loanProduct) {
@@ -30,6 +30,15 @@ module.exports = class LoanApplicationService {
         };
       }
 
+      const isValidDuration = loanProduct.duration.includes(loanData.loan_duration);
+      if (!isValidDuration) {
+          return {
+              success: false,
+              message: `Invalid loan duration. Allowed durations for ${loanProduct.name} are: ${loanProduct.duration.join(", ")} months.`,
+              code: "INVALID_DURATION",
+          };
+      }
+
       const lastLoan = await LoanApplication.findOne({}, { loan_id: 1 })
         .sort({ createdAt: -1 })
         .limit(1);
@@ -41,11 +50,10 @@ module.exports = class LoanApplicationService {
       }
 
       // Calculate repayment plan
-      const interestRate = loanProduct.interest;
       const repaymentPlan = calculateRepaymentPlan(
         loanData.loan_amount,
         loanData.loan_duration,
-        interestRate
+        loanProduct.interest,
       );
 
       // Process uploaded files
@@ -56,23 +64,12 @@ module.exports = class LoanApplicationService {
       const securityCheque = files["security_cheque"]?.[0]?.path || null;
 
       const loanApplication = new LoanApplication({
-        customer: customerId,
+        ...loanData,
         loan_id: newLoanId,
-        loan_product: loanData.loan_product,
-        interest_rate: interestRate,
-        loan_amount: loanData.loan_amount,
-        loan_duration: loanData.loan_duration,
+        interest_rate: loanProduct.interest,
         statement_of_account: statementOfAccount,
         statement_of_net_worth: statementOfNetWorth,
         security_cheque: securityCheque,
-        guarantor1: {
-          name: loanData.guarantor1.name,
-          email: loanData.guarantor1.email,
-        },
-        guarantor2: {
-          name: loanData.guarantor2.name,
-          email: loanData.guarantor2.email,
-        },
         date_disbursed: loanData.date_disbursed || null,
         repayment_plan: repaymentPlan,
       });
