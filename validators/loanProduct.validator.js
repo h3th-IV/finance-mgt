@@ -5,7 +5,7 @@ const createLoanProductSchema = Joi.object({
         "string.empty": "Name is required",
         "any.required": "Name is required",
     }),
-    desc: Joi.string().required().messages({
+    description: Joi.string().required().messages({
         "string.empty": "Description is required",
         "any.required": "Description is required",
     }),

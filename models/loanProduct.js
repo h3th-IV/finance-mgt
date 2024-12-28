@@ -3,18 +3,24 @@ const mongoose = require('mongoose');
 const LoanProduct = new mongoose.Schema({
     name: {
         type: String,
+        required: true,
     },
     desc: {
         type: String,
+        required: true,
+
     },
     interest: {
         type: Number,
+        required: true,
     },
     max: {
         type: Number,
+        required: true,
     },
     min: {
         type: Number,
+        required: true,
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

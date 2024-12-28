@@ -9,20 +9,14 @@ module.exports = class LoanApplicationController {
     static async createLoanApplication(req, res) {
         const { id, isStaff } = req.user;
         const { customerId } = req.params; //customer id
-        console.log({customerId});
         
         const { loan_product, loan_amount, loan_duration } = req.body;
-        const files = req.files;
-        console.log({files});
-        
+        const files = req.files;        
 
         try {
             const { error, value } = loanApplicationValidator.validate(
               req.body
-            );
-
-            console.log({value});
-            
+            );            
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
             }
@@ -52,7 +46,6 @@ module.exports = class LoanApplicationController {
                 processing_fee: processingFee,
 
             };
-            console.log('data', { customerId, loanData, files });
 
             const response = await LoanApplicationService.createLoanApplication(loanData, files);
             if (!response.success) {
@@ -190,7 +183,7 @@ module.exports = class LoanApplicationController {
     static async calculatorLoan(req, res) {
         const { loan_product, loan_amount, loan_duration } = req.body;
         try {
-            const { error } =  loanApplicationCalcValidator.validate({
+            const { error, value } =  loanApplicationCalcValidator.validate({
                 loan_product,
                 loan_amount,
                 loan_duration,
@@ -198,11 +191,14 @@ module.exports = class LoanApplicationController {
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
             }
+            
 
+            const processingFee = parseFloat(value.loan_amount) * 0.01;
             const loanData = {
                 loan_product,
                 loan_amount: parseFloat(loan_amount),
                 loan_duration: parseInt(loan_duration, 10),
+                processingFee
             };
             const response = await LoanApplicationService.calculateLoanApp(loanData);
             if (!response.success) {
@@ -220,6 +216,7 @@ module.exports = class LoanApplicationController {
             }
             return successResponse(res, 200, "Preview loan application.", response);
         } catch (error) {
+            console.error(error)
             return errorResponse(res, 500, "Server error");
         }
     }

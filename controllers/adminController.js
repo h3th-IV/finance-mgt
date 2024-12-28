@@ -42,6 +42,7 @@ module.exports = class AdminController{
                 interest_type: interest_type,
                 duration: duration,
             };
+            console.log(product_data)
             const loanProduct = await AdminService.createLoanProduct(product_data);
             console.log(loanProduct);
             return successResponse(res, 201, "Loan product created successfully", loanProduct);
