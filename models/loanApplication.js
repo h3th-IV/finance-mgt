@@ -53,6 +53,7 @@ const LoanApplication = new mongoose.Schema(
             enum: [
                 "new",
                 "processing",
+                "approved",
                 "disbursed",
                 "overdue",
                 "fully_paid",

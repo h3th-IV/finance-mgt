@@ -1,21 +1,35 @@
-const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate) => {
-    const monthlyInterest = (interestRate / 100) * loanAmount;
-    const monthlyRepayment = loanAmount / loanDuration + monthlyInterest;
-    const totalPayment = monthlyRepayment * loanDuration;
-    const totalCapital = loanAmount;
-    const totalInterest = totalPayment - totalCapital;
+const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate, interestType, processing_fee) => {
+    let monthlyPayment, totalPayment_, totalInterest, totalCapital, totalPayment;
+
+    if (interestType === "flat_rate") {
+        //flat-rate calculation
+        totalInterest = (interestRate / 100) * loanAmount * loanDuration / 12;
+        totalCapital = loanAmount;
+        totalPayment_ = totalCapital + totalInterest;
+        monthlyPayment = totalPayment_ / loanDuration;
+        totalPayment =  totalCapital + totalInterest + processing_fee
+    } else if (interestType === "reducing_balance") {
+        //reducing balance calculation
+        const monthlyRate = interestRate / 100 / 12;
+        monthlyPayment = loanAmount * monthlyRate / (1 - Math.pow(1 + monthlyRate, -loanDuration));
+        totalPayment_ = monthlyPayment * loanDuration;
+        totalPayment = monthlyPayment * loanDuration + processing_fee;
+        totalInterest = totalPayment_ - loanAmount;
+    } else {
+        throw new Error("Invalid interest type");
+    }
 
     return {
-        monthlyPayment: monthlyRepayment.toFixed(2),
+        monthlyPayment: monthlyPayment.toFixed(2),
         totalPayment: totalPayment.toFixed(2),
-        totalCapital: totalCapital.toFixed(2),
+        totalCapital: loanAmount.toFixed(2),
         totalInterest: totalInterest.toFixed(2),
         duration: loanDuration,
-        interestRate: interestRate
+        interestRate: interestRate,
+        interestType: interestType,
     };
 };
 
-
 module.exports = {
     calculateRepaymentPlan,
-}; 
+};

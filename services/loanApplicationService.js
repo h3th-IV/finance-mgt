@@ -7,9 +7,7 @@ const { sendGuarantorMail } = require("../config/mailer");
 
 module.exports = class LoanApplicationService {
   static async createLoanApplication(loanData, files) {
-    try {
-        console.log('product', loanData.loan_product);
-        
+    try {        
       const loanProduct = await LoanProduct.findById(loanData.loan_product);
       if (!loanProduct) {
         return {
@@ -54,6 +52,8 @@ module.exports = class LoanApplicationService {
         loanData.loan_amount,
         loanData.loan_duration,
         loanProduct.interest,
+        loanProduct.interest_type,
+        loanData.processing_fee
       );
 
       // Process uploaded files
@@ -75,12 +75,7 @@ module.exports = class LoanApplicationService {
       });
 
       const x = await loanApplication.save();
-      const _loanApplication = await LoanApplication.findById(x._id)
-        .populate("customer", "name")
-        .populate("loan_product", "name");
-
-        console.log({_loanApplication});
-        
+      const _loanApplication = await LoanApplication.findById(x._id).populate("customer", "name").populate("loan_product", "name");        
 
       // Send emails to guarantors
       await Promise.all([
@@ -136,17 +131,26 @@ module.exports = class LoanApplicationService {
         };
       }
 
-      if (
-        updateData.status === "approved" &&
-        loanApplication.status !== "approved"
-      ) {
+      if (updateData.status === "approved" && loanApplication.status !== "approved") {
         const currentDate = new Date();
         loanApplication.status = "approved";
         loanApplication.date_disbursed = currentDate;
 
-        // Generate repayments
-        const repaymentCount =
-          updateData.loan_duration || loanApplication.loan_duration;
+        //generate repayment
+        const loanProduct = loanApplication.loan_product;
+        const loanDuration = updateData.loan_duration || loanApplication.loan_duration;
+        const repaymentPlan = calculateRepaymentPlan(
+                  loanApplication.loan_amount,
+                  loanDuration,
+                  loanProduct.interest,
+                  loanProduct.interest_type,
+                  loanApplication.processing_fee
+        );
+
+          const monthlyPayment = parseFloat(repaymentPlan.monthlyPayment);
+          const monthlyPrincipal = parseFloat(repaymentPlan.totalCapital) / loanDuration;
+          const monthlyInterest = parseFloat(repaymentPlan.totalInterest) / loanDuration;
+
         const repayments = [];
         const lastRepayment = await Repayment.findOne().sort({
           repayment_id: -1,
@@ -155,13 +159,16 @@ module.exports = class LoanApplicationService {
           ? parseInt(lastRepayment.repayment_id.slice(4))
           : 123;
 
-        for (let i = 0; i < repaymentCount; i++) {
+        for (let i = 0; i < loanDuration; i++) {
           const repaymentId = `CWRP${++lastRepaymentId}`;
           const dueDate = new Date(currentDate);
           dueDate.setMonth(dueDate.getMonth() + i + 1);
 
           const repayment = new Repayment({
             repayment_id: repaymentId,
+            principal: monthlyPrincipal,
+            interest: monthlyInterest,
+            amount: monthlyPayment,
             due_date: dueDate,
           });
           await repayment.save();
@@ -169,6 +176,7 @@ module.exports = class LoanApplicationService {
         }
 
         loanApplication.repayments = repayments;
+        loanApplication.repayment_plan = repaymentPlan;
       }
 
       if (updateData.loan_duration) {
@@ -184,11 +192,13 @@ module.exports = class LoanApplicationService {
         const repaymentPlan = calculateRepaymentPlan(
           loanApplication.loan_amount,
           updateData.loan_duration,
-          loanProduct.interest
-        );
-
+          loanProduct.interest,
+          loanProduct.interest_type,
+          loanApplication.processing_fee
+        )
         loanApplication.loan_duration = updateData.loan_duration;
-        loanApplication.repayment_plan = repaymentPlan;
+        loanApplication.repayment_plan.monthly_payment = repaymentPlan.monthlyPayment;
+        loanApplication.repayment_plan.total_payment = repaymentPlan.totalPayment + loanApplication.processing_fee;
       }
 
       await loanApplication.save();
@@ -256,6 +266,7 @@ module.exports = class LoanApplicationService {
           );
 
           const totalApplications = await LoanApplication.countDocuments(queryFilter);
+          // await LoanApplication.deleteMany();
 
           const totalPages = Math.ceil(totalApplications / limit);
 
@@ -394,19 +405,60 @@ module.exports = class LoanApplicationService {
           code: "INVALID_AMOUNT",
         };
       }
+
+      const isValidDuration = loanProduct.duration.includes(loanData.loan_duration);
+      if (!isValidDuration) {
+          return {
+              success: false,
+              message: `Invalid loan duration. Allowed durations for ${loanProduct.name} are: ${loanProduct.duration.join(", ")} months.`,
+              code: "INVALID_DURATION",
+          };
+      }
+
+      const currentDate = new Date();
       const interestRate = loanProduct.interest;
       const repaymentPlan = calculateRepaymentPlan(
         loanData.loan_amount,
         loanData.loan_duration,
-        interestRate
+        interestRate,
+        loanProduct.interest_type,
+        loanData.processingFee
       );
-      console.log({repaymentPlan});
-      
+
+      const monthlyPayment = parseFloat(repaymentPlan.monthlyPayment);
+      const monthlyPrincipal = parseFloat(repaymentPlan.totalCapital) / loanData.loan_duration;
+      const monthlyInterest = parseFloat(repaymentPlan.totalInterest) / loanData.loan_duration;
+
+      const repayments = [];
+      const lastRepayment = await Repayment.findOne().sort({
+          repayment_id: -1,
+      });
+      let lastRepaymentId = lastRepayment
+        ? parseInt(lastRepayment.repayment_id.slice(4))
+        : 123;
+
+      for (let i = 0; i < loanData.loan_duration; i++) {
+        const repaymentId = `CWRP${++lastRepaymentId}`;
+        const dueDate = new Date(currentDate);
+        dueDate.setMonth(dueDate.getMonth() + i + 1);
+
+        const repayment = new Repayment({
+          repayment_id: repaymentId,
+          principal: monthlyPrincipal,
+          interest: monthlyInterest,
+          amount: monthlyPayment,
+          due_date: dueDate,
+        });
+        await repayment.save();
+        repayments.push(repayment);
+      } 
       return {
         success: true,
         repaymentPlan,
+        repayments,
       };
     } catch (error) {
+      console.log(error);
       return {
         success: false,
         message: "Error Calculating Loan Data",
