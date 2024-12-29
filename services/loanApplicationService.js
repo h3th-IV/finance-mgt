@@ -120,109 +120,129 @@ module.exports = class LoanApplicationService {
 
   static async updateLoanApplication(loanApplicationId, updateData) {
     try {
-      const loanApplication = await LoanApplication.findById(
-        loanApplicationId
-      ).populate("loan_product");
-      if (!loanApplication) {
+        const loanApplication = await LoanApplication.findById(loanApplicationId).populate("loan_product");
+        if (!loanApplication) {
+            return {
+                success: false,
+                message: "Loan application not found",
+                code: "NOT_FOUND",
+            };
+        }
+        const loanProduct = loanApplication.loan_product;
+        if(updateData.loan_duration){
+          if(!loanProduct.duration.includes(updateData.loan_duration)){
+            return {
+              success: false,
+              message: `Invalid loan duration. Allowed durations for ${loanProduct.name} are: ${loanProduct.duration.join(", ")} months.`,
+              code: "INVALID_DURATION",}
+          }
+        }
+        if (updateData.status === "approved" && loanApplication.status !== "approved") {
+            const currentDate = new Date();
+            loanApplication.status = "approved";
+            loanApplication.date_disbursed = currentDate;
+
+            //gen repayment plan
+            const loanDuration = updateData.loan_duration || loanApplication.loan_duration;
+
+            const repaymentPlan = calculateRepaymentPlan(
+                loanApplication.loan_amount,
+                loanDuration,
+                loanProduct.interest,
+                loanProduct.interest_type,
+                loanApplication.processing_fee
+            );
+            console.log(repaymentPlan);
+            const repayments = [];
+            const lastRepayment = await Repayment.findOne().sort({ repayment_id: -1 });
+            let lastRepaymentId = lastRepayment ? parseInt(lastRepayment.repayment_id.slice(4)) : 123;
+
+            if (loanProduct.interest_type === "flat_rate") {
+                const monthlyPayment = parseFloat(repaymentPlan.monthlyPayment);
+                const monthlyPrincipal = parseFloat(repaymentPlan.totalCapital) / loanDuration;
+                const monthlyInterest = parseFloat(repaymentPlan.totalInterest) / loanDuration;
+
+                for (let i = 0; i < loanDuration; i++) {
+                    const repaymentId = `CWRP${++lastRepaymentId}`;
+                    const dueDate = new Date(currentDate);
+                    dueDate.setMonth(dueDate.getMonth() + i + 1);
+
+                    const repayment = new Repayment({
+                        repayment_id: repaymentId,
+                        principal: monthlyPrincipal,
+                        remaining_principal: loanApplication.loan_amount - monthlyPrincipal * (i + 1),
+                        interest: monthlyInterest,
+                        amount: monthlyPayment,
+                        due_date: dueDate,
+                    });
+                    await repayment.save();
+                    repayments.push(repayment._id);
+                }
+            } else if (loanProduct.interest_type === "reducing_balance") {
+              for (const [index, schedule] of repaymentPlan.repaymentSchedule.entries()) {
+                const repaymentId = `CWRP${++lastRepaymentId}`;
+                const dueDate = new Date(currentDate);
+                dueDate.setMonth(dueDate.getMonth() + index + 1);
+        
+                const repayment = new Repayment({
+                    repayment_id: repaymentId,
+                    principal: parseFloat(schedule.principal),
+                    remaining_principal: parseFloat(schedule.remainingPrincipal),
+                    interest: parseFloat(schedule.interest),
+                    amount: parseFloat(schedule.payment),
+                    due_date: dueDate,
+                });
+                await repayment.save();
+                repayments.push(repayment._id);
+              }
+            }
+
+            loanApplication.repayments = repayments;
+            loanApplication.repayment_plan = repaymentPlan;
+        }
+
+        // Handle updates to loan duration
+        if (updateData.loan_duration) {
+            if (updateData.loan_duration <= 0) {
+                return {
+                    success: false,
+                    message: "Loan duration must be greater than 0.",
+                    code: "INVALID_DURATION",
+                };
+            }
+            // const loanProduct = loanApplication.loan_product;
+            // const repaymentPlan = calculateRepaymentPlan(
+            //     loanApplication.loan_amount,
+            //     updateData.loan_duration,
+            //     loanProduct.interest,
+            //     loanProduct.interest_type,
+            //     loanApplication.processing_fee
+            // );
+
+            loanApplication.loan_duration = updateData.loan_duration;
+            // loanApplication.repayment_plan = repaymentPlan;
+        }
+
+        await loanApplication.save();
+        const updatedLoanApplication = await LoanApplication.findById(loanApplication._id)
+            .populate("loan_product")
+            .populate("repayments");
+
         return {
-          success: false,
-          message: "Loan application not found",
-          code: "NOT_FOUND",
+            success: true,
+            loanApplication: updatedLoanApplication,
+            repaymentPlan: loanApplication.repayment_plan || null,
         };
-      }
-
-      if (updateData.status === "approved" && loanApplication.status !== "approved") {
-        const currentDate = new Date();
-        loanApplication.status = "approved";
-        loanApplication.date_disbursed = currentDate;
-
-        //generate repayment
-        const loanProduct = loanApplication.loan_product;
-        const loanDuration = updateData.loan_duration || loanApplication.loan_duration;
-        const repaymentPlan = calculateRepaymentPlan(
-                  loanApplication.loan_amount,
-                  loanDuration,
-                  loanProduct.interest,
-                  loanProduct.interest_type,
-                  loanApplication.processing_fee
-        );
-
-          const monthlyPayment = parseFloat(repaymentPlan.monthlyPayment);
-          const monthlyPrincipal = parseFloat(repaymentPlan.totalCapital) / loanDuration;
-          const monthlyInterest = parseFloat(repaymentPlan.totalInterest) / loanDuration;
-
-        const repayments = [];
-        const lastRepayment = await Repayment.findOne().sort({
-          repayment_id: -1,
-        });
-        let lastRepaymentId = lastRepayment
-          ? parseInt(lastRepayment.repayment_id.slice(4))
-          : 123;
-
-        for (let i = 0; i < loanDuration; i++) {
-          const repaymentId = `CWRP${++lastRepaymentId}`;
-          const dueDate = new Date(currentDate);
-          dueDate.setMonth(dueDate.getMonth() + i + 1);
-
-          const repayment = new Repayment({
-            repayment_id: repaymentId,
-            principal: monthlyPrincipal,
-            interest: monthlyInterest,
-            amount: monthlyPayment,
-            due_date: dueDate,
-          });
-          await repayment.save();
-          repayments.push(repayment._id);
-        }
-
-        loanApplication.repayments = repayments;
-        loanApplication.repayment_plan = repaymentPlan;
-      }
-
-      if (updateData.loan_duration) {
-        if (updateData.loan_duration <= 0) {
-          return {
-            success: false,
-            message: "Loan duration must be greater than 0.",
-            code: "INVALID_DURATION",
-          };
-        }
-
-        const loanProduct = loanApplication.loan_product;
-        const repaymentPlan = calculateRepaymentPlan(
-          loanApplication.loan_amount,
-          updateData.loan_duration,
-          loanProduct.interest,
-          loanProduct.interest_type,
-          loanApplication.processing_fee
-        )
-        loanApplication.loan_duration = updateData.loan_duration;
-        loanApplication.repayment_plan.monthly_payment = repaymentPlan.monthlyPayment;
-        loanApplication.repayment_plan.total_payment = repaymentPlan.totalPayment + loanApplication.processing_fee;
-      }
-
-      await loanApplication.save();
-      const updatedLoanApplication = await LoanApplication.findById(
-        loanApplication._id
-      )
-        .populate("loan_product")
-        .populate("repayments");
-
-      return {
-        success: true,
-        loanApplication: updatedLoanApplication,
-        repaymentPlan: loanApplication.repayment_plan || null,
-      };
     } catch (error) {
-      console.error("Error updating loan application:", error);
-      return {
-        success: false,
-        message:
-          "An unexpected error occurred while updating the loan application.",
-        code: "SERVER_ERROR",
-      };
+        console.error("Error updating loan application:", error);
+        return {
+            success: false,
+            message: "An unexpected error occurred while updating the loan application.",
+            code: "SERVER_ERROR",
+        };
     }
   }
+
 
     static async getAllLoanApplication(filters, pagination) {
       const { status, search } = filters;
@@ -385,86 +405,103 @@ module.exports = class LoanApplicationService {
     }
   }
 
+
   static async calculateLoanApp(loanData) {
     try {
-      const loanProduct = await LoanProduct.findById(loanData.loan_product);
-      if (!loanProduct) {
+      console.log('entered the function');
+        const loanProduct = await LoanProduct.findById(loanData.loan_product);
+        if (!loanProduct) {
+            return {
+                success: false,
+                message: "Loan product not found",
+                code: "NOT_FOUND",
+            };
+        }
+        if (
+            loanData.loan_amount < loanProduct.min ||
+            loanData.loan_amount > loanProduct.max
+        ) {
+            return {
+                success: false,
+                message: `Loan amount for ${loanProduct.name} must be between ${loanProduct.min} and ${loanProduct.max}`,
+                code: "INVALID_AMOUNT",
+            };
+        }
+
+        if (!loanProduct.duration.includes(loanData.loan_duration)) {
+            return {
+                success: false,
+                message: `Invalid loan duration. Allowed durations for ${loanProduct.name} are: ${loanProduct.duration.join(", ")} months.`,
+                code: "INVALID_DURATION",
+            };
+        }
+
+        //gen repayment plan
+        const interestRate = loanProduct.interest;
+        const repaymentPlan = calculateRepaymentPlan(
+            loanData.loan_amount,
+            loanData.loan_duration,
+            interestRate,
+            loanProduct.interest_type,
+            loanData.processingFee
+        );
+
+        // {
+        //   monthlyPayment: '1750.00',
+        //   totalPayment: '10600.00',
+        //   totalCapital: '10000.00',
+        //   totalInterest: '500.00',
+        //   duration: 6,
+        //   interestRate: 10,
+        //   interestType: 'flat_rate',
+        //   repaymentSchedule: null
+        // }
+        
+        console.log(repaymentPlan);
+        console.log('test here')
+
+        let repayments = [];
+        if (loanProduct.interest_type === "flat_rate") {
+            const monthlyPayment = parseFloat(repaymentPlan.monthlyPayment);
+            const monthlyPrincipal = parseFloat(repaymentPlan.totalCapital) / loanData.loan_duration;
+            const monthlyInterest = parseFloat(repaymentPlan.totalInterest) / loanData.loan_duration;
+
+            //create repayment schedule for flat-rate
+            for (let i = 0; i < loanData.loan_duration; i++) {
+                repayments.push({
+                    repayment_id: null,
+                    principal: monthlyPrincipal.toFixed(2),
+                    interest: monthlyInterest.toFixed(2),
+                    amount: monthlyPayment.toFixed(2),
+                    due_date: null,
+                });
+            }
+        } else if (loanProduct.interest_type === "reducing_balance") {
+            //make use for repayment schedule from the helper
+            repayments = repaymentPlan.repaymentSchedule.map((schedule) => ({
+                repayment_id: null,
+                principal: parseFloat(schedule.principal).toFixed(2),
+                interest: parseFloat(schedule.interest).toFixed(2),
+                amount: parseFloat(schedule.payment).toFixed(2),
+                remaining_principal: parseFloat(schedule.remainingPrincipal).toFixed(2),
+                due_date: null,
+            }));
+        }
+
         return {
-          success: false,
-          message: "Loan product not found",
-          code: "NOT_FOUND",
+            success: true,
+            repaymentPlan,
+            repayments,
         };
-      }
-      const compare =
-        loanData.loan_amount < loanProduct.min ||
-        loanData.loan_amount > loanProduct.max;
-      if (compare === true) {
-        return {
-          success: false,
-          message: `Loan amount for ${loanProduct.name} must be between ${loanProduct.min} and ${loanProduct.max}`,
-          code: "INVALID_AMOUNT",
-        };
-      }
-
-      const isValidDuration = loanProduct.duration.includes(loanData.loan_duration);
-      if (!isValidDuration) {
-          return {
-              success: false,
-              message: `Invalid loan duration. Allowed durations for ${loanProduct.name} are: ${loanProduct.duration.join(", ")} months.`,
-              code: "INVALID_DURATION",
-          };
-      }
-
-      const currentDate = new Date();
-      const interestRate = loanProduct.interest;
-      const repaymentPlan = calculateRepaymentPlan(
-        loanData.loan_amount,
-        loanData.loan_duration,
-        interestRate,
-        loanProduct.interest_type,
-        loanData.processingFee
-      );
-
-      const monthlyPayment = parseFloat(repaymentPlan.monthlyPayment);
-      const monthlyPrincipal = parseFloat(repaymentPlan.totalCapital) / loanData.loan_duration;
-      const monthlyInterest = parseFloat(repaymentPlan.totalInterest) / loanData.loan_duration;
-
-      const repayments = [];
-      const lastRepayment = await Repayment.findOne().sort({
-          repayment_id: -1,
-      });
-      let lastRepaymentId = lastRepayment
-        ? parseInt(lastRepayment.repayment_id.slice(4))
-        : 123;
-
-      for (let i = 0; i < loanData.loan_duration; i++) {
-        const repaymentId = `CWRP${++lastRepaymentId}`;
-        const dueDate = new Date(currentDate);
-        dueDate.setMonth(dueDate.getMonth() + i + 1);
-
-        const repayment = new Repayment({
-          repayment_id: repaymentId,
-          principal: monthlyPrincipal,
-          interest: monthlyInterest,
-          amount: monthlyPayment,
-          due_date: dueDate,
-        });
-        await repayment.save();
-        repayments.push(repayment);
-      } 
-      return {
-        success: true,
-        repaymentPlan,
-        repayments,
-      };
     } catch (error) {
-      console.log(error);
-      return {
-        success: false,
-        message: "Error Calculating Loan Data",
-      };
+        console.error("Error calculating loan preview:", error);
+        return {
+            success: false,
+            message: "Error Calculating Loan Data",
+        };
     }
   }
+
 
   static async deleteLoanApplication(loanAppId) {
         try {

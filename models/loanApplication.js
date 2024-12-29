@@ -63,12 +63,24 @@ const LoanApplication = new mongoose.Schema(
             default: "processing",
         },
         repayment_plan: {
-            monthly_payment: {
+            monthlyPayment: {
                 type: Number,
             },
-            total_payment: {
+            totalPayment: {
                 type: Number,
             },
+            totalInterest: {
+                type: Number,
+            },
+            duration: {
+                type: Number,
+            },
+            interestRate: {
+                type: Number,
+            },
+            interestType: {
+                type: String,
+            }
         },
         repayments: [
             {
