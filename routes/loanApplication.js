@@ -15,5 +15,6 @@ router.post(
     ]),
     LoanApplicationController.createLoanApplication);
 router.post('/calc-loan', LoanApplicationController.calculatorLoan);
+router.get('/get-single-loan/:identifier', verifyToken, LoanApplicationController.getLoanApplication);
 
 module.exports = router;
