@@ -8,6 +8,9 @@ const Repayment = new mongoose.Schema({
     principal: {
         type: Number,
     },
+    remaining_principal: {
+        type: Number
+    },
     interest: {
         type: Number
     },

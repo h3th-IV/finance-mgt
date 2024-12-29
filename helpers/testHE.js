@@ -1,23 +1,21 @@
 const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate, interestType, processing_fee) => {
     let monthlyPayment, totalPayment, totalInterest = 0, totalCapital = loanAmount;
-    let repaymentSchedule = []; //this will be only populated for reducing balance loans
 
     if (interestType === "flat_rate") {
-        //flat-rate calculation
+        // Flat-rate calculation
         totalInterest = (interestRate / 100) * loanAmount * loanDuration / 12;
         totalPayment = loanAmount + totalInterest + processing_fee;
         monthlyPayment = (loanAmount + totalInterest) / loanDuration;
-
-        //no repayment schedule required for flat-rate
     } else if (interestType === "reducing_balance") {
-        //reducing balance calculation
+        // Reducing balance calculation
         const monthlyRate = interestRate / 100 / 12;
         monthlyPayment = loanAmount * monthlyRate / (1 - Math.pow(1 + monthlyRate, -loanDuration));
         totalPayment = monthlyPayment * loanDuration + processing_fee;
 
         let remainingPrincipal = loanAmount;
 
-        //simulate detailed repayment schedule
+        // Simulate monthly breakdown
+        const repaymentSchedule = [];
         for (let i = 1; i <= loanDuration; i++) {
             const monthlyInterest = remainingPrincipal * monthlyRate;
             const principalRepayment = monthlyPayment - monthlyInterest;
@@ -33,6 +31,8 @@ const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate, interest
             totalInterest += monthlyInterest;
             remainingPrincipal -= principalRepayment;
         }
+
+        console.log(repaymentSchedule); // Logs the breakdown for debugging
     } else {
         throw new Error("Invalid interest type");
     }
@@ -45,10 +45,5 @@ const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate, interest
         duration: loanDuration,
         interestRate: interestRate,
         interestType: interestType,
-        repaymentSchedule: interestType === "reducing_balance" ? repaymentSchedule : null,
     };
-};
-
-module.exports = {
-    calculateRepaymentPlan,
 };
