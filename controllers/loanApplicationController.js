@@ -191,7 +191,7 @@ module.exports = class LoanApplicationController {
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
             }
-            
+
 
             const processingFee = parseFloat(value.loan_amount) * 0.01;
             const loanData = {
@@ -237,5 +237,28 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, "Server error");
         }
     }
+
+    static async getLoanApplication(req, res) {
+        const { identifier } = req.params;
+        try {
+            const result = await LoanApplicationService.getLoanApplicationByIdOrLoanId(identifier);
+    
+            switch (result.code) {
+                case "NOT_FOUND":
+                    return errorResponse(res, 404, result.message);
+                case "SERVER_ERROR":
+                    return errorResponse(res, 500, result.message);
+                default:
+                    break;
+            }
+    
+            return successResponse(res, 200, "Loan application retrieved successfully", {
+                loanApplication: result.loanApplication,
+            });
+        } catch (error) {
+            console.error("Error in getLoanApplication controller:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    } 
 }
 
