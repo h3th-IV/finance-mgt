@@ -4,6 +4,7 @@ const LoanProduct = require("../models/loanProduct");
 const { calculateRepaymentPlan } = require("../helpers/calcRepayment.helper");
 const Repayment = require("../models/repayment");
 const { sendGuarantorMail } = require("../config/mailer");
+const { default: mongoose } = require("mongoose");
 
 module.exports = class LoanApplicationService {
   static async createLoanApplication(loanData, files) {
@@ -110,6 +111,7 @@ module.exports = class LoanApplicationService {
         repaymentPlan,
       };
     } catch (error) {
+      console.error('Error creating loan application',error);
       return {
         success: false,
         message: `Error: ${error.message}`,
@@ -136,6 +138,26 @@ module.exports = class LoanApplicationService {
               message: `Invalid loan duration. Allowed durations for ${loanProduct.name} are: ${loanProduct.duration.join(", ")} months.`,
               code: "INVALID_DURATION",}
           }
+
+          if (updateData.loan_duration <= 0) {
+            return {
+                success: false,
+                message: "Loan duration must be greater than 0.",
+                code: "INVALID_DURATION",
+            };
+          }
+          loanApplication.loan_duration = updateData.loan_duration;
+
+            // Recalculate repayment plan
+          const repaymentPlan = calculateRepaymentPlan(
+              loanApplication.loan_amount,
+              updateData.loan_duration,
+              loanProduct.interest,
+              loanProduct.interest_type,
+              loanApplication.processing_fee
+            );
+
+            loanApplication.repayment_plan = repaymentPlan;
         }
         if (updateData.status === "approved" && loanApplication.status !== "approved") {
             const currentDate = new Date();
@@ -152,31 +174,30 @@ module.exports = class LoanApplicationService {
                 loanProduct.interest_type,
                 loanApplication.processing_fee
             );
-            console.log(repaymentPlan);
             const repayments = [];
             const lastRepayment = await Repayment.findOne().sort({ repayment_id: -1 });
             let lastRepaymentId = lastRepayment ? parseInt(lastRepayment.repayment_id.slice(4)) : 123;
 
             if (loanProduct.interest_type === "flat_rate") {
-                const monthlyPayment = parseFloat(repaymentPlan.monthlyPayment);
-                const monthlyPrincipal = parseFloat(repaymentPlan.totalCapital) / loanDuration;
-                const monthlyInterest = parseFloat(repaymentPlan.totalInterest) / loanDuration;
-
-                for (let i = 0; i < loanDuration; i++) {
-                    const repaymentId = `CWRP${++lastRepaymentId}`;
-                    const dueDate = new Date(currentDate);
-                    dueDate.setMonth(dueDate.getMonth() + i + 1);
-
-                    const repayment = new Repayment({
-                        repayment_id: repaymentId,
-                        principal: monthlyPrincipal,
-                        remaining_principal: loanApplication.loan_amount - monthlyPrincipal * (i + 1),
-                        interest: monthlyInterest,
-                        amount: monthlyPayment,
-                        due_date: dueDate,
-                    });
-                    await repayment.save();
-                    repayments.push(repayment._id);
+              const monthlyPayment = parseFloat(repaymentPlan.monthlyPayment);
+              const monthlyPrincipal = parseFloat(repaymentPlan.totalCapital) / loanDuration;
+              const monthlyInterest = parseFloat(repaymentPlan.totalInterest) / loanDuration;
+          
+              for (let i = 0; i < loanDuration; i++) {
+                  const repaymentId = `CWRP${++lastRepaymentId}`;
+                  const dueDate = new Date(currentDate);
+                  dueDate.setMonth(dueDate.getMonth() + i + 1);
+          
+                  const repayment = new Repayment({
+                      repayment_id: repaymentId,
+                      principal: monthlyPrincipal,
+                      interest: monthlyInterest,
+                      amount: monthlyPayment,
+                      due_date: dueDate,
+                  });
+          
+                  await repayment.save();
+                  repayments.push(repayment._id);
                 }
             } else if (loanProduct.interest_type === "reducing_balance") {
               for (const [index, schedule] of repaymentPlan.repaymentSchedule.entries()) {
@@ -201,32 +222,8 @@ module.exports = class LoanApplicationService {
             loanApplication.repayment_plan = repaymentPlan;
         }
 
-        // Handle updates to loan duration
-        if (updateData.loan_duration) {
-            if (updateData.loan_duration <= 0) {
-                return {
-                    success: false,
-                    message: "Loan duration must be greater than 0.",
-                    code: "INVALID_DURATION",
-                };
-            }
-            // const loanProduct = loanApplication.loan_product;
-            // const repaymentPlan = calculateRepaymentPlan(
-            //     loanApplication.loan_amount,
-            //     updateData.loan_duration,
-            //     loanProduct.interest,
-            //     loanProduct.interest_type,
-            //     loanApplication.processing_fee
-            // );
-
-            loanApplication.loan_duration = updateData.loan_duration;
-            // loanApplication.repayment_plan = repaymentPlan;
-        }
-
         await loanApplication.save();
-        const updatedLoanApplication = await LoanApplication.findById(loanApplication._id)
-            .populate("loan_product")
-            .populate("repayments");
+        const updatedLoanApplication = await LoanApplication.findById(loanApplication._id).populate("loan_product").populate("repayments");
 
         return {
             success: true,
@@ -397,7 +394,7 @@ module.exports = class LoanApplicationService {
                 },
             };
     } catch (error) {
-      console.error("Error fetching loan applications:", error);
+      console.error("Error fetching user's loan applications:", error);
       return {
         success: false,
         message: "Could not fetch loan applications",
@@ -408,7 +405,6 @@ module.exports = class LoanApplicationService {
 
   static async calculateLoanApp(loanData) {
     try {
-      console.log('entered the function');
         const loanProduct = await LoanProduct.findById(loanData.loan_product);
         if (!loanProduct) {
             return {
@@ -445,20 +441,7 @@ module.exports = class LoanApplicationService {
             loanProduct.interest_type,
             loanData.processingFee
         );
-
-        // {
-        //   monthlyPayment: '1750.00',
-        //   totalPayment: '10600.00',
-        //   totalCapital: '10000.00',
-        //   totalInterest: '500.00',
-        //   duration: 6,
-        //   interestRate: 10,
-        //   interestType: 'flat_rate',
-        //   repaymentSchedule: null
-        // }
         
-        console.log(repaymentPlan);
-        console.log('test here')
 
         let repayments = [];
         if (loanProduct.interest_type === "flat_rate") {
@@ -521,5 +504,37 @@ module.exports = class LoanApplicationService {
             console.error("Error deleting loan application:", error);
             return { success: false, message: "Error deleting loan application" };
         }
+  }
+
+  static async getLoanApplicationByIdOrLoanId(identifier) {
+    try {
+        const query = mongoose.Types.ObjectId.isValid(identifier)
+            ? { _id: identifier }
+            : { loan_id: identifier };
+
+        const loanApplication = await LoanApplication.findOne(query)
+            .populate("customer")
+            .populate("loan_product")
+            .populate("repayments");
+
+        if (!loanApplication) {
+            return {
+                success: false,
+                message: "Loan application not found",
+                code: "NOT_FOUND",
+            };
+        }
+        return {
+            success: true,
+            loanApplication,
+        };
+    } catch (error) {
+        console.error("Error fetching loan application:", error);
+        return {
+            success: false,
+            message: "An unexpected error occurred while fetching the loan application.",
+            code: "SERVER_ERROR",
+        };
+    }
   }
 };
