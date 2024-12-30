@@ -1,8 +1,17 @@
 {
     "success": true,
-    "message": "Loan application updated successfully",
+    "message": "Loan application created successfully!",
     "data": {
+        "success": true,
         "loanApplication": {
+            "customer": "676e9e4de6d2b89ae45e0d84",
+            "loan_id": "CWLN-1047",
+            "loan_product": "677025d90c3cfa79ab11f68d",
+            "interest_rate": 10,
+            "loan_amount": 10000,
+            "loan_duration": 2,
+            "statement_of_account": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735549437/kyc-uploads/dllmg30ewhq0xjbizbs9.pdf",
+            "security_cheque": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735549444/kyc-uploads/cycc7vws8io6gzn0a0rf.pdf",
             "guarantor1": {
                 "name": "Trevor Grillo",
                 "email": "trevorgrillo45@gmail.com"
@@ -11,116 +20,34 @@
                 "name": "Marylin Viceroy",
                 "email": "marylinviceroy@gmail.com"
             },
+            "date_disbursed": null,
+            "status": "processing",
             "repayment_plan": {
-                "monthlyPayment": 1750,
-                "totalPayment": 10600,
-                "totalInterest": 500,
-                "duration": 6,
+                "monthlyPayment": 5083.33,
+                "totalPayment": 10266.67,
+                "totalInterest": 166.67,
+                "duration": 2,
                 "interestRate": 10,
                 "interestType": "flat_rate"
             },
-            "_id": "677187a5f2bff8b6e26f5514",
-            "customer": "676e9e4de6d2b89ae45e0d84",
-            "loan_id": "CWLN-1031",
-            "loan_product": {
-                "_id": "677025d90c3cfa79ab11f68d",
-                "name": "Amo-Restock Loan",
-                "desc": "This is yet another test loan",
-                "interest": 10,
-                "max": 100000,
-                "min": 1000,
-                "createdBy": "674c18fbe60d786ac0943489",
-                "status": "active",
-                "interest_type": "flat_rate",
-                "duration": [
-                    2,
-                    4,
-                    6,
-                    8,
-                    10,
-                    12
-                ],
-                "createdAt": "2024-12-28T16:22:49.296Z",
-                "updatedAt": "2024-12-28T16:22:49.296Z",
-                "__v": 0
-            },
-            "interest_rate": 10,
-            "loan_amount": 10000,
-            "loan_duration": 6,
-            "statement_of_account": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735493531/kyc-uploads/noc5xmfrgzkhvcluhvc5.pdf",
-            "security_cheque": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735493539/kyc-uploads/kafrllmdsr08qyh9qtou.pdf",
-            "date_disbursed": "2024-12-29T17:33:10.020Z",
-            "status": "approved",
-            "repayments": [
-                {
-                    "_id": "677187d6f2bff8b6e26f551c",
-                    "repayment_id": "CWRP401",
-                    "principal": 1666.6666666666667,
-                    "interest": 83.33333333333333,
-                    "amount": 1750,
-                    "due_date": "2025-01-29T17:33:10.020Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "677187d6f2bff8b6e26f551e",
-                    "repayment_id": "CWRP402",
-                    "principal": 1666.6666666666667,
-                    "interest": 83.33333333333333,
-                    "amount": 1750,
-                    "due_date": "2025-03-01T17:33:10.020Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "677187d6f2bff8b6e26f5520",
-                    "repayment_id": "CWRP403",
-                    "principal": 1666.6666666666667,
-                    "interest": 83.33333333333333,
-                    "amount": 1750,
-                    "due_date": "2025-03-29T17:33:10.020Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "677187d7f2bff8b6e26f5522",
-                    "repayment_id": "CWRP404",
-                    "principal": 1666.6666666666667,
-                    "interest": 83.33333333333333,
-                    "amount": 1750,
-                    "due_date": "2025-04-29T17:33:10.020Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "677187d7f2bff8b6e26f5524",
-                    "repayment_id": "CWRP405",
-                    "principal": 1666.6666666666667,
-                    "interest": 83.33333333333333,
-                    "amount": 1750,
-                    "due_date": "2025-05-29T17:33:10.020Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "677187d7f2bff8b6e26f5526",
-                    "repayment_id": "CWRP406",
-                    "principal": 1666.6666666666667,
-                    "interest": 83.33333333333333,
-                    "amount": 1750,
-                    "due_date": "2025-06-29T17:33:10.020Z",
-                    "__v": 0
-                }
-            ],
+            "repayments": [],
             "processing_fee": 100,
             "createdByType": "User",
             "createdBy": "676e9e4de6d2b89ae45e0d84",
-            "createdAt": "2024-12-29T17:32:21.090Z",
-            "updatedAt": "2024-12-29T17:33:11.854Z",
-            "__v": 1
+            "_id": "6772620633ede01054c707d4",
+            "createdAt": "2024-12-30T09:04:06.952Z",
+            "updatedAt": "2024-12-30T09:04:06.952Z",
+            "__v": 0
         },
         "repaymentPlan": {
-            "monthlyPayment": 1750,
-            "totalPayment": 10600,
-            "totalInterest": 500,
-            "duration": 6,
+            "monthlyPayment": "5083.33",
+            "totalPayment": "10266.67",
+            "totalCapital": "10000.00",
+            "totalInterest": "166.67",
+            "duration": 2,
             "interestRate": 10,
-            "interestType": "flat_rate"
+            "interestType": "flat_rate",
+            "repaymentSchedule": null
         }
     }
 }
