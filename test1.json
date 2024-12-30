@@ -1,8 +1,17 @@
 {
     "success": true,
-    "message": "Loan application updated successfully",
+    "message": "Loan application created successfully!",
     "data": {
+        "success": true,
         "loanApplication": {
+            "customer": "676e9e4de6d2b89ae45e0d84",
+            "loan_id": "CWLN-1044",
+            "loan_product": "677025f40c3cfa79ab11f68f",
+            "interest_rate": 10,
+            "loan_amount": 10000,
+            "loan_duration": 2,
+            "statement_of_account": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735548336/kyc-uploads/lvz1ajwbgi8nky5pqfrt.pdf",
+            "security_cheque": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735548340/kyc-uploads/me6uy8hdnmwhtkvlfaqo.pdf",
             "guarantor1": {
                 "name": "Trevor Grillo",
                 "email": "trevorgrillo45@gmail.com"
@@ -11,122 +20,49 @@
                 "name": "Marylin Viceroy",
                 "email": "marylinviceroy@gmail.com"
             },
+            "date_disbursed": null,
+            "status": "processing",
             "repayment_plan": {
-                "monthlyPayment": 1715.61,
-                "totalPayment": 10393.68,
-                "totalInterest": 293.68,
-                "duration": 6,
+                "monthlyPayment": 5083.33,
+                "totalPayment": 10225,
+                "totalInterest": 125,
+                "duration": 2,
                 "interestRate": 10,
                 "interestType": "reducing_balance"
             },
-            "_id": "67716589635a5edb2936a33c",
-            "customer": "676aaaccf05b16b67db1a9d3",
-            "loan_id": "CWLN-1028",
-            "loan_product": {
-                "_id": "677025f40c3cfa79ab11f68f",
-                "name": "Getting-Strapped Loan",
-                "desc": "This is yet another test loan",
-                "interest": 10,
-                "max": 100000,
-                "min": 1000,
-                "createdBy": "674c18fbe60d786ac0943489",
-                "status": "active",
-                "interest_type": "reducing_balance",
-                "duration": [
-                    2,
-                    4,
-                    6,
-                    8,
-                    10,
-                    12
-                ],
-                "createdAt": "2024-12-28T16:23:16.569Z",
-                "updatedAt": "2024-12-28T16:23:16.569Z",
-                "__v": 0
-            },
-            "interest_rate": 10,
-            "loan_amount": 10000,
-            "loan_duration": 6,
-            "statement_of_account": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735484801/kyc-uploads/chm0nvgqb8nhjtr8lo8b.pdf",
-            "security_cheque": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735484808/kyc-uploads/wtrzqfpl4evhhdvnprmj.pdf",
-            "date_disbursed": "2024-12-29T15:09:13.518Z",
-            "status": "approved",
-            "repayments": [
-                {
-                    "_id": "677166193bfe5c1d6a5c2232",
-                    "repayment_id": "CWRP285",
-                    "principal": 1632.28,
-                    "remaining_principal": 8367.72,
-                    "interest": 83.33,
-                    "amount": 1715.61,
-                    "due_date": "2025-01-29T15:09:13.518Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "6771661a3bfe5c1d6a5c2234",
-                    "repayment_id": "CWRP286",
-                    "principal": 1645.88,
-                    "remaining_principal": 6721.84,
-                    "interest": 69.73,
-                    "amount": 1715.61,
-                    "due_date": "2025-03-01T15:09:13.518Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "6771661a3bfe5c1d6a5c2236",
-                    "repayment_id": "CWRP287",
-                    "principal": 1659.6,
-                    "remaining_principal": 5062.24,
-                    "interest": 56.02,
-                    "amount": 1715.61,
-                    "due_date": "2025-03-29T15:09:13.518Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "6771661a3bfe5c1d6a5c2238",
-                    "repayment_id": "CWRP288",
-                    "principal": 1673.43,
-                    "remaining_principal": 3388.81,
-                    "interest": 42.19,
-                    "amount": 1715.61,
-                    "due_date": "2025-04-29T15:09:13.518Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "6771661b3bfe5c1d6a5c223b",
-                    "repayment_id": "CWRP289",
-                    "principal": 1687.37,
-                    "remaining_principal": 1701.44,
-                    "interest": 28.24,
-                    "amount": 1715.61,
-                    "due_date": "2025-05-29T15:09:13.518Z",
-                    "__v": 0
-                },
-                {
-                    "_id": "6771661b3bfe5c1d6a5c223d",
-                    "repayment_id": "CWRP290",
-                    "principal": 1701.44,
-                    "remaining_principal": 0,
-                    "interest": 14.18,
-                    "amount": 1715.61,
-                    "due_date": "2025-06-29T15:09:13.518Z",
-                    "__v": 0
-                }
-            ],
+            "repayments": [],
             "processing_fee": 100,
-            "createdByType": "Staff",
-            "createdBy": "676eb9d2124a2832901dad18",
-            "createdAt": "2024-12-29T15:06:49.184Z",
-            "updatedAt": "2024-12-29T15:09:15.569Z",
-            "__v": 1
+            "createdByType": "User",
+            "createdBy": "676e9e4de6d2b89ae45e0d84",
+            "_id": "67725db546a839f2b0bfe032",
+            "createdAt": "2024-12-30T08:45:41.691Z",
+            "updatedAt": "2024-12-30T08:45:41.691Z",
+            "__v": 0
         },
         "repaymentPlan": {
-            "monthlyPayment": 1715.61,
-            "totalPayment": 10393.68,
-            "totalInterest": 293.68,
-            "duration": 6,
+            "monthlyPayment": "5083.33",
+            "totalPayment": "10225.00",
+            "totalCapital": "10000.00",
+            "totalInterest": "125.00",
+            "duration": 2,
             "interestRate": 10,
-            "interestType": "reducing_balance"
+            "interestType": "reducing_balance",
+            "repaymentSchedule": [
+                {
+                    "month": 1,
+                    "payment": "5083.33",
+                    "interest": "83.33",
+                    "principal": "5000.00",
+                    "remainingPrincipal": "5000.00"
+                },
+                {
+                    "month": 2,
+                    "payment": "5041.67",
+                    "interest": "41.67",
+                    "principal": "5000.00",
+                    "remainingPrincipal": "0.00"
+                }
+            ]
         }
     }
 }
