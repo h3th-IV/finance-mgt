@@ -9,14 +9,14 @@ module.exports = class LoanApplicationController {
     static async createLoanApplication(req, res) {
         const { id, isStaff } = req.user;
         const { customerId } = req.params; //customer id
-        
+
         const { loan_product, loan_amount, loan_duration } = req.body;
-        const files = req.files;        
+        const files = req.files;
 
         try {
             const { error, value } = loanApplicationValidator.validate(
-              req.body
-            );            
+                req.body
+            );
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
             }
@@ -67,7 +67,6 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, error.message);
         }
     }
-
 
     static async updateLoanApplication(req, res) {
         const { loanApplicationId } = req.params;
@@ -135,7 +134,6 @@ module.exports = class LoanApplicationController {
         }
     }
 
-
     static async getUserLoanApplications(req, res) {
         const { userId } = req.params;
         const { status, page, limit } = req.query;
@@ -183,7 +181,7 @@ module.exports = class LoanApplicationController {
     static async calculatorLoan(req, res) {
         const { loan_product, loan_amount, loan_duration } = req.body;
         try {
-            const { error, value } =  loanApplicationCalcValidator.validate({
+            const { error, value } = loanApplicationCalcValidator.validate({
                 loan_product,
                 loan_amount,
                 loan_duration,
@@ -224,7 +222,7 @@ module.exports = class LoanApplicationController {
     static async deleteLoanApplication(req, res) {
         try {
             const { loanAppId } = req.params;
-            
+
             const response = await LoanApplicationService.deleteLoanApplication(loanAppId);
 
             if (response.success) {
@@ -240,25 +238,27 @@ module.exports = class LoanApplicationController {
 
     static async getLoanApplication(req, res) {
         const { identifier } = req.params;
+
         try {
             const result = await LoanApplicationService.getLoanApplicationByIdOrLoanId(identifier);
-    
-            switch (result.code) {
-                case "NOT_FOUND":
-                    return errorResponse(res, 404, result.message);
-                case "SERVER_ERROR":
-                    return errorResponse(res, 500, result.message);
-                default:
-                    break;
+
+            if (!result.success) {
+                const statusCode = result.code === "NOT_FOUND" ? 404 : 500;
+                return errorResponse(res, statusCode, result.message);
             }
-    
+            const guarantors = [
+                result.guarantor1?.guarantor || null,
+                result.guarantor2?.guarantor || null,
+            ].filter(Boolean);
+
             return successResponse(res, 200, "Loan application retrieved successfully", {
                 loanApplication: result.loanApplication,
+                guarantors,
             });
         } catch (error) {
             console.error("Error in getLoanApplication controller:", error);
-            return errorResponse(res, 500, "Server error");
+            return errorResponse(res, 500, "An unexpected server error occurred");
         }
-    } 
+    }
 }
 

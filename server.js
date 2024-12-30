@@ -8,6 +8,7 @@ const passport = require("passport");
 const session = require("express-session");
 const app = express();
 const user = require("./routes/user");
+const guarantor = require("./routes/guarantor");
 const admin =require('./routes/admin');
 const loanApp = require('./routes/loanApplication');
 const cron = require("node-cron");
@@ -71,6 +72,7 @@ app.get("/logout", function (req, res, next) {
 });
 
 app.use("/api/v1/user", user);
+app.use("/api/v1/guarantor", guarantor);
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/loanapp", loanApp);
 app.post('/api/v1/loan-calculator', LoanApplicationController.loanCalculator);

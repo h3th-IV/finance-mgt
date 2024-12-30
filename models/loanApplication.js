@@ -1,8 +1,5 @@
 const mongoose = require("mongoose");
-const User = require("./user");
-const LoanProduct = require("./loanProduct");
-const Staff = require("./staff");
-const { required } = require("joi");
+
 
 const LoanApplication = new mongoose.Schema(
     {
