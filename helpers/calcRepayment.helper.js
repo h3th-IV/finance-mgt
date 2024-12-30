@@ -1,25 +1,26 @@
 const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate, interestType, processing_fee) => {
     let monthlyPayment, totalPayment, totalInterest = 0, totalCapital = loanAmount;
-    let repaymentSchedule = []; // This will be only populated for reducing balance loans
+    let repaymentSchedule = []; //this will only be populated for reducing balance loans.
 
     if (interestType === "flat_rate") {
-        // Flat-rate calculation
-        totalInterest = (interestRate / 100) * loanAmount; // Calculate total interest based on loan amount
+        //flat-rate calculation
+        totalInterest = (interestRate / 100) * loanAmount * loanDuration / 12;
+        total = loanAmount + totalInterest;
+        monthlyPayment = total / loanDuration;
         totalPayment = loanAmount + totalInterest + processing_fee;
-        monthlyPayment = totalPayment / loanDuration;
-
-        // No repayment schedule required for flat-rate
+        //nein repayment schedule required for flat-rate loans
     } else if (interestType === "reducing_balance") {
         const monthlyPrincipal = loanAmount / loanDuration;
         let remainingPrincipal = loanAmount;
 
-        // Simulate detailed repayment schedule
+        //simulate detailed repayment schedule
         for (let i = 1; i <= loanDuration; i++) {
-            const monthlyInterest = (interestRate / 100) * remainingPrincipal; // Calculate interest on remaining principal
+            //calculate monthly interest using the simplified formula
+            const monthlyInterest = (remainingPrincipal * interestRate) / 100 / 12;
             const monthly = monthlyPrincipal + monthlyInterest;
 
             if (i === 1) {
-                monthlyPayment = monthly; // First month's payment
+                monthlyPayment = monthly; //save the first month's payment
             }
 
             repaymentSchedule.push({
@@ -35,11 +36,11 @@ const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate, interest
         }
 
         totalPayment = loanAmount + totalInterest + processing_fee;
-        console.log('outside')
-        console.log('permonth: ', monthlyPayment)
-        console.log('totalPayment thoughout',totalPayment)
-        console.log('iitial loan amount', totalCapital) 
-        console.log('totral interst', totalInterest)
+        console.log('Outside loop:');
+        console.log('Per month payment:', monthlyPayment);
+        console.log('Total payment:', totalPayment);
+        console.log('Initial loan amount:', totalCapital);
+        console.log('Total interest:', totalInterest);
     } else {
         throw new Error("Invalid interest type");
     }
