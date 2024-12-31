@@ -5,6 +5,7 @@ const Staff = require('../models/staff');
 const Role = require('../models/role');
 const loanProduct = require('../models/loanProduct');
 const Permission = require('../models/permission');
+const bankDetails = require('../models/bankDetails');
 
 module.exports = class AdminService{
     static async getAllkyc(){
@@ -186,6 +187,16 @@ module.exports = class AdminService{
         } catch (error) {
             console.error("Error archiving loan product:", error);
             return { success: false, message: "Error archiving loan product" };
+        }
+    }
+
+    static async getAllBankDetails() {
+        try {
+            const allBankDetails = await bankDetails.find().populate('user', 'name email');
+            return { success: true, data: allBankDetails };
+        } catch (error) {
+            console.error("Error fetching all bank details: ", error.message);
+            return { success: false, message: "An error occurred while fetching bank details." };
         }
     }
 }

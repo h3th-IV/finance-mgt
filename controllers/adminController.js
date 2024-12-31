@@ -282,4 +282,17 @@ module.exports = class AdminController{
             return errorResponse(res, 500, "Server error");
         }
     }
+
+    static async getAllBankDetails(req, res) {
+        try {
+            const response = await AdminService.getAllBankDetails();
+            if (!response.success) {
+                return errorResponse(res, 400, response.message);
+            }
+            return successResponse(res, 200, "All bank details fetched successfully.", response.data);
+        } catch (error) {
+            console.error("Controller error (getAllBankDetails): ", error.message);
+            return errorResponse(res, 500, "Internal Server Error");
+        }
+    }
 }   
