@@ -1,5 +1,6 @@
 const { sendOtp } = require("../config/messenger");
 const sendMMSOtp = require("../helpers/messenger");
+const bankDetails = require("../models/bankDetails");
 const kyc = require("../models/kyc");
 const User = require("../models/user");
 
@@ -243,5 +244,72 @@ module.exports = class UserService {
             return{ success: false, message: "An unexpected error occurred during OTP validation." }
         }
     }
+
+    static async addUserBankDetails(userId, userBankDetail) {
+        try {
+            const existingBankDetail = await bankDetails.findOne({ number: userBankDetail.number });
+            if (existingBankDetail) {
+                console.log('The provided account number is already in use.');
+                return { success: false, message: "This account number is already registered." };
+            }
+            const newDetails = {
+                user: userId,
+                name: userBankDetail.name,
+                number: userBankDetail.number,
+                bank: userBankDetail.bank,
+            };
+    
+            const response = await new bankDetails(newDetails).save();
+            console.log('Bank details added successfully.');
+            return { success: true, message: "Bank details saved successfully.", data: response };
+        } catch (error) {
+            console.error("Error adding bank details: ", error.message);
+            return { success: false, message: "An error occurred while saving bank details." };
+        }
+    }
+
+    static async getBankDetailsById(bankId) {
+        try {
+            const bankDetail = await bankDetails.findById(bankId).populate('user', 'first_name last_name');
+            if (!bankDetail) {
+                return { success: false, message: "Bank details not found." };
+            }
+            return { success: true, data: bankDetail };
+        } catch (error) {
+            console.error("Error fetching bank details by ID: ", error.message);
+            return { success: false, message: "An error occurred while fetching bank details." };
+        }
+    }
+
+    static async getUserBankDetails(userId) {
+        try {
+            const userBankDetails = await bankDetails.find({ user: userId });
+            if (userBankDetails.length === 0) {
+                return { success: false, message: "No bank details found for this user." };
+            }
+            return { success: true, data: userBankDetails };
+        } catch (error) {
+            console.error("Error fetching user's bank details: ", error.message);
+            return { success: false, message: "An error occurred while fetching bank details." };
+        }
+    }
+
+    static async archiveBankAccount(bankId) {
+        try {
+            const bankDetail = await bankDetails.findById(bankId);
+            if (!bankDetail) {
+                return { success: false, message: "Bank account not found." };
+            }
+
+            bankDetail.status = "not-active";
+            await bankDetail.save();
+
+            return { success: true, message: "Bank account archived successfully.", data: bankDetail };
+        } catch (error) {
+            console.error("Error archiving bank account: ", error.message);
+            return { success: false, message: "An error occurred while archiving the bank account." };
+        }
+    }
+
 };
 
