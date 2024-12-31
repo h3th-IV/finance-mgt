@@ -19,6 +19,7 @@ const BVNData = require('../models/bvnData');
 const { sendOtp } = require("../config/messenger");
 const sendMMSOtp = require("../helpers/messenger");
 const user = require("../models/user");
+const { bankDetailsValidator } = require("../validators/bankDetailsValidator");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -477,6 +478,75 @@ module.exports = class UserController {
         } catch (error) {
             console.error("Error in BVN OTP Regeneration:", error);
             return errorResponse(res, 500, 'Internal Server Error');
+        }
+    }
+
+    static async addUserBankDetails(req, res) {
+        const { userId } = req.params;
+        const { error, value } = bankDetailsValidator.validate(req.body);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
+        }
+        try {
+            const bankDetails = {
+                name: value.name,
+                number: value.number,
+                bank: value.bank,
+            };
+            const response = await UserService.addUserBankDetails(userId, bankDetails);
+    
+            if (!response.success) {
+                return errorResponse(res, 400, response.message);
+            }
+            return successResponse(res, 201, 'Bank details saved successfully.', response.data);
+        } catch (error) {
+            console.error('Controller error: ', error.message);
+            return errorResponse(res, 500, 'Internal Server Error');
+        }
+    }
+
+    
+    static async getBankDetailsById(req, res) {
+        const { bankId } = req.params;
+        try {
+            const response = await UserService.getBankDetailsById(bankId);
+            if (!response.success) {
+                return errorResponse(res, 404, response.message);
+            }
+            return successResponse(res, 200, "Bank details fetched successfully.", response.data);
+        } catch (error) {
+            console.error("Controller error (getBankDetailsById): ", error.message);
+            return errorResponse(res, 500, "Internal Server Error");
+        }
+    }
+
+
+    static async getUserBankDetails(req, res) {
+        const { userId } = req.params;
+        try {
+            const response = await UserService.getUserBankDetails(userId);
+            if (!response.success) {
+                return errorResponse(res, 404, response.message);
+            }
+            return successResponse(res, 200, "User bank details fetched successfully.", response.data);
+        } catch (error) {
+            console.error("Controller error (getUserBankDetails): ", error.message);
+            return errorResponse(res, 500, "Internal Server Error");
+        }
+    }
+
+    // Controller Method to Archive a Bank Account
+    static async archiveBankAccount(req, res) {
+        const { bankId } = req.params;
+        try {
+            const response = await UserService.archiveBankAccount(bankId);
+            if (!response.success) {
+                return errorResponse(res, 404, response.message);
+            }
+            return successResponse(res, 200, "Bank account archived successfully.", response.data);
+        } catch (error) {
+            console.error("Controller error (archiveBankAccount): ", error.message);
+            return errorResponse(res, 500, "Internal Server Error");
         }
     }
 };
