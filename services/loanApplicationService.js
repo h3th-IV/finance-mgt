@@ -62,7 +62,7 @@ module.exports = class LoanApplicationService {
       const statementOfAccount =
         files["statement_of_account"]?.[0]?.path || null;
       const statementOfNetWorth =
-        files["statement_of_net_worth"]?.[0]?.path || null;
+        files["statement_of_networth"]?.[0]?.path || null;
       const securityCheque = files["security_cheque"]?.[0]?.path || null;
 
       const loanApplication = new LoanApplication({
@@ -70,7 +70,7 @@ module.exports = class LoanApplicationService {
         loan_id: newLoanId,
         interest_rate: loanProduct.interest,
         statement_of_account: statementOfAccount,
-        statement_of_net_worth: statementOfNetWorth,
+        statement_of_networth: statementOfNetWorth,
         security_cheque: securityCheque,
         date_disbursed: loanData.date_disbursed || null,
         repayment_plan: repaymentPlan,
@@ -275,6 +275,7 @@ module.exports = class LoanApplicationService {
             }
             : {}, //nein filtering if search is not provided
         })
+        .populate("loan_product")
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 });

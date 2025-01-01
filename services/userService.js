@@ -1,8 +1,11 @@
 const { sendOtp } = require("../config/messenger");
 const sendMMSOtp = require("../helpers/messenger");
+const { generateOTP } = require("../helpers/otp");
 const bankDetails = require("../models/bankDetails");
 const kyc = require("../models/kyc");
 const User = require("../models/user");
+const mailer = require("../config/mailer");
+
 
 module.exports = class UserService {
     static async createUser(data) {
@@ -52,17 +55,95 @@ module.exports = class UserService {
     }
 
     //to test if commits works
-    static async getUsers(){
+    static async getUsers(filters, pagination) {
+        const { search, is_verified } = filters;
+        const { page = 1, limit = 10 } = pagination;
+    
         try {
-            const users = await User.find().populate('kyc_verification');
-            // await User.findByIdAndDelete('');
-            // await User.deleteMany();
-            // await User.syncIndexes();
-            return users;   
+            const queryFilter = {};
+    
+            // Filter by is_verified status if provided
+            if (typeof is_verified !== 'undefined') {
+                queryFilter.is_verified = is_verified;
+            }
+    
+            // Search query
+            const searchRegex = search ? new RegExp(search, "i") : null;
+    
+            // Pagination
+            const skip = (page - 1) * limit;
+    
+            // Query users with filters and pagination
+            const users = await User.find({
+                ...queryFilter,
+                ...(searchRegex ? {
+                    $or: [
+                        { first_name: searchRegex },
+                        { last_name: searchRegex },
+                        { phone_number: searchRegex },
+                        { email: searchRegex },
+                    ],
+                } : {}),
+            })
+                .populate('kyc_verification')
+                .skip(skip)
+                .limit(limit)
+                .sort({ createdAt: -1 });
+    
+            // Total count of users matching the query
+            const totalUsers = await User.countDocuments({
+                ...queryFilter,
+                ...(searchRegex ? {
+                    $or: [
+                        { first_name: searchRegex },
+                        { last_name: searchRegex },
+                        { phone_number: searchRegex },
+                        { email: searchRegex },
+                    ],
+                } : {}),
+            });
+    
+            // Calculate total pages
+            const totalPages = Math.ceil(totalUsers / limit);
+    
+            // Pagination links
+            const paginationLinks = {
+                first: `/all?page=1&limit=${limit}${is_verified !== undefined ? `&is_verified=${is_verified}` : ""}${search ? `&search=${search}` : ""}`,
+                prev: page > 1
+                    ? `/all?page=${page - 1}&limit=${limit}${is_verified !== undefined ? `&is_verified=${is_verified}` : ""}${search ? `&search=${search}` : ""}`
+                    : null,
+                next: page < totalPages
+                    ? `/all?page=${page + 1}&limit=${limit}${is_verified !== undefined ? `&is_verified=${is_verified}` : ""}${search ? `&search=${search}` : ""}`
+                    : null,
+                last: `/all?page=${totalPages}&limit=${limit}${is_verified !== undefined ? `&is_verified=${is_verified}` : ""}${search ? `&search=${search}` : ""}`,
+            };
+    
+            // Response
+            return {
+                success: true,
+                data: {
+                    users,
+                    links: {
+                        first: paginationLinks.first,
+                        prev: paginationLinks.prev,
+                        next: paginationLinks.next,
+                        last: paginationLinks.last,
+                        currentPage: page,
+                        totalPages: totalPages,
+                        totalPerPage: limit,
+                        total: totalUsers,
+                    },
+                },
+            };
         } catch (error) {
-            return error;
+            console.error("Error fetching users:", error);
+            return {
+                success: false,
+                message: "Could not fetch users",
+            };
         }
     }
+    
 
     static async validateOTP(userId, inputOTP) {
         try {
@@ -311,5 +392,47 @@ module.exports = class UserService {
         }
     }
 
-};
+    static async sentPasswordUpdateOTP(userId){
+        try{
+            const user = await User.findById(userId).populate('kyc_verification');
+            if (!user){
+                return { success: false, message: 'User not found'};
+            }
+            const kyc = user.kyc_verification;
+            const email = kyc.email.address;
+            const otp = generateOTP();
+            user.otp = otp;
+            user.otpCreatedAt = Date.now();
+            await user.save();
+            mailer.sendUpdatePasswordOTP(email, user.first_name, otp);
+            return { success: true, message: 'OTP updated ' }
+        }catch(error){
+            console.error('Error updating password: ', error);
+            return { success: false, message: 'Error generating otp' }
+        }
+    }
 
+    static async updatePassword(userId, otp, password){
+        try{
+            const user = await User.findById(userId)
+            if(!user){
+                return { success: false, message: 'User not found.' }
+            }
+            if (!user.otp || user.otp !== otp) {
+                console.log('logged here');
+                return { success: false, message: "Invalid OTP." };
+            }
+            if (user.isOTPExpired()) {
+                return { success: false, message: "Expired OTP." };
+            }
+            // user.otpCreatedAt = null;
+            user.password = password;
+            user.otp = "VERIFIED"
+            await user.save();
+            return { success: true, message: 'Password updated successfully' }
+        }catch(error){
+            console.error('Error updating password: ', error);
+            return { success: false, message: 'Error updating password' }
+        }
+    }
+};
