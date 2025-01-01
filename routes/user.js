@@ -26,4 +26,6 @@ router.post('/add-bank/:userId', verifyToken, UserController.addUserBankDetails)
 router.get('/bank/:bankId', verifyToken, UserController.getBankDetailsById);
 router.get('/banks/:userId', verifyToken, UserController.getUserBankDetails)
 router.patch('/bank/:bankId', verifyToken, UserController.archiveBankAccount);
+router.patch('/update-otp/:userId', verifyToken, UserController.sendPasswordUpdateOTP)
+router.patch('/update-password/:userId', verifyToken, UserController.updatePassword);
 module.exports = router;

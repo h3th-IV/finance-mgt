@@ -25,13 +25,22 @@ const resetPasswordValidator = Joi.object({
     "string.empty": "Please provide your phone number",
     "string.pattern.base": "Phone number must only contain digits",
   }),
-  otp: Joi.string().length(6).required().messages({
+  otp: Joi.string().length(5).required().messages({
     'string.length': 'OTP must be 6 characters.',
     'string.empty': 'OTP is required.',
     'any.required': 'OTP is required.',
   }),
   new_password: passwordSchema,
 });
+
+const updatePasswordValidator = Joi.object({
+  otp: Joi.string().length(5).required().messages({
+    'string.length': 'OTP does not meet the required length',
+    'string.empty': 'OTP is required.',
+    'any.required': 'OTP is required'
+  }),
+  password: passwordSchema,
+})
 
 const forgotPasswordValidator = Joi.object({
   email: emailSchema,
@@ -41,4 +50,5 @@ module.exports = {
   loginValidator,
   resetPasswordValidator,
   forgotPasswordValidator,
+  updatePasswordValidator,
 };
