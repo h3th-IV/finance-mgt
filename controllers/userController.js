@@ -5,7 +5,7 @@ const bcryptjs = require("bcryptjs");
 const KYC = require("../models/kyc");
 const User = require("../models/user")
 const { userValidationSchema } = require("../validators/userValidators");
-const { loginValidator } = require('../validators/user.validator');
+const { loginValidator, updatePasswordValidator } = require('../validators/user.validator');
 const { resetPasswordValidator } = require('../validators/user.validator');
 const { kycValidator } = require('../validators/kyc.validator')
 const { fetchUserAndKYC, combineKYCData, calculateStatuses } = require('../helpers/kyc.helper');
@@ -165,14 +165,33 @@ module.exports = class UserController {
         }
     }
 
-    static async getAllUsers(req, res){
+    static async getAllUsers(req, res) {
+        const { page, limit, search, is_verified } = req.query;
+    
         try {
-            const response = await UserService.getUsers();
-            return successResponse(res, 200, "Users returned successfully", response);
+            const filters = {
+                is_verified: is_verified === 'true' ? true : is_verified === 'false' ? false : undefined,
+                search: search || undefined,
+            };
+    
+            const pagination = {
+                page: parseInt(page, 10) || 1,
+                limit: parseInt(limit, 10) || 10,
+            };
+    
+            const response = await UserService.getUsers(filters, pagination);
+    
+            if (response.success) {
+                return successResponse(res, 200, "Users returned successfully", response.data);
+            } else {
+                return errorResponse(res, 400, "Failed to fetch users");
+            }
         } catch (error) {
+            console.error("Error fetching users:", error);
             return errorResponse(res, 500, "Server Error");
         }
     }
+    
 
     static async getSingleUser(req, res){
         try {
@@ -505,7 +524,7 @@ module.exports = class UserController {
         }
     }
 
-    
+
     static async getBankDetailsById(req, res) {
         const { bankId } = req.params;
         try {
@@ -541,12 +560,52 @@ module.exports = class UserController {
         try {
             const response = await UserService.archiveBankAccount(bankId);
             if (!response.success) {
-                return errorResponse(res, 404, response.message);
+                return errorResponse(res, 400, response.message);
             }
             return successResponse(res, 200, "Bank account archived successfully.", response.data);
         } catch (error) {
             console.error("Controller error (archiveBankAccount): ", error.message);
             return errorResponse(res, 500, "Internal Server Error");
+        }
+    }
+
+    static async sendPasswordUpdateOTP(req, res){
+        const { userId } = req.params;
+        if (!userId){
+            return errorResponse(res, 400, 'Missing user ID')
+        }
+        try{
+            const response = await UserService.sentPasswordUpdateOTP(userId);
+            if (!response.success){
+                return errorResponse(res, 400, response.message);
+            }
+            return successResponse(res, 200, 'An OTP has been sent to your KYC verified email address');
+        }catch(error){
+            console.error('Error sending update OTP ', error);
+            return errorResponse(res, 500, 'Internal Server Error')
+        }
+    }
+
+    static async updatePassword(req, res){
+        const { userId } = req.params;
+        if (!userId){
+            return errorResponse(res, 400, 'Missing user ID');
+        }
+        try{
+            const { error, value } = updatePasswordValidator.validate(req.body);
+            if (error){
+                return errorResponse(res, 400, error.details[0].message);
+            }
+            const otp = value.otp;
+            const password = value.password;
+            const response = await UserService.updatePassword(userId, otp, password);
+            if (!response.success){
+                return errorResponse(res, 400, response.message);
+            }
+            return successResponse(res, 200, 'Password updated successfully');
+        }catch(error){
+            console.error('Error updating password: ', error);
+            return errorResponse(res, 500, 'Internal server error');
         }
     }
 };
