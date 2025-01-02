@@ -6,6 +6,7 @@ const Role = require('../models/role');
 const loanProduct = require('../models/loanProduct');
 const Permission = require('../models/permission');
 const bankDetails = require('../models/bankDetails');
+const ActivityLogService = require("../services/activityLogService");
 
 module.exports = class AdminService{
     static async getAllkyc(){
@@ -33,31 +34,87 @@ module.exports = class AdminService{
                 duration: product_data.duration,
             }
             const loanProduct = await new LoanProduct(newloanProduct).save();
+
+            await ActivityLogService.LogActivity(
+                "create",
+                "Staff",
+                product_data.createdBy,
+                "LoanProduct",
+                loanProduct._id,
+                {
+                    name: product_data.name,
+                    interest: product_data.interest,
+                    max: product_data.max,
+                    min: product_data.min,
+                    interest_type: product_data.interest_type,
+                    duration: product_data.duration,
+                }
+            );
             return loanProduct;
         } catch (error) {
             return error;
         }
     }
 
-    static async updateLoanProduct(productId, updateData) {
+    static async getLoanProduct(productId) {
+        try {
+            const product = await LoanProduct.findById(productId);
+            if (!product) {
+                return { success: false, message: "Loan Product not found" };
+            }
+    
+            const productActivity = await ActivityLogService.getActivityLogs("LoanProduct", productId);
+    
+            return { 
+                success: true, 
+                message: "Loan Product returned successfully", 
+                data: {
+                    product,
+                    productActivity: productActivity.success ? productActivity.data : [],
+                } 
+            };
+        } catch (error) {
+            console.error("Error getting loan product: ", error);
+            return { success: false, message: "Error fetching loan product" };
+        }
+    }
+    
+
+    static async updateLoanProduct(productId, updateData, updatedBy) {
         try {
             const loanProduct = await LoanProduct.findById(productId);
             if (!loanProduct) {
                 return { success: false, message: "Loan product not found" };
             }
             const updatableFields = ["interest", "max", "min"];
+            const changes = {};
             updatableFields.forEach((field) => {
-                if (updateData[field] !== undefined) {
+                if (updateData[field] !== undefined && loanProduct[field] !== updateData[field]) {
+                    changes[field] = {
+                        oldValue: loanProduct[field],
+                        newValue: updateData[field],
+                    };
                     loanProduct[field] = updateData[field];
                 }
             });
+            if (Object.keys(changes).length === 0) {
+                return { success: false, message: "No changes made to the loan product" };
+            }
             await loanProduct.save();
+            await ActivityLogService.LogActivity(
+                "update",
+                "Staff",
+                updatedBy,
+                "LoanProduct",
+                productId,
+                changes
+            )
             return {
                 success: true,
                 loanProduct,
             };
         } catch (error) {
-            console.log('err: ', error);
+            console.log('Error updating loan product: ', error);
             return { success: false, message: `Error updating loanProduct` };
         }
 
@@ -169,7 +226,7 @@ module.exports = class AdminService{
         }
     }
 
-    static async archiveLoanProduct(productId) {
+    static async archiveLoanProduct(productId, archivedBy) {
         try {
             const loanProduct = await LoanProduct.findByIdAndUpdate(
                 productId,
@@ -179,6 +236,22 @@ module.exports = class AdminService{
             if (!loanProduct) {
                 return { success: false, message: "Loan product not found" };
             }
+            if (loanProduct.status === "archived") {
+                return { success: false, message: "Loan product is already archived" };
+            }
+
+            const oldStatus = loanProduct.status;
+            loanProduct.status = "archived";
+            await loanProduct.save();
+
+            await ActivityLogService.LogActivity(
+                "archive",
+                "Staff",
+                archivedBy,
+                "LoanProduct",
+                productId,
+                { oldStatus, newStatus: "archived" }
+            );
             return {
                 success: true,
                 message: "Loan product archived successfully",

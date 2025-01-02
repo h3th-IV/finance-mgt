@@ -102,6 +102,7 @@ module.exports = class UserService {
                     ],
                 } : {}),
             });
+            // await User.findOneAndDelete('676aaaccf05b16b67db1a9d3');
     
             // Calculate total pages
             const totalPages = Math.ceil(totalUsers / limit);

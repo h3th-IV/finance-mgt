@@ -439,7 +439,6 @@ module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
                             <p><strong>Loan Duration:</strong> ${loanDetails.loanDuration} months</p>
                         </div>
                         <p>If you agree to be the guarantor, please respond to this email or contact us for further steps.</p>
-                        <p>If this was not requested by you, kindly ignore this email.</p>
                     </div>
                     <div class="footer">
                         &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
