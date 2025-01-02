@@ -69,6 +69,7 @@ module.exports = class LoanApplicationController {
     }
 
     static async updateLoanApplication(req, res) {
+        const { id } = req.user;
         const { loanApplicationId } = req.params;
         const updateData = req.body;
 
@@ -85,7 +86,7 @@ module.exports = class LoanApplicationController {
             );
         }
         try {
-            const result = await LoanApplicationService.updateLoanApplication(loanApplicationId, updateData);
+            const result = await LoanApplicationService.updateLoanApplication(loanApplicationId, updateData, id);
 
             switch (result.code) {
                 case "NOT_FOUND":
@@ -220,10 +221,11 @@ module.exports = class LoanApplicationController {
     }
 
     static async deleteLoanApplication(req, res) {
+        const { id } = req.user;
         try {
             const { loanAppId } = req.params;
 
-            const response = await LoanApplicationService.deleteLoanApplication(loanAppId);
+            const response = await LoanApplicationService.deleteLoanApplication(loanAppId, id);
 
             if (response.success) {
                 return successResponse(res, 200, response.message);
@@ -254,6 +256,7 @@ module.exports = class LoanApplicationController {
             return successResponse(res, 200, "Loan application retrieved successfully", {
                 loanApplication: result.loanApplication,
                 guarantors,
+                activityLog: result.appActivity
             });
         } catch (error) {
             console.error("Error in getLoanApplication controller:", error);

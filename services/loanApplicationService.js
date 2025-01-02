@@ -6,6 +6,7 @@ const Repayment = require("../models/repayment");
 const { sendGuarantorMail } = require("../config/mailer");
 const { default: mongoose } = require("mongoose");
 const GuarantorsDataService = require("./guarantorsDataService");
+const ActivityLogService = require("../services/activityLogService");
 
 module.exports = class LoanApplicationService {
   static async createLoanApplication(loanData, files) {
@@ -81,7 +82,6 @@ module.exports = class LoanApplicationService {
 
       // Send emails to guarantors
       await Promise.all([
-        // Call sendGuarantorMail for guarantor1
         sendGuarantorMail(
           _loanApplication.guarantor1.email,
           _loanApplication.guarantor1.name,
@@ -93,7 +93,6 @@ module.exports = class LoanApplicationService {
           }
         ),
 
-        // Call sendGuarantorMail for guarantor2
         sendGuarantorMail(
           _loanApplication.guarantor2.email,
           _loanApplication.guarantor2.name,
@@ -105,7 +104,19 @@ module.exports = class LoanApplicationService {
           }
         ),
       ]);
-
+      await ActivityLogService.LogActivity(
+        "create",
+        loanData.createdByType,
+        loanData.createdBy,
+        "LoanApplication",
+        _loanApplication._id,
+        {
+          loanProduct: _loanApplication.loan_product,
+          loanAmount: _loanApplication.loan_amount,
+          loanDuration: _loanApplication.loan_duration,
+          loanStatus: _loanApplication.status,
+        }
+      )
       return {
         success: true,
         loanApplication,
@@ -121,7 +132,7 @@ module.exports = class LoanApplicationService {
     }
   }
 
-  static async updateLoanApplication(loanApplicationId, updateData) {
+  static async updateLoanApplication(loanApplicationId, updateData, updatedBy) {
     try {
       const loanApplication = await LoanApplication.findById(loanApplicationId).populate("loan_product");
       if (!loanApplication) {
@@ -227,6 +238,19 @@ module.exports = class LoanApplicationService {
       await loanApplication.save();
       const updatedLoanApplication = await LoanApplication.findById(loanApplication._id).populate("loan_product").populate("repayments");
 
+      await ActivityLogService.LogActivity(
+        "update",
+        "Staff",
+        updatedBy,
+        "LoanApplication",
+        loanApplication._id,
+        {
+          loanProduct: updatedLoanApplication.loan_product,
+          loanAmount: updatedLoanApplication.loan_amount,
+          loanDuration: updatedLoanApplication.loan_duration,
+          status: updatedLoanApplication.status
+        }
+      );
       return {
         success: true,
         loanApplication: updatedLoanApplication,
@@ -479,25 +503,40 @@ module.exports = class LoanApplicationService {
   }
 
 
-  static async deleteLoanApplication(loanAppId) {
+  static async deleteLoanApplication(loanAppId, performedBy) {
     try {
-      const loanApplication = await LoanApplication.findById(loanAppId);
+        const loanApplication = await LoanApplication.findById(loanAppId);
 
-      if (!loanApplication) {
-        return { success: false, message: "Loan application not found" };
-      }
+        if (!loanApplication) {
+            return { success: false, message: "Loan application not found" };
+        }
 
-      await loanApplication.deleteOne();
+        loanApplication.status = "deleted";
+        await loanApplication.save();
 
-      return {
-        success: true,
-        message: "Loan application deleted successfully",
-      };
+        await ActivityLogService.LogActivity(
+            "delete",
+            "Staff",
+            performedBy,
+            "LoanApplication",
+            loanAppId,
+            {
+                loanId: loanApplication.loan_id,
+                status: "deleted",
+                previousStatus: loanApplication.status,
+            }
+        );
+
+        return {
+            success: true,
+            message: "Loan application marked as deleted successfully",
+        };
     } catch (error) {
-      console.error("Error deleting loan application:", error);
-      return { success: false, message: "Error deleting loan application" };
+        console.error("Error deleting loan application:", error);
+        return { success: false, message: "Error deleting loan application" };
     }
   }
+
 
   static async getLoanApplicationByIdOrLoanId(identifier) {
     try {
@@ -533,12 +572,13 @@ module.exports = class LoanApplicationService {
           loanApplication.guarantor2?.email
         ),
       ]);
-
+      const applicationActivity = await ActivityLogService.getActivityLogs("LoanApplication", loanApplication._id)
       return {
         success: true,
         loanApplication,
         guarantor1: guarantor1 || null,
         guarantor2: guarantor2 || null,
+        appActivity: applicationActivity.success ? applicationActivity.data : [],
       };
     } catch (error) {
       console.error("Error fetching loan application:", error);

@@ -28,5 +28,6 @@ router.post("/create-loanapp/:customerId", verifyStaffToken, checkPermission("CR
     { name: "security_cheque", maxCount: 1 },
 ]), LoanApplicationController.createLoanApplication)
 router.get('/banks', AdminController.getAllBankDetails);
+router.get('/loan-product/:productId', AdminController.getLoanProduct);
 
 module.exports = router;
