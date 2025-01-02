@@ -52,6 +52,7 @@ module.exports = class AdminController{
     }
 
     static async updateLoanProduct(req, res) {
+        const { id } = req.user
         const productId = req.params.productId;
         const { error } = updateLoanProductSchema.validate(req.body);
         if (error) {
@@ -62,7 +63,7 @@ module.exports = class AdminController{
             if (!productId) {
                 return errorResponse(res, 400, "Loan productId is required");
             }
-            const response = await AdminService.updateLoanProduct(productId, updateData);
+            const response = await AdminService.updateLoanProduct(productId, updateData, id);
             if (!response.success) {
                 return errorResponse(res, 400, "Error updating loan product", response);
             }
@@ -270,9 +271,10 @@ module.exports = class AdminController{
     }
 
     static async archiveLoanProduct(req, res){
+        const { id } = req.user;
         try{
             const { productId } = req.params;
-            const response = await AdminService.archiveLoanProduct(productId);
+            const response = await AdminService.archiveLoanProduct(productId, id);
             if(!response.success){
                 return errorResponse(res, 404, response.message);
             }
@@ -293,6 +295,23 @@ module.exports = class AdminController{
         } catch (error) {
             console.error("Controller error (getAllBankDetails): ", error.message);
             return errorResponse(res, 500, "Internal Server Error");
+        }
+    }
+
+    static async getLoanProduct(req, res){
+        const { productId } = req.params;
+        try{
+            if(!productId){
+                return errorResponse(res, 400, 'Missing productId')
+            }
+            const response = await AdminService.getLoanProduct(productId);
+            if (!response.success) {
+                return errorResponse(res, response.message === 'Loan Product not found' ? 404 : 400, response.message);
+            }            
+            return successResponse(res, 200, 'Loan product returned successfully', response.data);
+        }catch(error){
+            console.error('Error fetching product', error)
+            return errorResponse(res, 500, 'Internal server Error');
         }
     }
 }   

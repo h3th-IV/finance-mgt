@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { Schema, Types } = mongoose;
 
 const ActivityLog = new mongoose.Schema(
   {
@@ -35,8 +36,7 @@ const ActivityLog = new mongoose.Schema(
       required: true,
     },
     details: {
-      type: Map,
-      of: String, // would be key-value pair for metadata (e.g., oldValue, newValue)
+        type: Schema.Types.Mixed,
     },
   },
   { timestamps: true }
