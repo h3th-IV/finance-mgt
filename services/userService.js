@@ -1,5 +1,6 @@
 const { sendOtp } = require("../config/messenger");
-const sendMMSOtp = require("../helpers/messenger");
+const sendSMSOTP = require("../helpers/messenger");
+//const {sendMMSOtp} = require("../helpers/messenger");
 const { generateOTP } = require("../helpers/otp");
 const bankDetails = require("../models/bankDetails");
 const kyc = require("../models/kyc");
@@ -23,7 +24,7 @@ module.exports = class UserService {
             try {
                 // const message = `Welcome to Capitalwise! Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
                 const message = `${response.otp}`;
-                await sendMMSOtp(response.phone_number, message);
+                await sendSMSOTP(response.phone_number, message);
                 console.log("OTP sent successfully.");
             } catch (otpError) {
                 console.error("Failed to send OTP:", otpError);
@@ -290,7 +291,7 @@ module.exports = class UserService {
             await user.save();
             // const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${kyc.bank_verification_number.otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
             const bvnMessage = `${kyc.bank_verification_number.otp}`;
-            await sendMMSOtp(data.number, bvnMessage);
+            await sendSMSOTP(data.number, bvnMessage);
             return { success: true, message: "BVN details updated successfully.", user };
         } catch (error) {
             console.error("Update User BVN Error:", error);

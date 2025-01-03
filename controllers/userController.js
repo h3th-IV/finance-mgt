@@ -12,7 +12,7 @@ const { fetchUserAndKYC, combineKYCData, calculateStatuses } = require('../helpe
 const { generateOTP} = require('../helpers/otp');
 const verifyBVN = require("../helpers/verifyBVN");
 // const sendOtp = require("../helpers/messenger");
-// const sendSMSOTP = require("../helpers/messenger");
+const sendSMSOTP = require("../helpers/messenger");
 const formatMobileNumber = require("../helpers/formatPhone");
 const BVNDataService = require("../services/bvnDataService");
 const BVNData = require('../models/bvnData');
@@ -99,7 +99,9 @@ module.exports = class UserController {
                 // mailer.sendOTPEmail(user.email, user.first_name, newOTP);
                 // const message = `Your OTP for completing signup is ${newOTP}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
                 const message = `${newOTP}`;
-               const response = await sendMMSOtp(user.phone_number, message);
+               const response = await sendSMSOTP(user.phone_number, newOTP);
+               console.log({response});
+               
                if (!response.success){
                 return errorResponse(res, 200, response.message);
                }
@@ -215,7 +217,7 @@ module.exports = class UserController {
 
             // const message = `Dear user, your OTP for resetting your Capitalwise account password is ${otp}. This OTP is valid for 5 minutes. If you did not request a password reset, please ignore this message.`;
             const message = `${otp}`;
-            await sendMMSOtp(phone_number, message);
+            await  await sendSMSOTP(user.phone_number, otp);
 
             // await mailer.sendForgotPassword(email, otp);
 
