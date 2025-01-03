@@ -36,10 +36,12 @@ module.exports = class LoanApplicationController {
                 guarantor1: {
                     name: value["guarantor1.name"],
                     email: value["guarantor1.email"],
+                    phone_number: value["guarantor1.phone_number"],
                 },
                 guarantor2: {
                     name: value["guarantor2.name"],
                     email: value["guarantor2.email"],
+                    phone_number: value["guarantor2.phone_number"],
                 },
                 createdByType,
                 createdBy,

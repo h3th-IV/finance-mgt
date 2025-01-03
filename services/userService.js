@@ -6,7 +6,7 @@ const bankDetails = require("../models/bankDetails");
 const kyc = require("../models/kyc");
 const User = require("../models/user");
 const mailer = require("../config/mailer");
-
+const LoanApplication = require("../models/loanApplication");
 
 module.exports = class UserService {
     static async createUser(data) {
@@ -55,7 +55,6 @@ module.exports = class UserService {
         }
     }
 
-    //to test if commits works
     static async getUsers(filters, pagination) {
         const { search, is_verified } = filters;
         const { page = 1, limit = 10 } = pagination;
@@ -63,18 +62,16 @@ module.exports = class UserService {
         try {
             const queryFilter = {};
     
-            // Filter by is_verified status if provided
+            //filter by is_verified status if provided
             if (typeof is_verified !== 'undefined') {
                 queryFilter.is_verified = is_verified;
             }
     
-            // Search query
+            //search query
             const searchRegex = search ? new RegExp(search, "i") : null;
-    
-            // Pagination
+            //pagination
             const skip = (page - 1) * limit;
-    
-            // Query users with filters and pagination
+
             const users = await User.find({
                 ...queryFilter,
                 ...(searchRegex ? {
@@ -90,8 +87,21 @@ module.exports = class UserService {
                 .skip(skip)
                 .limit(limit)
                 .sort({ createdAt: -1 });
-    
-            // Total count of users matching the query
+
+            const userDetails = await Promise.all(
+                users.map(async (user) => {
+                    const loanApplications = await LoanApplication.find({ customer: user._id });
+                    const totalApplications = loanApplications.length;
+                    const grossLoanAmount = loanApplications.reduce((total, loan) => total + (loan.loan_amount || 0), 0);
+        
+                    return {
+                        ...user.toObject(),
+                        totalApplications,
+                        grossLoanAmount,
+                    };
+                })
+            );
+            
             const totalUsers = await User.countDocuments({
                 ...queryFilter,
                 ...(searchRegex ? {
@@ -103,12 +113,8 @@ module.exports = class UserService {
                     ],
                 } : {}),
             });
-            // await User.findOneAndDelete('676aaaccf05b16b67db1a9d3');
     
-            // Calculate total pages
-            const totalPages = Math.ceil(totalUsers / limit);
-    
-            // Pagination links
+            const totalPages = Math.ceil(totalUsers / limit);    
             const paginationLinks = {
                 first: `/all?page=1&limit=${limit}${is_verified !== undefined ? `&is_verified=${is_verified}` : ""}${search ? `&search=${search}` : ""}`,
                 prev: page > 1
@@ -124,7 +130,7 @@ module.exports = class UserService {
             return {
                 success: true,
                 data: {
-                    users,
+                    users: userDetails,
                     links: {
                         first: paginationLinks.first,
                         prev: paginationLinks.prev,

@@ -24,6 +24,10 @@ const loanApplicationValidator = Joi.object({
         'string.email': '"Guarantor1 email" must be a valid email address.',
         'any.required': '"Guarantor1 email" is required.',
     }),
+    "guarantor1.phone_number": Joi.string().pattern(/^[0-9]+$/).required().messages({
+        "string.empty": "Please provide your phone number",
+        "string.pattern.base": "Phone number must only contain digits",
+    }),
     "guarantor2.name": Joi.string().required().messages({
         'string.empty': '"Guarantor2 name" is required.',
         'any.required': '"Guarantor2 name" is required.',
@@ -32,6 +36,10 @@ const loanApplicationValidator = Joi.object({
         'string.empty': '"Guarantor2 email" is required.',
         'string.email': '"Guarantor2 email" must be a valid email address.',
         'any.required': '"Guarantor2 email" is required.',
+    }),
+    "guarantor2.phone_number": Joi.string().pattern(/^[0-9]+$/).required().messages({
+        "string.empty": "Please provide your phone number",
+        "string.pattern.base": "Phone number must only contain digits",
     }),
     // security_cheque: Joi.string().uri().required().messages({
     //     'string.empty': '"Security cheque" is required.',
