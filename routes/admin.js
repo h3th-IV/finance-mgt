@@ -14,7 +14,7 @@ router.post("/create-loanproduct/:staffId", verifyStaffToken, checkPermission("C
 router.patch("/update-loanapp/:loanApplicationId", verifyStaffToken, checkPermission("UPDATE_LOAN_APP"), LoanApplicationController.updateLoanApplication);
 router.get("/loan-apps", verifyStaffToken, checkPermission("VIEW_LOAN_APP"), LoanApplicationController.getAllLoanApplication);
 router.patch("/update-product/:productId", verifyStaffToken, checkPermission("UPDATE_LOAN_PRODUCT"), AdminController.updateLoanProduct);
-router.get("/loanProducts", verifyStaffToken,AdminController.getAllLoanProducts);
+router.get("/loanProducts",AdminController.getAllLoanProducts);
 router.post('/add-staff', verifyStaffToken, checkPermission("CREATE_STAFF"), AdminController.createStaff);
 router.get('/permissions', verifyStaffToken, AdminController.getAllPermissions);
 router.get('/roles', verifyStaffToken, AdminController.getAllRoles);
@@ -30,6 +30,6 @@ router.post("/create-loanapp/:customerId", verifyStaffToken, checkPermission("CR
     { name: "security_cheque", maxCount: 1 },
 ]), LoanApplicationController.createLoanApplication)
 router.get('/banks', verifyStaffToken, AdminController.getAllBankDetails);
-router.get('/loan-product/:productId', verifyStaffToken, AdminController.getLoanProduct);
+router.get('/loan-product/:productId', AdminController.getLoanProduct);
 
 module.exports = router;
