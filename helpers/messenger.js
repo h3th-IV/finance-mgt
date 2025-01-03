@@ -22,8 +22,6 @@ async function sendSMSOTP(recipients, otp) {
         appnamecode: app_name_code,
         templatecode: template_code,
     };
-console.log({payload});
-
     try {
         const response = await axios.post(url, payload, {
             headers: {
