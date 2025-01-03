@@ -37,10 +37,12 @@ const LoanApplication = new mongoose.Schema(
         guarantor1: {
             name: { type: String, required: true },
             email: { type: String, required: true },
+            phone_number: {type: String, required: true},
         },
         guarantor2: {
             name: { type: String, required: true },
             email: { type: String, required: true },
+            phone_number: {type: String, required: true},
         },
         date_disbursed: {
             type: Date,

@@ -2,7 +2,7 @@ const { generateOTP } = require('../helpers/otp');
 const BVNData = require('../models/bvnData');
 const UserService = require('./userService');
 const User = require("../models/user");
-const sendMMSOtp = require('../helpers/messenger');
+const sendSMSOTP = require('../helpers/messenger');
 
 
 module.exports = class BVNDataService{
@@ -71,7 +71,7 @@ module.exports = class BVNDataService{
             if (!kyc || !kyc.bank_verification_number) {
                 return { success: false, message: "KYC record not found or incomplete for this user." };
             }
-
+            updateUserDetailsBVN
             kyc.bank_verification_number.otp = otp;
             kyc.bank_verification_number.otpCreatedAt = new Date();
             await kyc.save();
@@ -79,7 +79,7 @@ module.exports = class BVNDataService{
 
             const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
 
-            await sendMMSOtp(userBVNDatum.mobile, bvnMessage);
+            await sendSMSOTP(userBVNDatum.mobile, otp);
 
             return { 
                 success: true, 
