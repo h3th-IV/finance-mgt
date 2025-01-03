@@ -13,7 +13,9 @@ const permissions = [
     { name: "DELETE_LOAN_PRODUCT", description: "Delete loan products" },
     { name: "DELETE_LOAN_APP", description: "Delete loan applications" },
     { name: "CREATE_ROLE", description: "Admin create new role and assign permissions" },
-    {name: "VERIFY_DOCS", description: "Document verification officers" }
+    {name: "VERIFY_DOCS", description: "Document verification officers" },
+    {name: "CREATE_STAFF", description: "Create Staff" },
+    {name: "ARCHIVE_LOAN_PRODUCT", description: "Archive Loan Product" },
 ]
 
 const seedPermissions = async () => {

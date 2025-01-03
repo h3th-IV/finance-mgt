@@ -2,32 +2,34 @@ const express = require("express");
 const router = express.Router();
 const AdminController = require('../controllers/adminController');
 const LoanApplicationController =require('../controllers/loanApplicationController');
+const UserController = require("../controllers/userController");    
 const { verifyToken } = require("../middleware/tokenGenerator");
 const { verifyStaffToken, checkPermission } = require("../middleware/permission");
 const parser = require("../config/uploader");
 
-router.post("/createRole", verifyToken, AdminController.createRolePermission);
-router.get("/get-kycs", AdminController.getAllkycs);
-router.post("/create-loanproduct/:staffId", verifyToken, AdminController.createLoanProduct);
-router.patch("/update-loanapp/:loanApplicationId", verifyToken, LoanApplicationController.updateLoanApplication);
-router.get("/loan-apps", verifyToken, LoanApplicationController.getAllLoanApplication);
-router.patch("/update-product/:productId", verifyToken, AdminController.updateLoanProduct);
-router.get("/loanProducts", AdminController.getAllLoanProducts);
-router.post('/add-staff', verifyToken, AdminController.createStaff);
-router.get('/permissions', verifyToken, AdminController.getAllPermissions);
-router.get('/roles', verifyToken, AdminController.getAllRoles);
-router.get('/staffs', verifyToken, AdminController.getAllStaffs);
+router.get("/all", verifyStaffToken, UserController.getAllUsers);
+router.post("/createRole", verifyStaffToken, checkPermission("CREATE_ROLE"), AdminController.createRolePermission);
+router.get("/get-kycs", verifyStaffToken, AdminController.getAllkycs);
+router.post("/create-loanproduct/:staffId", verifyStaffToken, checkPermission("CREATE_LOAN_PRODUCT"), AdminController.createLoanProduct);
+router.patch("/update-loanapp/:loanApplicationId", verifyStaffToken, checkPermission("UPDATE_LOAN_APP"), LoanApplicationController.updateLoanApplication);
+router.get("/loan-apps", verifyStaffToken, checkPermission("VIEW_LOAN_APP"), LoanApplicationController.getAllLoanApplication);
+router.patch("/update-product/:productId", verifyStaffToken, checkPermission("UPDATE_LOAN_PRODUCT"), AdminController.updateLoanProduct);
+router.get("/loanProducts", verifyStaffToken,AdminController.getAllLoanProducts);
+router.post('/add-staff', verifyStaffToken, checkPermission("CREATE_STAFF"), AdminController.createStaff);
+router.get('/permissions', verifyStaffToken, AdminController.getAllPermissions);
+router.get('/roles', verifyStaffToken, AdminController.getAllRoles);
+router.get('/staffs', verifyStaffToken, AdminController.getAllStaffs);
 router.patch('/verify', AdminController.updatePassword);
 router.post('/login', AdminController.login);
-router.get('/bvnData', verifyToken, AdminController.getAllBVNData);
-router.delete('/delete/:loanAppId', verifyToken, LoanApplicationController.deleteLoanApplication);
-router.patch("/archive-loanproduct/:productId", verifyToken, AdminController.archiveLoanProduct);
+router.get('/bvnData', verifyStaffToken, AdminController.getAllBVNData);
+router.delete('/delete/:loanAppId', verifyStaffToken, checkPermission("DELETE_LOAN_APP"), LoanApplicationController.deleteLoanApplication);
+router.patch("/archive-loanproduct/:productId", verifyStaffToken, checkPermission("ARCHIVE_LOAN_PRODUCT"), AdminController.archiveLoanProduct);
 router.post("/create-loanapp/:customerId", verifyStaffToken, checkPermission("CREATE_LOAN_APP"), parser.fields([
     { name: "statement_of_account", maxCount: 1 },
     { name: "statement_of_networth", maxCount: 1 },
     { name: "security_cheque", maxCount: 1 },
 ]), LoanApplicationController.createLoanApplication)
-router.get('/banks', AdminController.getAllBankDetails);
-router.get('/loan-product/:productId', AdminController.getLoanProduct);
+router.get('/banks', verifyStaffToken, AdminController.getAllBankDetails);
+router.get('/loan-product/:productId', verifyStaffToken, AdminController.getLoanProduct);
 
 module.exports = router;
