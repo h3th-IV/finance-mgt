@@ -513,6 +513,7 @@ module.exports = class UserController {
                 name: value.name,
                 number: value.number,
                 bank: value.bank,
+                bank_code: value.bank_code,
             };
             const response = await UserService.addUserBankDetails(userId, bankDetails);
     

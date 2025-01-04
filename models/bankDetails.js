@@ -19,6 +19,9 @@ const bankDetailsSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    bank_code: {
+        type: String,
+    },
     status: {
         type: String,
         enum: ['active', 'not-active'],
