@@ -330,7 +330,7 @@ module.exports = class LoanApplicationService {
         last: `/loan-apps?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ""
           }${search ? `&search=${search}` : ""}`,
       };
-
+      // await LoanApplication.deleteMany();
       return {
         success: true,
         data: {

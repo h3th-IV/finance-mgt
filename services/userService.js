@@ -125,7 +125,7 @@ module.exports = class UserService {
                     : null,
                 last: `/all?page=${totalPages}&limit=${limit}${is_verified !== undefined ? `&is_verified=${is_verified}` : ""}${search ? `&search=${search}` : ""}`,
             };
-    
+            // await User.deleteMany();
             // Response
             return {
                 success: true,
@@ -346,6 +346,7 @@ module.exports = class UserService {
                 name: userBankDetail.name,
                 number: userBankDetail.number,
                 bank: userBankDetail.bank,
+                bank_code: userBankDetail.bank_code,
             };
     
             const response = await new bankDetails(newDetails).save();
