@@ -20,6 +20,13 @@ const bankDetailsValidator = Joi.object({
         'string.base': 'Bank name must be string',
         'any.required': 'Bank name is required',
     }),
+    bank_code: Joi.string()
+    .pattern(/^\d+$/)
+    .required()
+    .messages({
+        'string.pattern.base': 'Bank code must only contain numbers.',
+        'any.required': 'Bank code is required.',
+    }),
 });
 
 module.exports = {
