@@ -11,30 +11,46 @@ const LoanApplication = require("../models/loanApplication");
 module.exports = class UserService {
     static async createUser(data) {
         try {
+            // Prepare the user object
             const newUser = {
-                first_name: data.first_name,
-                last_name: data.last_name,
-                phone_number: data.number,
+                phone_number: data.phone_number,
                 password: data.password,
                 otp: data.otp,
+                accountType: data.accountType, // Include accountType
             };
+    
+            // Conditionally add individual-specific fields
+            if (data.accountType === 'individual') {
+                newUser.first_name = data.first_name;
+                newUser.last_name = data.last_name;
+            }
+    
+            // Conditionally add business-specific fields
+            if (data.accountType === 'business') {
+                newUser.business_name = data.business_name;
+                newUser.phone_number = data.phone_number;
+            }
+    
+            // Save the new user to the database
             const response = await new User(newUser).save();
             console.log("User saved successfully:", response);
     
             try {
-                // const message = `Welcome to Capitalwise! Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
+                // Send OTP via SMS
                 const message = `${response.otp}`;
                 await sendSMSOTP(response.phone_number, message);
                 console.log("OTP sent successfully.");
             } catch (otpError) {
                 console.error("Failed to send OTP:", otpError);
             }
+    
             return response;
         } catch (error) {
             console.error("Error in createUser:", error);
             return { error: "Failed to create user.", details: error };
         }
     }
+    
     
 
     static async getUserByPhone(number){

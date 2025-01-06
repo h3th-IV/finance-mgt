@@ -31,30 +31,59 @@ module.exports = class UserController {
             }, {});
             return errorResponse(res, 400, "Validation error", { errors });
         }
-        const { first_name, last_name, number, password } = value;
+    
+        // Extract values from the validated data
+        const { first_name, last_name, phone_number, password, accountType, business_name, business_address, business_phone_number, businessEmail } = value;
+        console.log({value});
+        
+    
         try {
-            const user_exist = await UserService.getUserByPhone(number);
+            // Check if the user already exists by phone number
+            const user_exist = await UserService.getUserByPhone(phone_number);
             if (user_exist) {
-            return errorResponse(res, 409, "User with this phone number already exists");
+                return errorResponse(res, 409, "User with this phone number already exists");
             }
+    
+            // Generate OTP
             const otp = generateOTP();
+    
+            // Prepare the user object based on account type
             const user = {
-            first_name,
-            last_name,
-            number,
-            password,
-            otp,
+                phone_number,
+                password,
+                otp,
+                accountType,
             };
+
+    
+            // Add individual-specific fields if accountType is individual
+            if (accountType === 'individual') {
+                user.first_name = first_name;
+                user.last_name = last_name;
+            }
+    
+            // Add business-specific fields if accountType is business
+            if (accountType === 'business') {
+                user.business_name = business_name;
+            }
+    
+            // Create the user in the database
             const response = await UserService.createUser(user);
             if (response?.errors) {
-            return errorResponse(res, 500, "An error occurred", response);
+                return errorResponse(res, 500, "An error occurred", response);
             }
+    
+            // Send the OTP to the user's phone number
+            const message = `Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
+            await sendSMSOTP(response.phone_number, message);
+            
             return successResponse(res, 201, "Your account has been successfully created. An OTP has been sent to your phone number for verification.", response);
         } catch (error) {
             console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
         }
     }
+    
 
     static async validateOTP(req, res){
         const userId = req.params.userId;
