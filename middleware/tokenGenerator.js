@@ -44,4 +44,11 @@ exports.verifyToken = (req, res, next) => {
 };
 
 
+exports.Business = (req, res, next) => {
+  if (req.user.accountType !== "business") {
+    return res.status(403).send({ message: "Access denied" });
+  }
+  next();
+};
+
 

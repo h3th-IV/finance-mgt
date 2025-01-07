@@ -31,30 +31,46 @@ module.exports = class UserController {
             }, {});
             return errorResponse(res, 400, "Validation error", { errors });
         }
-        const { first_name, last_name, number, password } = value;
+    
+        const { first_name, last_name, phone_number, password, accountType, business_name } = value;
+        console.log({value});
+        
+    
         try {
-            const user_exist = await UserService.getUserByPhone(number);
+            const user_exist = await UserService.getUserByPhone(phone_number);
             if (user_exist) {
-            return errorResponse(res, 409, "User with this phone number already exists");
+                return errorResponse(res, 409, "User with this phone number already exists");
             }
+    
             const otp = generateOTP();
             const user = {
-            first_name,
-            last_name,
-            number,
-            password,
-            otp,
+                phone_number,
+                password,
+                otp,
+                accountType,
             };
+            if (accountType === 'individual') {
+                user.first_name = first_name;
+                user.last_name = last_name;
+            }
+            if (accountType === 'business') {
+                user.business_name = business_name;
+            }
             const response = await UserService.createUser(user);
             if (response?.errors) {
-            return errorResponse(res, 500, "An error occurred", response);
+                return errorResponse(res, 500, "An error occurred", response);
             }
+    
+            const message = `Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
+            await sendSMSOTP(response.phone_number, message);
+            
             return successResponse(res, 201, "Your account has been successfully created. An OTP has been sent to your phone number for verification.", response);
         } catch (error) {
             console.log(error);
             return errorResponse(res, 500, "An unexpected error occurred", error);
         }
     }
+    
 
     static async validateOTP(req, res){
         const userId = req.params.userId;
@@ -381,15 +397,17 @@ module.exports = class UserController {
                 user.kyc_verification = updatedKYC._id;
             }
 
-            const { emailVerified, bankVerified, utilityBillVerified, documentVerified } = calculateStatuses(kycData, req.files, updatedKYC);
+            const { emailVerified, bankVerified, utilityBillVerified, documentVerified, addressVerified, employmentInfoVerified } = calculateStatuses(kycData, req.files, updatedKYC);
 
             updatedKYC.email.status = emailVerified;
             updatedKYC.bank_verification_number.status = bankVerified;
             updatedKYC.utility_bill.status = utilityBillVerified;
             updatedKYC.document_verification.status = documentVerified;
+            updatedKYC.address.status = addressVerified;
+            updatedKYC.employment_info.status = employmentInfoVerified;
             await updatedKYC.save();
 
-            user.is_verified = emailVerified && bankVerified && utilityBillVerified && documentVerified;
+            user.is_verified = emailVerified && bankVerified && utilityBillVerified && documentVerified && addressVerified && employmentInfoVerified;
             await user.save();
 
             const updatedUser = await User.findById(userId).populate('kyc_verification');

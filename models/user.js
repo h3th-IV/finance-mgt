@@ -7,11 +7,11 @@ const { generateOTP} = require('../helpers/otp');
 const UsersSchema = new mongoose.Schema({
     first_name: {
         type: String,
-        required: true,
+        required: function() { return this.accountType === 'individual'; }
     },
     last_name: {
         type: String,
-        required: true,
+        required: function() { return this.accountType === 'individual'; }
     },
     email: {
         type: String,
@@ -29,10 +29,6 @@ const UsersSchema = new mongoose.Schema({
     profilePicture: {
         type: String,
         required: false,
-    },
-    dateOfBirth: {
-        type: Date,
-        required: false
     },
     address: {
         type: String,
@@ -57,8 +53,18 @@ const UsersSchema = new mongoose.Schema({
     is_verified: {
       type: Boolean,
       default: false,
-    }
-}, {timestamps: true,});
+    },
+    accountType: {
+      type: String,
+      enum: ['individual', 'business'],
+      required: true,
+      default: 'individual'
+    },
+    business_name: {
+      type: String,
+      required: function() { return this.accountType === 'business'; }
+    },
+}, {timestamps: true});
 
 UsersSchema.methods.isOTPExpired = function () {
   const otpExpirationTime = 5 * 60 * 1000; // 5 minutes
@@ -90,11 +96,11 @@ UsersSchema.pre("save", async function (next) {
     next();
 });
 
-
 UsersSchema.methods.getSignedJwtToken = function(){
   return jwt.sign({
     id: this._id,
-    email: this.email
+    email: this.email,
+    accountType: this.accountType,
   },
     "thugnificient@lethalinterjections.com",
   {
