@@ -30,10 +30,6 @@ const UsersSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
-    // dateOfBirth: {
-    //     type: Date,
-    //     required: function() { return this.accountType === 'individual'; }
-    // },
     address: {
         type: String,
         required: false,
@@ -68,11 +64,6 @@ const UsersSchema = new mongoose.Schema({
       type: String,
       required: function() { return this.accountType === 'business'; }
     },
-    business_address: {
-      type: String,
-     // required: function() { return this.accountType === 'business'; }
-    },
-    // Add any other business-specific fields as necessary
 }, {timestamps: true});
 
 UsersSchema.methods.isOTPExpired = function () {
@@ -108,7 +99,8 @@ UsersSchema.pre("save", async function (next) {
 UsersSchema.methods.getSignedJwtToken = function(){
   return jwt.sign({
     id: this._id,
-    email: this.email
+    email: this.email,
+    accountType: this.accountType,
   },
     "thugnificient@lethalinterjections.com",
   {

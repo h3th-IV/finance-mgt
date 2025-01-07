@@ -13,6 +13,7 @@
         "newloan",
         "NOKYC",
         "Regen",
-        "signin"
+        "signin",
+        "SMSOTP"
     ]
 }

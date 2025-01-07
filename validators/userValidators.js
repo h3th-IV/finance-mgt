@@ -11,10 +11,6 @@ const userValidationSchema = Joi.object({
     .messages({
       "string.empty": "Please provide your last name",
     }),
-  // email: Joi.string().email().required().messages({
-  //   "string.empty": "Please provide your email address",
-  //   "string.email": "Invalid email format",
-  // }),
   phone_number: Joi.string()
     .pattern(/^[0-9]+$/)
     .required()
