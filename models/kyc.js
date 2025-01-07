@@ -60,14 +60,52 @@ const KYCSchema = new mongoose.Schema({
         doc: {
             type: String,
         },
-        // home_address: {
-        //     type: String,
-        // },
+        status: {
+            type: Boolean,
+            default: false,
+        },
+    },
+    address: {
+        address: {
+            type: String,
+        },
+        proof_of_address: {
+            type: String
+        },
+        status: {
+            type: Boolean,
+            default: false
+        }
+    },
+    employment_info: {
+        employment_status: {
+            type: String,
+            enum: ["employee", "self_employed", "worker"]
+        },
+        employer_name: {
+            type: String,
+        },
+        employer_phone: {
+            type: String,
+        },
+        employer_email: {
+            type: String,
+        },
+        employer_address: {
+            type: String
+        },
+        job_title: {
+            type: String,
+        },
+        income_per_period: {
+            type: String
+        },
         status: {
             type: Boolean,
             default: false,
         },
     }
+
 }, { timestamps: true });
 
 

@@ -32,48 +32,35 @@ module.exports = class UserController {
             return errorResponse(res, 400, "Validation error", { errors });
         }
     
-        // Extract values from the validated data
-        const { first_name, last_name, phone_number, password, accountType, business_name, business_address, business_phone_number, businessEmail } = value;
+        const { first_name, last_name, phone_number, password, accountType, business_name } = value;
         console.log({value});
         
     
         try {
-            // Check if the user already exists by phone number
             const user_exist = await UserService.getUserByPhone(phone_number);
             if (user_exist) {
                 return errorResponse(res, 409, "User with this phone number already exists");
             }
     
-            // Generate OTP
             const otp = generateOTP();
-    
-            // Prepare the user object based on account type
             const user = {
                 phone_number,
                 password,
                 otp,
                 accountType,
             };
-
-    
-            // Add individual-specific fields if accountType is individual
             if (accountType === 'individual') {
                 user.first_name = first_name;
                 user.last_name = last_name;
             }
-    
-            // Add business-specific fields if accountType is business
             if (accountType === 'business') {
                 user.business_name = business_name;
             }
-    
-            // Create the user in the database
             const response = await UserService.createUser(user);
             if (response?.errors) {
                 return errorResponse(res, 500, "An error occurred", response);
             }
     
-            // Send the OTP to the user's phone number
             const message = `Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
             await sendSMSOTP(response.phone_number, message);
             
@@ -410,15 +397,17 @@ module.exports = class UserController {
                 user.kyc_verification = updatedKYC._id;
             }
 
-            const { emailVerified, bankVerified, utilityBillVerified, documentVerified } = calculateStatuses(kycData, req.files, updatedKYC);
+            const { emailVerified, bankVerified, utilityBillVerified, documentVerified, addressVerified, employmentInfoVerified } = calculateStatuses(kycData, req.files, updatedKYC);
 
             updatedKYC.email.status = emailVerified;
             updatedKYC.bank_verification_number.status = bankVerified;
             updatedKYC.utility_bill.status = utilityBillVerified;
             updatedKYC.document_verification.status = documentVerified;
+            updatedKYC.address.status = addressVerified;
+            updatedKYC.employment_info.status = employmentInfoVerified;
             await updatedKYC.save();
 
-            user.is_verified = emailVerified && bankVerified && utilityBillVerified && documentVerified;
+            user.is_verified = emailVerified && bankVerified && utilityBillVerified && documentVerified && addressVerified && employmentInfoVerified;
             await user.save();
 
             const updatedUser = await User.findById(userId).populate('kyc_verification');

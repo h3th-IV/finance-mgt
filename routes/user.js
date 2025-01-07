@@ -17,7 +17,8 @@ router.patch("/kyc-email/:userId", verifyToken, UserController.kycEmailOTPValida
 router.post("/regen-otp/:userId", verifyToken, UserController.kycRegenEmailOTP);
 router.patch("/kyc/:userId", verifyToken, parser.fields([
     { name: 'utility_bill.doc', maxCount: 1 }, 
-    { name: 'document_verification.doc', maxCount: 1 }
+    { name: 'document_verification.doc', maxCount: 1 },
+    { name: 'address.proof_of_address', maxCount: 1 } 
   ]),  UserController.updateKYC);
 router.post("/bvn-otp/:userId", verifyToken, UserController.bvnOTPValidation);
 router.patch("/regen-bvn-otp/:userId", verifyToken, UserController.bvnOTPRegen);
