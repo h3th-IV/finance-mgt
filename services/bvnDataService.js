@@ -60,24 +60,21 @@ module.exports = class BVNDataService{
             if (!user){
                 return { success: false, message: "User not found" }
             };
-            const userBVNDatum = await BVNData.findOne({ customer: userId });
+            const userKYCDatum = user.kyc_verification
+            const userBVNDatum = await BVNData.findOne({ bvn: userKYCDatum.bank_verification_number.bvn });
             if (!userBVNDatum) {
                 return { success: false, message: "No BVN data found for this user." };
             }
-
             const otpTel = userBVNDatum.mobile.slice(-4);
             const otp = generateOTP();
             const kyc = user.kyc_verification;
             if (!kyc || !kyc.bank_verification_number) {
                 return { success: false, message: "KYC record not found or incomplete for this user." };
             }
-            updateUserDetailsBVN
             kyc.bank_verification_number.otp = otp;
             kyc.bank_verification_number.otpCreatedAt = new Date();
             await kyc.save();
             await user.save();
-
-            const bvnMessage = `Dear user, your OTP for bank verification number with Capitalwise is ${otp}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`;
 
             await sendSMSOTP(userBVNDatum.mobile, otp);
 
