@@ -37,18 +37,6 @@ const KYCSchema = new mongoose.Schema({
             default: false,
         },
     },
-    utility_bill: {
-        doc: {
-            type: String,
-        },
-        home_address: {
-            type: String,
-        },
-        status: {
-            type: Boolean,
-            default: false,
-        },
-    },
     document_verification: {
         doc_type: {
             type: String,
