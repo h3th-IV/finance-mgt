@@ -209,6 +209,21 @@ module.exports = class UserService {
         }
     }
 
+    static async regenerateOTP(userId){
+        try{
+            const user = await User.findById(userId);
+            if(!user){
+                return { success: false, message: "User not found." }
+            }
+            const newOTP = await user.regenerateOTP()
+            await sendSMSOTP(user.phone_number, newOTP)
+            return { success: true, message: "OTP sent to phone number successfully and updated"}
+        }catch(error){
+            console.error("error updating otp: ", error)
+            return { success: true, message: "Error updating OTP" }
+        }
+    }
+
     static async resetPassword(phone_number, otp, new_password) {
         try {
             const user = await User.findOne({ phone_number: phone_number });

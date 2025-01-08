@@ -20,6 +20,7 @@ const { sendOtp } = require("../config/messenger");
 const sendMMSOtp = require("../helpers/messenger");
 const user = require("../models/user");
 const { bankDetailsValidator } = require("../validators/bankDetailsValidator");
+const { businessKYCValidator } = require("../validators/bus.kyc.validator");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -106,25 +107,14 @@ module.exports = class UserController {
     static async regenerateOTP(req, res) {
         const userId = req.params.userId;
         try {
-            const user = await User.findById(userId);
-            if (!user) {
-                return errorResponse(res, 404, "User not found");
+            if(!userId){
+                return errorResponse(res, 400, "Missing userId")
             }
-            const newOTP = await user.regenerateOTP();
-            if (newOTP) {
-                // mailer.sendOTPEmail(user.email, user.first_name, newOTP);
-                // const message = `Your OTP for completing signup is ${newOTP}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
-                const message = `${newOTP}`;
-               const response = await sendSMSOTP(user.phone_number, newOTP);
-               console.log({response});
-               
-               if (!response.success){
-                return errorResponse(res, 200, response.message);
-               }
-                return successResponse(res, 200, "A new OTP has been sent to your phone number");
-            } else {
-                return errorResponse(res, 400, "OTP is still valid. Please try again later");
+            const response = await UserService.regenerateOTP(userId)
+            if(!response.success){
+                return errorResponse(res, 400, response.message)
             }
+            return successResponse(res, 200, "A new OTP has been sent to your phone number, please proceed with validation as it expires soon");
         } catch (error) {
             console.log(error);
             return errorResponse(res, 500, "An error occurred while regenerating the OTP", error);
@@ -626,6 +616,22 @@ module.exports = class UserController {
         }catch(error){
             console.error('Error updating password: ', error);
             return errorResponse(res, 500, 'Internal server error');
+        }
+    }
+
+    static async businessUpdateKYC(req, res) {
+        const { userId } = req.params;
+        const { error, value } = businessKYCValidator.validate(req.body, { abortEarly: false});
+        if(error){
+            const error = error.details.reduce((acc, err) => {
+                acc[err.context.key] = err.message;
+                return acc;
+            }, {});
+            return re.status(400).json({
+                success: false,
+                errors,
+                data: null,
+            })
         }
     }
 };
