@@ -17,9 +17,6 @@ const fetchUserAndKYC = async (userId) => {
 const combineKYCData = (kycData, files, kycRecord) => {
     return {
         ...kycData,
-        'utility_bill.doc': files['utility_bill.doc']
-            ? files['utility_bill.doc'][0].path
-            : kycRecord?.utility_bill?.doc,
         'document_verification.doc': files['document_verification.doc']
             ? files['document_verification.doc'][0].path
             : kycRecord?.document_verification?.doc,
@@ -39,11 +36,6 @@ const calculateStatuses = (kycData, files, kycRecord) => {
         (kycData['bank_verification_number.bvn'] || kycRecord?.bank_verification_number?.bvn) &&
         (kycData['bank_verification_number.dob'] || kycRecord?.bank_verification_number?.dob) &&
         ((kycData['bank_verification_number.otp'] === "VERIFIED") || (kycRecord?.bank_verification_number?.otp === "VERIFIED"))
-    );
-
-    const utilityBillVerified = Boolean(
-        (files['utility_bill.doc'] || kycRecord?.utility_bill?.doc) &&
-        (kycData['utility_bill.home_address'] || kycRecord?.utility_bill?.home_address)
     );
 
     const documentVerified = Boolean(
@@ -70,7 +62,6 @@ const calculateStatuses = (kycData, files, kycRecord) => {
     return {
         emailVerified,
         bankVerified,
-        utilityBillVerified,
         documentVerified,
         addressVerified,
         employmentInfoVerified,
