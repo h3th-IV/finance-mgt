@@ -16,7 +16,6 @@ router.patch("/reset-password", UserController.resetPassword);
 router.patch("/kyc-email/:userId", verifyToken, UserController.kycEmailOTPValidation);
 router.post("/regen-otp/:userId", verifyToken, UserController.kycRegenEmailOTP);
 router.patch("/kyc/:userId", verifyToken, parser.fields([
-    { name: 'utility_bill.doc', maxCount: 1 }, 
     { name: 'document_verification.doc', maxCount: 1 },
     { name: 'address.proof_of_address', maxCount: 1 } 
   ]),  UserController.updateKYC);

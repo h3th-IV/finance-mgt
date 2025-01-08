@@ -397,17 +397,16 @@ module.exports = class UserController {
                 user.kyc_verification = updatedKYC._id;
             }
 
-            const { emailVerified, bankVerified, utilityBillVerified, documentVerified, addressVerified, employmentInfoVerified } = calculateStatuses(kycData, req.files, updatedKYC);
+            const { emailVerified, bankVerified, documentVerified, addressVerified, employmentInfoVerified } = calculateStatuses(kycData, req.files, updatedKYC);
 
             updatedKYC.email.status = emailVerified;
             updatedKYC.bank_verification_number.status = bankVerified;
-            updatedKYC.utility_bill.status = utilityBillVerified;
             updatedKYC.document_verification.status = documentVerified;
             updatedKYC.address.status = addressVerified;
             updatedKYC.employment_info.status = employmentInfoVerified;
             await updatedKYC.save();
 
-            user.is_verified = emailVerified && bankVerified && utilityBillVerified && documentVerified && addressVerified && employmentInfoVerified;
+            user.is_verified = emailVerified && bankVerified && documentVerified && addressVerified && employmentInfoVerified;
             await user.save();
 
             const updatedUser = await User.findById(userId).populate('kyc_verification');
