@@ -166,7 +166,7 @@ module.exports = class UserService {
     }
     
 
-    static async validateOTP(userId, inputOTP) {
+    static async validateOTP(identifier, inputOTP) {
         try {
             const query = mongoose.Types.ObjectId.isValid(identifier)
                     ? { _id: identifier }
@@ -220,7 +220,6 @@ module.exports = class UserService {
                     ? { _id: identifier }
                     : { phone_number: identifier };
             const user = await User.findOne(query);
-            console.log(user);
             if(!user){
                 return { success: false, message: "User not found." }
             }
