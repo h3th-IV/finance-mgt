@@ -13,6 +13,7 @@ const admin =require('./routes/admin');
 const loanApp = require('./routes/loanApplication');
 const cron = require("node-cron");
 const userModel = require("./models/user");
+const business = require("./routes/business");
 
 app.use(
   session({
@@ -76,28 +77,9 @@ app.use("/api/v1/guarantor", guarantor);
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/loanapp", loanApp);
 app.post('/api/v1/loan-calculator', LoanApplicationController.loanCalculator);
+app.use("/api/v1/business", business);
 // app.post('/api/v1/sms', AdminController.sendSMS);
 const PORT = process.env.PORT || 8000;
 sever.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });
-
-// cron.schedule('*/1 * * * *', async () => {
-//     console.log("there");
-//     try {
-//         const usersWithExpiredOTPs = await userModel.find({
-//             otpExpired: false,
-//             otpCreatedAt: { $lte: new Date(Date.now() - 5 * 60 * 1000) }
-//         });
-
-//         for (const user of usersWithExpiredOTPs) {
-//             user.otp = "EXPIRED";
-//             // user.otpCreatedAt = null;
-//             user.otpExpired = true;
-//             await user.save();
-//         }
-//         console.log(`Expired OTPs cleaned up at ${new Date().toISOString()}`);
-//     } catch (error) {
-//         console.error("Error during OTP cleanup:", error);
-//     }
-// });
