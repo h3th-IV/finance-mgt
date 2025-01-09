@@ -75,16 +75,16 @@ module.exports = class UserController {
     
 
     static async validateOTP(req, res){
-        const userId = req.params.userId;
+        const { identifier } = req.params;
         const { inputOTP } = req.body;
-        if (!userId) {
-            return errorResponse(res, 400, "Missing user ID");
+        if (!identifier) {
+            return errorResponse(res, 400, "Missing identifier");
         }
         if (!inputOTP || inputOTP === ""){
             return errorResponse(res, 400, "Please provide the OTP");
         }
         try {
-            const responseOTP = await UserService.validateOTP(userId, inputOTP);
+            const responseOTP = await UserService.validateOTP(identifier, inputOTP);
             const user = responseOTP.User;
             if (responseOTP.success) {
                 const token = user.getSignedJwtToken();
@@ -617,36 +617,6 @@ module.exports = class UserController {
         }catch(error){
             console.error('Error updating password: ', error);
             return errorResponse(res, 500, 'Internal server error');
-        }
-    }
-
-    static async businessUpdateKYC(req, res) {
-        const { userId } = req.params;
-        const { error, value } = businessKYCValidator.validate(req.body, { abortEarly: false});
-        if(error){
-            const errors = error.details.reduce((acc, err) => {
-                acc[err.context.key] = err.message;
-                return acc;
-            }, {});
-            return res.status(400).json({
-                success: false,
-                errors,
-                data: null,
-            });
-        }
-        const businessKYCData = req.body;
-        let otpSent = false;
-        let otpBVN = false;
-        let otpNUm = '';
-
-        try{
-            const { user, kycRecord } = await fetchBusinessKYC(userId);
-        }catch(error){
-            console.error("Error updating KYC:", error.message);
-            if (error.statusCode === 404) {
-                return errorResponse(res, 404, error.message);
-            }
-            return errorResponse(res, 500, "Server error");
         }
     }
 };

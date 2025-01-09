@@ -6,7 +6,7 @@ const { verifyToken } = require("../middleware/tokenGenerator");
 const LoanApplicationController = require('../controllers/loanApplicationController');
 
 router.post("/signup", UserController.createUser);
-router.post("/validate-otp/:userId", UserController.validateOTP);
+router.post("/validate-otp/:identifier", UserController.validateOTP);
 router.get("/all", UserController.getAllUsers);
 router.get("/single/:id", UserController.getAllUser);
 router.post("/signin", UserController.login);
@@ -28,8 +28,4 @@ router.get('/banks/:userId', verifyToken, UserController.getUserBankDetails)
 router.patch('/bank/:bankId', verifyToken, UserController.archiveBankAccount);
 router.patch('/update-otp/:userId', verifyToken, UserController.sendPasswordUpdateOTP)
 router.patch('/update-password/:userId', verifyToken, UserController.updatePassword);
-router.patch("/bus-kyc/:userId", verifyToken, parser.fields([
-  { name: 'business_registration.certificate', maxCount: 1 },
-  { name: 'business_address.proof_of_address', maxCount: 1 } 
-]),  UserController.businessUpdateKYC);
 module.exports = router;
