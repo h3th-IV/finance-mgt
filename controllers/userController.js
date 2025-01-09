@@ -21,6 +21,7 @@ const sendMMSOtp = require("../helpers/messenger");
 const user = require("../models/user");
 const { bankDetailsValidator } = require("../validators/bankDetailsValidator");
 const { businessKYCValidator } = require("../validators/bus.kyc.validator");
+const { fetchBusinessKYC } = require("../helpers/bus_kyc.helpers");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -105,12 +106,12 @@ module.exports = class UserController {
     }
 
     static async regenerateOTP(req, res) {
-        const userId = req.params.userId;
+        const { identifier } = req.params;
         try {
-            if(!userId){
-                return errorResponse(res, 400, "Missing userId")
+            if(!identifier){
+                return errorResponse(res, 400, "Missing identifier")
             }
-            const response = await UserService.regenerateOTP(userId)
+            const response = await UserService.regenerateOTP(identifier)
             if(!response.success){
                 return errorResponse(res, 400, response.message)
             }
@@ -623,15 +624,29 @@ module.exports = class UserController {
         const { userId } = req.params;
         const { error, value } = businessKYCValidator.validate(req.body, { abortEarly: false});
         if(error){
-            const error = error.details.reduce((acc, err) => {
+            const errors = error.details.reduce((acc, err) => {
                 acc[err.context.key] = err.message;
                 return acc;
             }, {});
-            return re.status(400).json({
+            return res.status(400).json({
                 success: false,
                 errors,
                 data: null,
-            })
+            });
+        }
+        const businessKYCData = req.body;
+        let otpSent = false;
+        let otpBVN = false;
+        let otpNUm = '';
+
+        try{
+            const { user, kycRecord } = await fetchBusinessKYC(userId);
+        }catch(error){
+            console.error("Error updating KYC:", error.message);
+            if (error.statusCode === 404) {
+                return errorResponse(res, 404, error.message);
+            }
+            return errorResponse(res, 500, "Server error");
         }
     }
 };

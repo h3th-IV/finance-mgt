@@ -7,6 +7,8 @@ const kyc = require("../models/kyc");
 const User = require("../models/user");
 const mailer = require("../config/mailer");
 const LoanApplication = require("../models/loanApplication");
+const { default: mongoose } = require("mongoose");
+
 
 module.exports = class UserService {
     static async createUser(data) {
@@ -209,9 +211,13 @@ module.exports = class UserService {
         }
     }
 
-    static async regenerateOTP(userId){
+    static async regenerateOTP(identifier){
         try{
-            const user = await User.findById(userId);
+            const query = mongoose.Types.ObjectId.isValid(identifier)
+                    ? { _id: identifier }
+                    : { phone_number: identifier };
+            const user = await User.findOne(query);
+            console.log(user);
             if(!user){
                 return { success: false, message: "User not found." }
             }
@@ -220,7 +226,7 @@ module.exports = class UserService {
             return { success: true, message: "OTP sent to phone number successfully and updated"}
         }catch(error){
             console.error("error updating otp: ", error)
-            return { success: true, message: "Error updating OTP" }
+            return { success: false, message: "Error updating OTP" }
         }
     }
 

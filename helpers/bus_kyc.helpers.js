@@ -1,13 +1,16 @@
-const BusinessKYC = require('../models/businessKYC');
+const BusinessKYC = require('../models/business_kyc');
+const user = require('../models/user');
+const User = require("../models/user")
 
 const fetchBusinessKYC = async (businessId) => {
-    const kycRecord = await BusinessKYC.findById(businessId);
-    if (!kycRecord) {
-        const error = new Error("Business KYC record not found");
+    const business = await User.findById(businessId).populate('kyc_business');
+    if (!business) {
+        const error = new Error("business not found");
         error.statusCode = 404;
         throw error;
     }
-    return kycRecord;
+    const kycRecord = business.kyc_business ? await BusinessKYC.findById(business.kyc_business._id): null;
+    return { business, kycRecord };
 };
 
 const combineBusinessKYCData = (kycData, files, kycRecord) => {
