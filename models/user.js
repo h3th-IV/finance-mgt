@@ -64,6 +64,10 @@ const UsersSchema = new mongoose.Schema({
       type: String,
       required: function() { return this.accountType === 'business'; }
     },
+    kyc_business: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BusinessKYC'
+    }
 }, {timestamps: true});
 
 UsersSchema.methods.isOTPExpired = function () {
