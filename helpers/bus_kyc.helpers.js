@@ -2,7 +2,7 @@ const BusinessKYC = require('../models/business_kyc');
 const user = require('../models/user');
 const User = require("../models/user")
 
-const fetchBusinessKYC = async (businessId) => {
+const fetchBusinessAndKYC = async (businessId) => {
     const business = await User.findById(businessId).populate('kyc_business');
     if (!business) {
         const error = new Error("business not found");
@@ -59,7 +59,7 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
 };
 
 module.exports = {
-    fetchBusinessKYC,
+    fetchBusinessAndKYC,
     combineBusinessKYCData,
     calculateBusinessStatuses,
 };
