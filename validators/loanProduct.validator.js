@@ -1,5 +1,6 @@
 const Joi = require('joi');
 
+// Schema for creating a loan product
 const createLoanProductSchema = Joi.object({
     name: Joi.string().required().messages({
         "string.empty": "Name is required",
@@ -20,10 +21,10 @@ const createLoanProductSchema = Joi.object({
         "any.required": "Max is required",
     }),
     min: Joi.number().positive().required().less(Joi.ref('max')).messages({
-            "number.base": "Min must be a number",
-            "number.positive": "Min must be a positive number",
-            "number.less": "Min must be less than Max",
-            "any.required": "Min is required",
+        "number.base": "Min must be a number",
+        "number.positive": "Min must be a positive number",
+        "number.less": "Min must be less than Max",
+        "any.required": "Min is required",
     }),
     interest_type: Joi.string()
         .valid("flat_rate", "reducing_balance")
@@ -41,8 +42,16 @@ const createLoanProductSchema = Joi.object({
             "array.min": "Duration must have at least one element",
             "any.required": "Duration is required",
         }),
+    product_group: Joi.string()
+        .valid("individual", "business")
+        .required()
+        .messages({
+            "any.only": "Product Group must be either 'individual' or 'business'",
+            "any.required": "Product Group is required",
+        }),
 });
 
+// Schema for updating a loan product
 const updateLoanProductSchema = Joi.object({
     name: Joi.string(),
     desc: Joi.string(),
@@ -64,8 +73,13 @@ const updateLoanProductSchema = Joi.object({
         .messages({
             "array.base": "Duration must be an array of positive numbers",
         }),
-}).or('name', 'desc', 'interest', 'max', 'min', 'status', 'interest_type', 'duration')
-.messages({
+    product_group: Joi.string()
+        .valid("individual", "business")
+        .messages({
+            "any.only": "Product Group must be either 'individual' or 'business'",
+        }),
+}).or('name', 'desc', 'interest', 'max', 'min', 'status', 'interest_type', 'duration', 'product_group') // At least one field must be updated
+  .messages({
     "object.missing": "At least one field must be updated",
 });
 

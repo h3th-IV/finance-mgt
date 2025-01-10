@@ -4,35 +4,105 @@ const { loanApplicationValidator, updateLoanApplicationValidator, loanApplicatio
 const { validateRequiredFiles } = require('../helpers/validateFiles.helper');
 const { loanCalculatorValidator } = require('../validators/loanCalc.validator');
 const { calculateRepaymentPlan } = require('../helpers/calcRepayment.helper');
+const AdminService = require('../services/adminService')
 
 module.exports = class LoanApplicationController {
+    // static async createLoanApplication(req, res) {
+    //     const { id, isStaff } = req.user;
+    //     const { customerId } = req.params; //customer id
+
+    //     const { loan_product, loan_amount, loan_duration } = req.body;
+    //     const files = req.files;
+
+    //     try {
+    //         const { error, value } = loanApplicationValidator.validate(
+    //             req.body
+    //         );
+    //         if (error) {
+    //             return errorResponse(res, 400, error.details[0].message);
+    //         }
+
+    //         const fileError = validateRequiredFiles(files);
+    //         if (fileError) {
+    //             return errorResponse(res, 400, fileError);
+    //         }
+    //         const createdByType = isStaff ? "Staff" : "User";
+    //         const createdBy = id;
+    //         const processingFee = parseFloat(value.loan_amount) * 0.01;
+    //         const loanData = {
+    //             customer: customerId,
+    //             loan_product,
+    //             loan_amount: parseFloat(value.loan_amount),
+    //             loan_duration: parseInt(value.loan_duration, 10),
+    //             guarantor1: {
+    //                 name: value["guarantor1.name"],
+    //                 email: value["guarantor1.email"],
+    //                 phone_number: value["guarantor1.phone_number"],
+    //             },
+    //             guarantor2: {
+    //                 name: value["guarantor2.name"],
+    //                 email: value["guarantor2.email"],
+    //                 phone_number: value["guarantor2.phone_number"],
+    //             },
+    //             createdByType,
+    //             createdBy,
+    //             processing_fee: processingFee,
+
+    //         };
+
+    //         const response = await LoanApplicationService.createLoanApplication(loanData, files);
+    //         if (!response.success) {
+    //             switch (response.code) {
+    //                 case "NOT_FOUND":
+    //                     return errorResponse(res, 404, response.message);
+
+    //                 case "INVALID_AMOUNT":
+    //                     return errorResponse(res, 400, response.message);
+
+    //                 case "INTERNAL_ERROR":
+    //                 default:
+    //                     return errorResponse(res, 500, "An unexpected server error occurred", response);
+    //             }
+    //         }
+    //         return successResponse(res, 201, "Loan application created successfully!", response);
+    //     } catch (error) {
+    //         console.error("Error creating loan application:", error);
+    //         return errorResponse(res, 500, error.message);
+    //     }
+    // }
+
     static async createLoanApplication(req, res) {
         const { id, isStaff } = req.user;
-        const { customerId } = req.params; //customer id
-
-        const { loan_product, loan_amount, loan_duration } = req.body;
+        const { customerId } = req.params; // customer id
+    
+        const { loan_product, loan_amount, loan_duration, loan_type, business_financial, business_collateral } = req.body;
+        const loanProductData =await AdminService.getProductsById(loan_product);
+        console.log({loanProductData});
+        
         const files = req.files;
-
+    
         try {
-            const { error, value } = loanApplicationValidator.validate(
-                req.body
-            );
+            const { error, value } = loanApplicationValidator.validate(req.body);
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
             }
-
-            const fileError = validateRequiredFiles(files);
+    
+            const fileError = validateRequiredFiles(files, loan_type);  // Ensure file validation is dependent on loan type
             if (fileError) {
                 return errorResponse(res, 400, fileError);
             }
+    
             const createdByType = isStaff ? "Staff" : "User";
             const createdBy = id;
             const processingFee = parseFloat(value.loan_amount) * 0.01;
+    
+            // Prepare loanData with additional fields for business loans
             const loanData = {
                 customer: customerId,
                 loan_product,
                 loan_amount: parseFloat(value.loan_amount),
                 loan_duration: parseInt(value.loan_duration, 10),
+                loan_type: loanProductData.product_group, 
                 guarantor1: {
                     name: value["guarantor1.name"],
                     email: value["guarantor1.email"],
@@ -46,29 +116,32 @@ module.exports = class LoanApplicationController {
                 createdByType,
                 createdBy,
                 processing_fee: processingFee,
-
+                business_financial,  
+                business_collateral, 
             };
-
+    
             const response = await LoanApplicationService.createLoanApplication(loanData, files);
             if (!response.success) {
                 switch (response.code) {
                     case "NOT_FOUND":
                         return errorResponse(res, 404, response.message);
-
                     case "INVALID_AMOUNT":
                         return errorResponse(res, 400, response.message);
-
+                    case "INVALID_DURATION":
+                        return errorResponse(res, 400, response.message);
                     case "INTERNAL_ERROR":
                     default:
                         return errorResponse(res, 500, "An unexpected server error occurred", response);
                 }
             }
+    
             return successResponse(res, 201, "Loan application created successfully!", response);
         } catch (error) {
             console.error("Error creating loan application:", error);
             return errorResponse(res, 500, error.message);
         }
     }
+     
 
     static async updateLoanApplication(req, res) {
         const { id } = req.user;

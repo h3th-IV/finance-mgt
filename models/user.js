@@ -94,7 +94,7 @@ UsersSchema.methods.regenerateOTP = async function () {
 };
 
 UsersSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next(); // To avoid rehashing an already hashed password
+    if (!this.isModified("password")) return next(); //avoid rehashing an already hashed password
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
@@ -110,6 +110,6 @@ UsersSchema.methods.getSignedJwtToken = function(){
   {
     expiresIn: "30d",
   })
-}
+};
 
 module.exports = mongoose.model("User", UsersSchema);

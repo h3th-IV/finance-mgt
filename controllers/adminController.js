@@ -7,72 +7,102 @@ const bcryptjs = require("bcryptjs");
 const Staff = require('../models/staff');
 const { validateCreateRole } = require('../validators/rolePerm.validator');
 const { staffValidator } = require("../validators/staff.validator");
-const { generateOTP} = require('../helpers/otp');
+const { generateOTP } = require('../helpers/otp');
 const mailer = require("../config/mailer");
 const { updatePasswordValidator } = require('../validators/staffUpdate.validator');
 const BVNDataService = require('../services/bvnDataService');
+const { listenerCount } = require('../models/loanApplication');
 // const { smsOTP } = require('../config/messenger');
 
 
-module.exports = class AdminController{
+module.exports = class AdminController {
     static async getAllkycs(req, res) {
-        try{
+        try {
             const kycs = await AdminService.getAllkyc();
             return successResponse(res, 200, "KYCs returned successfully", kycs);
-        } catch(error){
-            return errorResponse(res, 500, "Server error");
-        }
-    }
-
-    static async createLoanProduct(req, res) {
-        const staffId = req.params.staffId;
-        const { error } = createLoanProductSchema.validate(req.body);
-        if (error) {
-            return errorResponse(res, 400, error.details[0].message);
-        }
-        const { name, description, interest, max, min, interest_type, duration } = req.body;
-        try {
-            const product_data = {
-                name: name,
-                desc: description,
-                interest: interest,
-                max: max,
-                min: min,
-                createdBy: staffId,
-                interest_type: interest_type,
-                duration: duration,
-            };
-            console.log(product_data)
-            const loanProduct = await AdminService.createLoanProduct(product_data);
-            console.log(loanProduct);
-            return successResponse(res, 201, "Loan product created successfully", loanProduct);
         } catch (error) {
             return errorResponse(res, 500, "Server error");
         }
     }
 
+    // Create Loan Product
+    static async createLoanProduct(req, res) {
+        const staffId = req.params.staffId;
+
+        // Validate the request body using Joi schema
+        const { error } = createLoanProductSchema.validate(req.body);
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
+        }
+
+        // Destructure the valid fields from the request body
+        const { name, description, interest, max, min, interest_type, duration, product_group } = req.body;
+
+        try {
+            // Prepare the product data
+            const product_data = {
+                name,
+                desc: description,
+                interest,
+                max,
+                min,
+                createdBy: staffId,
+                interest_type,
+                duration,
+                product_group, // Ensure we include product_group
+            };
+
+            console.log("Product Data:", product_data);
+
+            // Call the service to create the loan product
+            const loanProduct = await AdminService.createLoanProduct(product_data);
+            console.log("Loan Product Created:", loanProduct);
+
+            // Send a successful response with the created loan product
+            return successResponse(res, 201, "Loan product created successfully", loanProduct);
+
+        } catch (error) {
+            console.error("Error creating loan product:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
+
+    // Update Loan Product
     static async updateLoanProduct(req, res) {
-        const { id } = req.user
+        const { id } = req.user; // Get the user ID from the request user object
         const productId = req.params.productId;
+
+        // Validate the request body using the update schema
         const { error } = updateLoanProductSchema.validate(req.body);
         if (error) {
             return errorResponse(res, 400, error.details[0].message);
         }
+
         const updateData = req.body;
+
         try {
+            // Check if productId is provided in the request params
             if (!productId) {
                 return errorResponse(res, 400, "Loan productId is required");
             }
+
+            // Call the service to update the loan product
             const response = await AdminService.updateLoanProduct(productId, updateData, id);
+
+            // If no loan product was found or no changes were made, return a descriptive error
             if (!response.success) {
-                return errorResponse(res, 400, "Error updating loan product", response);
+                return errorResponse(res, 400, response.message || "Error updating loan product");
             }
-            return successResponse(res, 200, "Loan product updated successfully", response);
+
+            // Return success response with the updated loan product details
+            return successResponse(res, 200, "Loan product updated successfully", response.loanProduct);
+
         } catch (error) {
             console.error("Error updating loan product:", error);
             return errorResponse(res, 500, "Server error");
         }
     }
+
 
     static async createStaff(req, res) {
         try {
@@ -81,7 +111,7 @@ module.exports = class AdminController{
                 const errorMessages = error.details.map((err) => err.message);
                 return errorResponse(res, 400, "Validation error", { errors: errorMessages });
             }
-            
+
             const { first_name, last_name, email, dob, role } = req.body;
             const otp = generateOTP()
 
@@ -100,7 +130,7 @@ module.exports = class AdminController{
             const staffId = response.staffData.staff._id;
             const role_name = response.staffData.role_name
             mailer.sendStaffOTPEmail(email, first_name, otp, role_name, staffId);
-            return successResponse(res, 201, "Staff created successfully.", response.staffData);    
+            return successResponse(res, 201, "Staff created successfully.", response.staffData);
         } catch (error) {
             console.error("Error creating staff:", error);
             return errorResponse(res, 500, "Server error");
@@ -122,7 +152,7 @@ module.exports = class AdminController{
 
             const { staffId, otp, pass } = dataToValidate;
             const response = await AdminService.updatePassword(staffId, otp, pass);
-            if (!response.success){
+            if (!response.success) {
                 return errorResponse(res, 400, response.message)
             }
             return successResponse(res, 200, "Password has been updated successfully", response.staff);
@@ -132,23 +162,23 @@ module.exports = class AdminController{
     }
 
     //login for admin routes for staffs
-    static async login(req, res){
+    static async login(req, res) {
         const { error } = loginValidator.validate(req.body);
         if (error) {
             return errorResponse(res, 400, error.details[0].message);
         }
         const { identifier, password } = req.body;
-        try{
+        try {
             const query = identifier.includes('@') ? { email: identifier.toLowerCase() } : { phone_number: identifier };
             const staff = await Staff.findOne(query).populate('role');
             if (!staff) {
                 return errorResponse(res, 401, `Staff with ${query.email ? "email" : "Phone Number"} not found`);
             }
             const isPassword = await bcryptjs.compare(password, staff.password);
-            if(!isPassword) {
+            if (!isPassword) {
                 return errorResponse(res, 401, "Incorrect password");
             }
-            if(!staff.role) {
+            if (!staff.role) {
                 return errorResponse(res, 403, "Access denied");
             }
             const token = staff.generateStaffToken();
@@ -168,14 +198,26 @@ module.exports = class AdminController{
         }
     }
 
-    static async getAllLoanProducts(req, res){
+    static async getAllLoanProducts(req, res) {
         try {
-            const response = await AdminService.getAllLoanProducts();
+            let response = []
+
+
+            if (req.query !== null) {
+                console.log({z: req.query.accountType}, "u");
+                
+                response = await AdminService.getAllLoanProducts(req?.query?.accountType);
+            } else {
+                response = await AdminService.getAllLoanProducts();
+            }
+           
             return successResponse(res, 200, "All loan product returned successfully", response);
         } catch (error) {
-            return errorResponse(res,   500, "Server error");
+            return errorResponse(res, 500, "Server error");
         }
     }
+
+
 
     static async createRolePermission(req, res) {
         const { name, permissions } = req.body;
@@ -224,35 +266,35 @@ module.exports = class AdminController{
         }
     }
 
-    static async getAllStaffs(req, res){
-        try{
+    static async getAllStaffs(req, res) {
+        try {
             const staffs = await AdminService.getStaffs();
             return successResponse(res, 200, "Staff returned successfully", staffs);
-        } catch(error){
+        } catch (error) {
             return errorResponse(res, 500, "Server error while fetching staffs");
         }
     }
 
-    static async sendSMS(req, res){
-        try{
+    static async sendSMS(req, res) {
+        try {
             const response = await smsOTP('2347035643850', '44444');
-            if (!response.success){
+            if (!response.success) {
                 return successResponse(res, 400, "Error", response.message);
             }
             return successResponse(res, 200, "Success", response.message);
-        } catch(error){
+        } catch (error) {
             return errorResponse(res, 500, 'Server error');
         }
     }
 
-    static async getAllBVNData(req, res){
-        try{
+    static async getAllBVNData(req, res) {
+        try {
             const response = await BVNDataService.getAllBVNData();
-            if (!response.success){
+            if (!response.success) {
                 return errorResponse(res, 400, "Error", response.message);
             }
             return successResponse(res, 200, response.message, response.bvnData);
-        }catch(error){
+        } catch (error) {
             return errorResponse(res, 500, 'Server error');
         }
     }
@@ -261,7 +303,7 @@ module.exports = class AdminController{
         const bvn = req.body.bvn;
         try {
             const response = await BVNDataService.getSingleBVNData(bvn);
-            if(!response.success){
+            if (!response.success) {
                 return errorResponse(res, 400, "Error", response.message)
             }
             return successResponse(res, 200, response.message, response.bvnDatum);
@@ -270,16 +312,16 @@ module.exports = class AdminController{
         }
     }
 
-    static async archiveLoanProduct(req, res){
+    static async archiveLoanProduct(req, res) {
         const { id } = req.user;
-        try{
+        try {
             const { productId } = req.params;
             const response = await AdminService.archiveLoanProduct(productId, id);
-            if(!response.success){
+            if (!response.success) {
                 return errorResponse(res, 404, response.message);
             }
             return successResponse(res, 200, response.message, response.data);
-        }catch(error){
+        } catch (error) {
             console.error("Error in archive LoanProduct controller: ", error);
             return errorResponse(res, 500, "Server error");
         }
@@ -298,18 +340,18 @@ module.exports = class AdminController{
         }
     }
 
-    static async getLoanProduct(req, res){
+    static async getLoanProduct(req, res) {
         const { productId } = req.params;
-        try{
-            if(!productId){
+        try {
+            if (!productId) {
                 return errorResponse(res, 400, 'Missing productId')
             }
             const response = await AdminService.getLoanProduct(productId);
             if (!response.success) {
                 return errorResponse(res, response.message === 'Loan Product not found' ? 404 : 400, response.message);
-            }            
+            }
             return successResponse(res, 200, 'Loan product returned successfully', response.data);
-        }catch(error){
+        } catch (error) {
             console.error('Error fetching product', error)
             return errorResponse(res, 500, 'Internal server Error');
         }

@@ -20,8 +20,6 @@ const { sendOtp } = require("../config/messenger");
 const sendMMSOtp = require("../helpers/messenger");
 const user = require("../models/user");
 const { bankDetailsValidator } = require("../validators/bankDetailsValidator");
-const { businessKYCValidator } = require("../validators/bus.kyc.validator");
-const { fetchBusinessKYC } = require("../helpers/bus_kyc.helpers");
 
 module.exports = class UserController {
     static async createUser(req, res) {
@@ -72,7 +70,31 @@ module.exports = class UserController {
             return errorResponse(res, 500, "An unexpected error occurred", error);
         }
     }
-    
+
+
+    static async deleteUser(req, res) {
+        const { userId } = req.params;
+
+        try {
+            const deletedUser = await UserService.deleteUserById(userId);
+
+            return successResponse(
+                res,
+                200,
+                "User account deleted successfully",
+                { deletedUser }
+            );
+        } catch (error) {
+            if (error.message === "User not found") {
+                return errorResponse(res, 404, error.message);
+            }
+
+            console.error("Error in deleteUser:", error);
+            return errorResponse(res, 500, "An unexpected error occurred", error);
+        }
+    }
+
+
 
     static async validateOTP(req, res){
         const { identifier } = req.params;

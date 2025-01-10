@@ -79,7 +79,7 @@ StaffSchema.methods.generateStaffToken = function () {
             isStaff: true,
         },
         process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+        { expiresIn: "30d" } //changed just for kicks
     );
 };
 
