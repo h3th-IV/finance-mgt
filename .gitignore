@@ -2,3 +2,7 @@
 test.txt
 test.json
 /node_modules
+./node_modules
+node_modules
+git.txt
+node_modules
