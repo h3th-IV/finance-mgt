@@ -16,6 +16,7 @@ const permissions = [
     {name: "VERIFY_DOCS", description: "Document verification officers" },
     {name: "CREATE_STAFF", description: "Create Staff" },
     {name: "ARCHIVE_LOAN_PRODUCT", description: "Archive Loan Product" },
+    {name: "DELETE_USER", description: "Delete User Account" },
 ]
 
 const seedPermissions = async () => {
