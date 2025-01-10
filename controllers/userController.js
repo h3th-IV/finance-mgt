@@ -90,12 +90,9 @@ module.exports = class UserController {
                 const token = user.getSignedJwtToken();
                 const response = {
                     jwToken: token,
-                    name: user.first_name,
-                    email: user.email,
-                    phone: user.phone_number,
-                    message: "OTP validated successfully"
+                    user,
                 }
-                return successResponse(res, 200, response);
+                return successResponse(res, 200, "OTP validated successfully", response);
             } else {
                 return errorResponse(res, 400, responseOTP.message);
             }

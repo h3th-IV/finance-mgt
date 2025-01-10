@@ -96,10 +96,14 @@ module.exports = class UserService {
                     ],
                 } : {}),
             })
-                .populate('kyc_verification')
+                .populate([
+                    { path: 'kyc_verification' },
+                    { path: 'kyc_business' }
+                ])
                 .skip(skip)
                 .limit(limit)
                 .sort({ createdAt: -1 });
+            
 
             const userDetails = await Promise.all(
                 users.map(async (user) => {
@@ -175,7 +179,6 @@ module.exports = class UserService {
             if (!user) {
                 return { success: false, message: "User not found." };
             }
-
             await user.clearOTPIfExpired();
 
             if (user.otp === "EXPIRED") {
