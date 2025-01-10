@@ -1,53 +1,27 @@
 {
-    "success": true,
-    "message": "Loan application created successfully!",
-    "data": {
-        "success": true,
-        "loanApplication": {
-            "customer": "676e9e4de6d2b89ae45e0d84",
-            "loan_id": "CWLN-1047",
-            "loan_product": "677025d90c3cfa79ab11f68d",
-            "interest_rate": 10,
-            "loan_amount": 10000,
-            "loan_duration": 2,
-            "statement_of_account": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735549437/kyc-uploads/dllmg30ewhq0xjbizbs9.pdf",
-            "security_cheque": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735549444/kyc-uploads/cycc7vws8io6gzn0a0rf.pdf",
-            "guarantor1": {
-                "name": "Trevor Grillo",
-                "email": "trevorgrillo45@gmail.com"
-            },
-            "guarantor2": {
-                "name": "Marylin Viceroy",
-                "email": "marylinviceroy@gmail.com"
-            },
-            "date_disbursed": null,
-            "status": "processing",
-            "repayment_plan": {
-                "monthlyPayment": 5083.33,
-                "totalPayment": 10266.67,
-                "totalInterest": 166.67,
-                "duration": 2,
-                "interestRate": 10,
-                "interestType": "flat_rate"
-            },
-            "repayments": [],
-            "processing_fee": 100,
-            "createdByType": "User",
-            "createdBy": "676e9e4de6d2b89ae45e0d84",
-            "_id": "6772620633ede01054c707d4",
-            "createdAt": "2024-12-30T09:04:06.952Z",
-            "updatedAt": "2024-12-30T09:04:06.952Z",
-            "__v": 0
-        },
-        "repaymentPlan": {
-            "monthlyPayment": "5083.33",
-            "totalPayment": "10266.67",
-            "totalCapital": "10000.00",
-            "totalInterest": "166.67",
-            "duration": 2,
-            "interestRate": 10,
-            "interestType": "flat_rate",
-            "repaymentSchedule": null
+    "owners_partner_info":
+    [
+        {
+            "name":"John Doe",
+            "phone_number":"07012345678",
+            "email":"jade@vxxmail.com",
+            "bvn":"02345678419"
         }
+    ],
+    "directors_bvn_verification":
+    [
+        {
+            "director_name":"Jane Smith",
+            "email":"marylin@vxxmail.com",
+            "bvn":"19876543419"
+        }
+    ],
+    "business_address":
+    {
+        "address":"123 Business Lane"
+    },
+    "employee_size":
+    {
+        "size":50
     }
 }

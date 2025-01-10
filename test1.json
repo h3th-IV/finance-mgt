@@ -1,68 +1,27 @@
 {
-    "success": true,
-    "message": "Loan application created successfully!",
-    "data": {
-        "success": true,
-        "loanApplication": {
-            "customer": "676e9e4de6d2b89ae45e0d84",
-            "loan_id": "CWLN-1044",
-            "loan_product": "677025f40c3cfa79ab11f68f",
-            "interest_rate": 10,
-            "loan_amount": 10000,
-            "loan_duration": 2,
-            "statement_of_account": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735548336/kyc-uploads/lvz1ajwbgi8nky5pqfrt.pdf",
-            "security_cheque": "https://res.cloudinary.com/dtwujehfs/image/upload/v1735548340/kyc-uploads/me6uy8hdnmwhtkvlfaqo.pdf",
-            "guarantor1": {
-                "name": "Trevor Grillo",
-                "email": "trevorgrillo45@gmail.com"
-            },
-            "guarantor2": {
-                "name": "Marylin Viceroy",
-                "email": "marylinviceroy@gmail.com"
-            },
-            "date_disbursed": null,
-            "status": "processing",
-            "repayment_plan": {
-                "monthlyPayment": 5083.33,
-                "totalPayment": 10225,
-                "totalInterest": 125,
-                "duration": 2,
-                "interestRate": 10,
-                "interestType": "reducing_balance"
-            },
-            "repayments": [],
-            "processing_fee": 100,
-            "createdByType": "User",
-            "createdBy": "676e9e4de6d2b89ae45e0d84",
-            "_id": "67725db546a839f2b0bfe032",
-            "createdAt": "2024-12-30T08:45:41.691Z",
-            "updatedAt": "2024-12-30T08:45:41.691Z",
-            "__v": 0
-        },
-        "repaymentPlan": {
-            "monthlyPayment": "5083.33",
-            "totalPayment": "10225.00",
-            "totalCapital": "10000.00",
-            "totalInterest": "125.00",
-            "duration": 2,
-            "interestRate": 10,
-            "interestType": "reducing_balance",
-            "repaymentSchedule": [
-                {
-                    "month": 1,
-                    "payment": "5083.33",
-                    "interest": "83.33",
-                    "principal": "5000.00",
-                    "remainingPrincipal": "5000.00"
-                },
-                {
-                    "month": 2,
-                    "payment": "5041.67",
-                    "interest": "41.67",
-                    "principal": "5000.00",
-                    "remainingPrincipal": "0.00"
-                }
-            ]
+    "owners_partner_info":
+    [
+        {
+            "name":"",
+            "phone_number":"",
+            "email":"",
+            "bvn":""
         }
+    ],
+    "directors_bvn_verification":
+    [
+        {
+            "director_name":"",
+            "email":"",
+            "bvn":""
+        }
+    ],
+    "business_address":
+    {
+        "address":""
+    },
+    "employee_size":
+    {
+        "size":0
     }
 }
