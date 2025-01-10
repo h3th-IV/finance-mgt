@@ -62,7 +62,7 @@ module.exports = class UserController {
             }
     
             const message = `Your OTP for completing signup is ${response.otp}. It will expire in 5 minutes. Please do not share this OTP with anyone.`;
-            await sendSMSOTP(response.phone_number, message);
+            // await sendSMSOTP(response.phone_number, message);
             
             return successResponse(res, 201, "Your account has been successfully created. An OTP has been sent to your phone number for verification.", response);
         } catch (error) {
