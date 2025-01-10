@@ -31,5 +31,6 @@ router.post("/create-loanapp/:customerId", verifyStaffToken, checkPermission("CR
 ]), LoanApplicationController.createLoanApplication)
 router.get('/banks', verifyStaffToken, AdminController.getAllBankDetails);
 router.get('/loan-product/:productId', AdminController.getLoanProduct);
+router.delete('/del-user/:userId', verifyStaffToken, UserController.deleteUser);
 
 module.exports = router;

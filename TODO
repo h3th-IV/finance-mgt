@@ -2,3 +2,6 @@ hash OTP
 rate limiting across needed endpoints
 
 return user detail for validating otp
+
+
+update some user or business info

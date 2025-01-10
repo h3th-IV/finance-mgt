@@ -8,6 +8,8 @@ const User = require("../models/user");
 const mailer = require("../config/mailer");
 const LoanApplication = require("../models/loanApplication");
 const { default: mongoose } = require("mongoose");
+const BusinessKYCSchema = require("../models/business_kyc");
+const KYCSchema = require("../models/kyc");
 
 
 module.exports = class UserService {
@@ -48,7 +50,24 @@ module.exports = class UserService {
         }
     }
     
-    
+    static async deleteUserById(userId) {
+        try {
+            const user = await User.findById(userId);
+            if(user.kyc_business){
+                await BusinessKYCSchema.findByIdAndDelete(user.kyc_business)
+            } else{
+                await KYCSchema.findByIdAndDelete(user.kyc_verification);
+            }
+            const deletedUser = await User.findByIdAndDelete(userId);
+            if (!deletedUser) {
+                throw new Error("User not found");
+            }
+            return deletedUser;
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            throw error;
+        }
+    }
 
     static async getUserByPhone(number){
         try {
