@@ -6,19 +6,15 @@ const BusinessKYCSchema = new mongoose.Schema(
             {
                 name: {
                     type: String,
-                    required: true,
                 },
                 phone_number: {
                     type: String,
-                    required: true,
                 },
                 email: {
                     type: String,
-                    required: true,
                 },
                 bvn: {
                     type: String,
-                    required: true,
                     length: 11,
                     match: /^\d+$/,
                 },
@@ -31,7 +27,6 @@ const BusinessKYCSchema = new mongoose.Schema(
         business_registration: {
             certificate: {
                 type: String,
-                required: true,
             },
             status: {
                 type: Boolean,
@@ -42,15 +37,12 @@ const BusinessKYCSchema = new mongoose.Schema(
             {
                 director_name: {
                     type: String,
-                    required: true,
                 },
                 email: {
                     type: String,
-                    required: true,
                 },
                 bvn: {
                     type: String,
-                    required: true,
                     length: 11,
                     match: /^\d+$/,
                 },
@@ -63,11 +55,9 @@ const BusinessKYCSchema = new mongoose.Schema(
         business_address: {
             address: {
                 type: String,
-                required: true,
             },
             proof_of_address: {
                 type: String,
-                required: true,
             },
             status: {
                 type: Boolean,
@@ -77,7 +67,6 @@ const BusinessKYCSchema = new mongoose.Schema(
         employee_size: {
             size: {
                 type: Number,
-                required: true,
                 min: 1,
             },
             status: {
@@ -88,6 +77,47 @@ const BusinessKYCSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+
+BusinessKYCSchema.statics.checkForExistingEmails = async function (emails) {
+    const results = await this.find({
+        $or: [
+            { 'owners_partner_info.email': { $in: emails } },
+            { 'directors_bvn_verification.email': { $in: emails } },
+        ],
+    }).select({
+        'owners_partner_info.email': 1,
+        'directors_bvn_verification.email': 1,
+    });
+
+    const existingEmails = results.flatMap((record) => [
+        ...record.owners_partner_info.map((owner) => owner.email),
+        ...record.directors_bvn_verification.map((director) => director.email),
+    ]);
+
+    return existingEmails.filter((email) => emails.includes(email));
+};
+
+
+BusinessKYCSchema.statics.checkForExistingBVNs = async function (bvns) {
+    const results = await this.find({
+        $or: [
+            { 'owners_partner_info.bvn': { $in: bvns } },
+            { 'directors_bvn_verification.bvn': { $in: bvns } },
+        ],
+    }).select({
+        'owners_partner_info.bvn': 1,
+        'directors_bvn_verification.bvn': 1,
+    });
+
+    const existingBVNs = results.flatMap((record) => [
+        ...record.owners_partner_info.map((owner) => owner.bvn),
+        ...record.directors_bvn_verification.map((director) => director.bvn),
+    ]);
+
+    return existingBVNs.filter((bvn) => bvns.includes(bvn));
+};
+
 
 //heleper to check all fields are verified
 BusinessKYCSchema.methods.calculateStatuses = function () {

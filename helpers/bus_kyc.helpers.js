@@ -26,27 +26,45 @@ const combineBusinessKYCData = (kycData, files, kycRecord) => {
 };
 
 const calculateBusinessStatuses = (kycData, files, kycRecord) => {
-    const ownersVerified = Boolean(
-        kycRecord?.owners_partner_info.every((owner) => owner.status)
+    const ownersVerified = kycRecord?.owners_partner_info.every(
+        (owner) =>
+            owner.name &&
+            owner.phone_number &&
+            owner.email &&
+            owner.bvn &&
+            owner.bvn.length === 11 &&
+            /^\d+$/.test(owner.bvn)
     );
 
     const registrationVerified = Boolean(
-        kycData['business_registration.certificate'] ||
-        kycRecord?.business_registration?.certificate
+        kycData['business_registration.certificate'] || kycRecord?.business_registration?.certificate
     );
 
-    const directorsVerified = Boolean(
-        kycRecord?.directors_bvn_verification.every((director) => director.status)
+    const directorsVerified = kycRecord?.directors_bvn_verification.every(
+        (director) =>
+            director.director_name &&
+            director.email &&
+            director.bvn &&
+            director.bvn.length === 11 &&
+            /^\d+$/.test(director.bvn)
     );
 
     const addressVerified = Boolean(
-        kycData['business_address.address'] ||
+        (kycData['business_address.address'] || kycRecord?.business_address?.address) &&
         (files['business_address.proof_of_address'] || kycRecord?.business_address?.proof_of_address)
     );
 
     const employeeSizeVerified = Boolean(
-        kycData['employee_size.size'] || kycRecord?.employee_size?.status
+        (kycData['employee_size.size'] || kycRecord?.employee_size?.size) >= 1
     );
+
+    //fully vrified status
+    const isFullyVerified =
+        ownersVerified &&
+        registrationVerified &&
+        directorsVerified &&
+        addressVerified &&
+        employeeSizeVerified;
 
     return {
         ownersVerified,
@@ -54,9 +72,10 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
         directorsVerified,
         addressVerified,
         employeeSizeVerified,
-        isFullyVerified: ownersVerified && registrationVerified && directorsVerified && addressVerified && employeeSizeVerified,
+        isFullyVerified,
     };
 };
+
 
 module.exports = {
     fetchBusinessAndKYC,

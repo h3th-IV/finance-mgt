@@ -22,7 +22,7 @@ const KYCSchema = new mongoose.Schema({
     bank_verification_number: {
         bvn: {
             type: String,
-        },
+        },  
         dob: {
             type: Date,
         },
