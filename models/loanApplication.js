@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-
 const LoanApplication = new mongoose.Schema(
     {
         customer: {
@@ -25,24 +24,44 @@ const LoanApplication = new mongoose.Schema(
         loan_duration: {
             type: Number,
         },
-        statement_of_account: {
-            type: String,
+  
+        individual_documents: {
+            statement_of_account: {
+                type: String, 
+            },
+            statement_of_networth: {
+                type: String, 
+            },
+            security_cheque: {
+                type: String,
+            },
         },
-        statement_of_networth: {
-            type: String,
-        },
-        security_cheque: {
-            type: String,
+        business_documents: {
+            business_financial: {
+                annual_revenue: { type: Number },
+                bank_statements: { type: String }, 
+                additional_documents: [{ type: String }],
+            },
+            collateral: {
+                description_of_assets: { type: String },
+                valuation_reports: { type: String },
+                photographs: [{ type: String }],
+            },
+            other_documents: {
+                business_plan: { type: String },
+                insurance_documents: { type: String }, 
+                tax_clearance: { type: String }, 
+            },
         },
         guarantor1: {
             name: { type: String, required: true },
             email: { type: String, required: true },
-            phone_number: {type: String, required: true},
+            phone_number: { type: String, required: true },
         },
         guarantor2: {
             name: { type: String, required: true },
             email: { type: String, required: true },
-            phone_number: {type: String, required: true},
+            phone_number: { type: String, required: true },
         },
         date_disbursed: {
             type: Date,
@@ -100,6 +119,11 @@ const LoanApplication = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             refPath: 'createdByType',
             required: true
+        },
+        loan_type: {
+            type: String,
+            enum: ["individual", "business"],
+            required: true, // This determines if the loan is for an individual or business
         }
     },
     { timestamps: true }

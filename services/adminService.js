@@ -19,7 +19,7 @@ module.exports = class AdminService{
         }
     }
 
-    static async createLoanProduct(product_data){
+    static async createLoanProduct(product_data) {
         try {
             const newloanProduct = {
                 name: product_data.name,
@@ -30,9 +30,13 @@ module.exports = class AdminService{
                 createdBy: product_data.createdBy,
                 interest_type: product_data.interest_type,
                 duration: product_data.duration,
+                product_group: product_data.product_group, // Add product_group here
             }
+    
+            // Create and save the new loan product
             const loanProduct = await new LoanProduct(newloanProduct).save();
-
+    
+            // Log the creation activity including product_group
             await ActivityLogService.LogActivity(
                 "create",
                 "Staff",
@@ -46,13 +50,17 @@ module.exports = class AdminService{
                     min: product_data.min,
                     interest_type: product_data.interest_type,
                     duration: product_data.duration,
+                    product_group: product_data.product_group, // Log product_group as well
                 }
             );
+    
             return loanProduct;
         } catch (error) {
-            return error;
+            console.error('Error creating loan product: ', error);
+            return error; // or you can throw the error based on your error-handling strategy
         }
     }
+    
 
     static async getLoanProduct(productId) {
         try {
@@ -80,25 +88,36 @@ module.exports = class AdminService{
 
     static async updateLoanProduct(productId, updateData, updatedBy) {
         try {
+            // Find the existing loan product by its ID
             const loanProduct = await LoanProduct.findById(productId);
             if (!loanProduct) {
                 return { success: false, message: "Loan product not found" };
             }
-            const updatableFields = ["interest", "max", "min"];
+    
+            // Allowed fields to be updated
+            const updatableFields = ["interest", "max", "min", "status", "interest_type", "product_group", "duration"];
             const changes = {};
+    
+            // Check and collect changes for updatable fields
             updatableFields.forEach((field) => {
                 if (updateData[field] !== undefined && loanProduct[field] !== updateData[field]) {
                     changes[field] = {
                         oldValue: loanProduct[field],
                         newValue: updateData[field],
                     };
-                    loanProduct[field] = updateData[field];
+                    loanProduct[field] = updateData[field]; // Apply the update
                 }
             });
+    
+            // If no changes are detected, return early
             if (Object.keys(changes).length === 0) {
                 return { success: false, message: "No changes made to the loan product" };
             }
+    
+            // Save the updated loan product
             await loanProduct.save();
+    
+            // Log the activity of updating the loan product
             await ActivityLogService.LogActivity(
                 "update",
                 "Staff",
@@ -106,19 +125,19 @@ module.exports = class AdminService{
                 "LoanProduct",
                 productId,
                 changes
-            )
+            );
+    
             return {
                 success: true,
                 loanProduct,
             };
+    
         } catch (error) {
             console.log('Error updating loan product: ', error);
-            return { success: false, message: `Error updating loanProduct` };
+            return { success: false, message: 'Error updating loan product' };
         }
-
     }
-
-//test commit here
+    
     static async createStaff({ first_name, last_name, email, dob, roleId, otp }) {
         try {
             const role = await Role.findById(roleId);
@@ -146,10 +165,17 @@ module.exports = class AdminService{
     }
 
 
-    static async getAllLoanProducts(){
+    static async getAllLoanProducts(accountType){
         try {
-            const response = await loanProduct.find();
-            // await loanProduct.deleteMany();
+            console.log({accountType});
+            
+            let response = [];
+            if(accountType){
+                response = await loanProduct.find({product_group: accountType});
+            } else {
+                response = await loanProduct.find();
+            }
+        
             return response;
         } catch (error) {
             return error;
@@ -268,6 +294,15 @@ module.exports = class AdminService{
         } catch (error) {
             console.error("Error fetching all bank details: ", error.message);
             return { success: false, message: "An error occurred while fetching bank details." };
+        }
+    }
+
+    static async getProductsById(id){
+        try {
+            const response = await loanProduct.findById(id);
+            return response;
+        } catch (error) {
+            return error;
         }
     }
 }

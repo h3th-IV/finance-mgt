@@ -36,8 +36,12 @@ const LoanProduct = new mongoose.Schema({
         type: String,
         enum: ["flat_rate", "reducing_balance"]
     },
+    product_group: {
+        type: String,
+        enum: ["individual", "business"]
+    },
     duration: {
-        type: [Number], //a list of numbers csv
+        type: [Number], 
         required: true,
     }
 }, {timestamps: true,});
