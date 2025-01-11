@@ -10,6 +10,10 @@ const loanApplicationValidator = Joi.object({
         'number.positive': '"Loan amount" must be greater than zero.',
         'any.required': '"Loan amount" is required.',
     }),
+    "business_financial.annual_revenue": Joi.number().positive().messages({
+        'number.base': 'Annual revenue must be a number.',
+        'number.positive': 'Annual revenue must be greater than zero.',
+    }).allow("", null, 0),
     loan_duration: Joi.number().positive().integer().required().messages({
         'number.base': '"Loan duration" must be a number.',
         'number.integer': '"Loan duration" must be an integer.',

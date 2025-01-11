@@ -24,35 +24,32 @@ const LoanApplication = new mongoose.Schema(
         loan_duration: {
             type: Number,
         },
-  
-        individual_documents: {
-            statement_of_account: {
-                type: String, 
-            },
-            statement_of_networth: {
-                type: String, 
-            },
-            security_cheque: {
-                type: String,
-            },
+        statement_of_account: {
+            type: String,
         },
-        business_documents: {
-            business_financial: {
-                annual_revenue: { type: Number },
-                bank_statements: { type: String }, 
-                additional_documents: [{ type: String }],
-            },
-            collateral: {
-                description_of_assets: { type: String },
-                valuation_reports: { type: String },
-                photographs: [{ type: String }],
-            },
-            other_documents: {
-                business_plan: { type: String },
-                insurance_documents: { type: String }, 
-                tax_clearance: { type: String }, 
-            },
+        statement_of_networth: {
+            type: String,
         },
+        security_cheque: {
+            type: String,
+        },
+
+        business_financial: {
+            annual_revenue: { type: Number },
+            bank_statements: { type: String },
+            additional_documents: [{ type: String }],
+        },
+        collateral: {
+            description_of_assets: { type: String },
+            valuation_reports: { type: String },
+            photographs: [{ type: String }],
+        },
+        other_documents: {
+            business_plan: { type: String },
+            insurance_documents: { type: String },
+            tax_clearance: { type: String },
+        },
+
         guarantor1: {
             name: { type: String, required: true },
             email: { type: String, required: true },
