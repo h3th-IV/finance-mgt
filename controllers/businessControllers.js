@@ -58,82 +58,79 @@ module.exports = class BusinessControllers {
                 data: null,
             });
         }
-    console.log("test passed")
         try{
-    console.log("test passed in try")
+            const { business, kycRecord } = await fetchBusinessAndKYC(businessId);
+            
+            //get partner emails and check if they dont exist
+            const ownerEmails = jsonData.owners_partner_info?.map((owner) => owner.email) || [];
+            //get partner BVNs and check if they dont exist
+            const ownerBVNs = jsonData.owners_partner_info?.map((owner) => owner.bvn) || [];
+            //get director emails
+            const directorEmails = jsonData.directors_bvn_verification?.map((director) => director.email) || [];
+            //get director BVNs
+            const directorBVNs = jsonData.directors_bvn_verification?.map((director) => director.bvn) || [];
 
-            // const { business, kycRecord } = await fetchBusinessAndKYC(businessId);
-            
-            // //get partner emails and check if they dont exist
-            // const ownerEmails = jsonData.owners_partner_info?.map((owner) => owner.email) || [];
-            // //get partner BVNs and check if they dont exist
-            // const ownerBVNs = jsonData.owners_partner_info?.map((owner) => owner.bvn) || [];
-            // //get director emails
-            // const directorEmails = jsonData.directors_bvn_verification?.map((director) => director.email) || [];
-            // //get director BVNs
-            // const directorBVNs = jsonData.directors_bvn_verification?.map((director) => director.bvn) || [];
+            //combine emails and BVNs
+            const allEmails = [...ownerEmails, ...directorEmails];
+            const allBVNs = [...ownerBVNs, ...directorBVNs];
 
-            // //combine emails and BVNs
-            // const allEmails = [...ownerEmails, ...directorEmails];
-            // const allBVNs = [...ownerBVNs, ...directorBVNs];
+            const existingEmails = await BusinessKYC.checkForExistingEmails(allEmails);
+            const existingBVNs = await BusinessKYC.checkForExistingBVNs(allBVNs);
+            if (existingEmails.length > 0 || existingBVNs.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Some emails or BVNs are already in use.",
+                    errors: {
+                        existingEmails,
+                        existingBVNs,
+                    },
+                });
+            }
+            const updateData = combineBusinessKYCData(payload, req.files, kycRecord);
 
-            // const existingEmails = await BusinessKYC.checkForExistingEmails(allEmails);
-            // const existingBVNs = await BusinessKYC.checkForExistingBVNs(allBVNs);
-            // if (existingEmails.length > 0 || existingBVNs.length > 0) {
-            //     return res.status(400).json({
-            //         success: false,
-            //         message: "Some emails or BVNs are already in use.",
-            //         errors: {
-            //             existingEmails,
-            //             existingBVNs,
-            //         },
-            //     });
-            // }
-            // const updateData = combineBusinessKYCData(payload, req.files, kycRecord);
+            let updatedBusinessKYC
+            if(kycRecord){
+                updatedBusinessKYC = await BusinessKYC.findByIdAndUpdate(kycRecord._id, updateData, {
+                    new: true,
+                    runValidators: true,
+                });
+            } else{
+                updatedBusinessKYC = new BusinessKYC(updateData);
+                await updatedBusinessKYC.save();
+                business.kyc_business = updatedBusinessKYC._id;
+            }
+            if (updatedBusinessKYC) {
+                //dyynamically set statuses based on provided data
+                updatedBusinessKYC.business_registration.status = Boolean(updatedBusinessKYC.business_registration.certificate);
+                updatedBusinessKYC.business_address.status = Boolean(
+                    updatedBusinessKYC.business_address.address && updatedBusinessKYC.business_address.proof_of_address
+                );
+                updatedBusinessKYC.employee_size.status = Boolean(updatedBusinessKYC.employee_size.size >= 1);
+            
+                updatedBusinessKYC.owners_partner_info.forEach((owner) => {
+                    owner.status = Boolean(
+                        owner.name && owner.phone_number && owner.email && owner.bvn && owner.bvn.length === 11 && /^\d+$/.test(owner.bvn)
+                    );
+                });
+            
+                updatedBusinessKYC.directors_bvn_verification.forEach((director) => {
+                    director.status = Boolean(
+                        director.director_name && director.email && director.bvn && director.bvn.length === 11 && /^\d+$/.test(director.bvn)
+                    );
+                });
+            
+                await updatedBusinessKYC.save();
+            }
+            
+            const { ownersVerified, registrationVerified, directorsVerified, addressVerified, employeeSizeVerified, isFullyVerified } = calculateBusinessStatuses(payload, req.files, updatedBusinessKYC);
+            console.log('isFUllyVErified', isFullyVerified);
+            
+            //update the business verification status
+            business.is_verified = isFullyVerified;
+            await business.save();
 
-            // let updatedBusinessKYC
-            // if(kycRecord){
-            //     updatedBusinessKYC = await BusinessKYC.findByIdAndUpdate(kycRecord._id, updateData, {
-            //         new: true,
-            //         runValidators: true,
-            //     });
-            // } else{
-            //     updatedBusinessKYC = new BusinessKYC(updateData);
-            //     await updatedBusinessKYC.save();
-            //     business.kyc_business = updatedBusinessKYC._id;
-            // }
-            // if (updatedBusinessKYC) {
-            //     //dyynamically set statuses based on provided data
-            //     updatedBusinessKYC.business_registration.status = Boolean(updatedBusinessKYC.business_registration.certificate);
-            //     updatedBusinessKYC.business_address.status = Boolean(
-            //         updatedBusinessKYC.business_address.address && updatedBusinessKYC.business_address.proof_of_address
-            //     );
-            //     updatedBusinessKYC.employee_size.status = Boolean(updatedBusinessKYC.employee_size.size >= 1);
-            
-            //     updatedBusinessKYC.owners_partner_info.forEach((owner) => {
-            //         owner.status = Boolean(
-            //             owner.name && owner.phone_number && owner.email && owner.bvn && owner.bvn.length === 11 && /^\d+$/.test(owner.bvn)
-            //         );
-            //     });
-            
-            //     updatedBusinessKYC.directors_bvn_verification.forEach((director) => {
-            //         director.status = Boolean(
-            //             director.director_name && director.email && director.bvn && director.bvn.length === 11 && /^\d+$/.test(director.bvn)
-            //         );
-            //     });
-            
-            //     await updatedBusinessKYC.save();
-            // }
-            
-            // const { ownersVerified, registrationVerified, directorsVerified, addressVerified, employeeSizeVerified, isFullyVerified } = calculateBusinessStatuses(payload, req.files, updatedBusinessKYC);
-            // console.log('isFUllyVErified', isFullyVerified);
-            
-            // //update the business verification status
-            // business.is_verified = isFullyVerified;
-            // await business.save();
-
-            // const updatedBusiness = await User.findById(businessId).populate('kyc_business');
-            // console.log(updatedBusiness);
+            const updatedBusiness = await User.findById(businessId).populate('kyc_business');
+            console.log(updatedBusiness);
             return successResponse(
                 res,
                 200,
