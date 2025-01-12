@@ -80,7 +80,7 @@ module.exports = class UserService {
 
     static async getUserByID(id){
         try {
-            const user = await User.findById(id).populate('kyc_verification');
+            const user = await User.findById(id).populate('kyc_verification').populate('kyc_business');
             return user;
         } catch (error) {
             return error;

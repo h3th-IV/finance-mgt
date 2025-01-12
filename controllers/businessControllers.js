@@ -41,11 +41,8 @@ module.exports = class BusinessControllers {
             'cac.number': req.body.cac_number || undefined,
             'cac.certificate': req.files?.['cac_certificate']?.[0]?.path || undefined,
         };
-
-        console.log('Payload Data:', payload);
-
-        const { error, value } = businessKYCValidator.validate(payload, { abortEarly: false });
-        if (error) {
+        const { error, value } = businessKYCValidator.validate(payload, { abortEarly: false});
+        if(error){
             const errors = error.details.reduce((acc, err) => {
                 acc[err.context.key] = err.message;
                 return acc;
@@ -111,24 +108,16 @@ module.exports = class BusinessControllers {
             //check for existing emails and BVNs
             const existingEmails = await BusinessKYC.checkForExistingEmails(allEmails);
             const existingBVNs = await BusinessKYC.checkForExistingBVNs(allBVNs);
-    
-            if (existingEmails.length > 0 || existingBVNs.length > 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Some emails or BVNs are already in use.",
-                    errors: { existingEmails, existingBVNs },
-                });
-            }
-            //check cac number
-            if (payload["cac.number"]) {
-                const existCACNumber = await BusinessKYC.findOne({ "cac.number": payload["cac.number"] });
-            
-                const isCACNumberUsedByAnother = existCACNumber && (!kycRecord || existCACNumber._id.toString() !== kycRecord._id.toString());
-            
-                if (isCACNumberUsedByAnother) {
-                    return errorResponse(res, 400, "The provided CAC number has already been used.");
-                }
-            }
+            // if (existingEmails.length > 0 || existingBVNs.length > 0) {
+            //     return res.status(400).json({
+            //         success: false,
+            //         message: "Some emails or BVNs are already in use.",
+            //         errors: {
+            //             existingEmails,
+            //             existingBVNs,
+            //         },
+            //     });
+            // }
             const updateData = combineBusinessKYCData(payload, req.files, kycRecord);
 
     
