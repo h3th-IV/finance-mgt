@@ -1,27 +1,10 @@
 {
-    "owners_partner_info":
-    [
-        {
-            "name":"John Doe",
-            "phone_number":"07012345678",
-            "email":"jade@vxxmail.com",
-            "bvn":"02345678419"
-        }
-    ],
     "directors_bvn_verification":
     [
         {
-            "director_name":"Jane Smith",
-            "email":"marylin@vxxmail.com",
-            "bvn":"19876543419"
+            "director_name":"Gareth Miller",
+            "email":"garethmiller@clother.com",
+            "bvn":"22334455110"
         }
-    ],
-    "business_address":
-    {
-        "address":"123 Business Lane"
-    },
-    "employee_size":
-    {
-        "size":50
-    }
+    ]
 }
