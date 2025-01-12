@@ -2,12 +2,46 @@ const mongoose = require('mongoose');
 
 const BusinessKYCSchema = new mongoose.Schema(
     {
+        email: {
+            address: {
+                type: String,
+            },
+            otp: {
+                type: String
+            },
+            otpCreatedAt: {
+                type: Date,
+            },
+            status: {
+                type: Boolean,
+                default: false
+            },
+        },
         owners_partner_info: [
             {
                 name: {
                     type: String,
                 },
                 phone_number: {
+                    type: String,
+                },
+                email: {
+                    type: String,
+                },
+                bvn: {
+                    type: String,
+                    length: 11,
+                    match: /^\d+$/,
+                },
+                status: {
+                    type: Boolean,
+                    default: false,
+                },
+            },
+        ],
+        directors_bvn_verification: [
+            {
+                director_name: {
                     type: String,
                 },
                 email: {
@@ -33,25 +67,6 @@ const BusinessKYCSchema = new mongoose.Schema(
                 default: false,
             },
         },
-        directors_bvn_verification: [
-            {
-                director_name: {
-                    type: String,
-                },
-                email: {
-                    type: String,
-                },
-                bvn: {
-                    type: String,
-                    length: 11,
-                    match: /^\d+$/,
-                },
-                status: {
-                    type: Boolean,
-                    default: false,
-                },
-            },
-        ],
         business_address: {
             address: {
                 type: String,
@@ -74,11 +89,23 @@ const BusinessKYCSchema = new mongoose.Schema(
                 default: false,
             },
         },
+        cac: {
+            number: {
+                type: String,
+            },
+            certificate: {
+                type: String,
+            },
+            status: {
+                type: Boolean,
+                default: false
+            },
+        },
     },
     { timestamps: true }
 );
 
-
+//check for existing rmails
 BusinessKYCSchema.statics.checkForExistingEmails = async function (emails) {
     const results = await this.find({
         $or: [

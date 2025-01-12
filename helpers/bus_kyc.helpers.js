@@ -13,17 +13,19 @@ const fetchBusinessAndKYC = async (businessId) => {
     return { business, kycRecord };
 };
 
-const combineBusinessKYCData = (kycData, files, kycRecord) => {
+
+const combineBusinessKYCData = (kycData, files = {}, kycRecord = {}) => {
     return {
         ...kycData,
-        'business_registration.certificate': files['business_registration.certificate']
-            ? files['business_registration.certificate'][0].path
-            : kycRecord?.business_registration?.certificate,
-        'business_address.proof_of_address': files['business_address.proof_of_address']
-            ? files['business_address.proof_of_address'][0].path
-            : kycRecord?.business_address?.proof_of_address,
+        'business_registration.certificate': files?.['business_registration.certificate']?.[0]?.path
+            || kycRecord?.business_registration?.certificate
+            || undefined,
+        'business_address.proof_of_address': files?.['business_address.proof_of_address']?.[0]?.path
+            || kycRecord?.business_address?.proof_of_address
+            || undefined,
     };
 };
+
 
 const calculateBusinessStatuses = (kycData, files, kycRecord) => {
     const ownersVerified = kycRecord?.owners_partner_info.every(
@@ -58,13 +60,24 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
         (kycData['employee_size.size'] || kycRecord?.employee_size?.size) >= 1
     );
 
-    //fully vrified status
+    const emailVerified = Boolean(
+        (kycRecord?.email?.address || kycData['email.address']) &&
+        kycRecord?.email?.otp === 'VERIFIED'
+    );
+
+    const cacVerified = Boolean(
+        (kycData['cac.number'] || kycRecord?.cac?.number) &&
+        (kycData['cac.certificate'] || kycRecord?.cac?.certificate)
+    );
+
     const isFullyVerified =
         ownersVerified &&
         registrationVerified &&
         directorsVerified &&
         addressVerified &&
-        employeeSizeVerified;
+        employeeSizeVerified &&
+        emailVerified &&
+        cacVerified;
 
     return {
         ownersVerified,
@@ -72,9 +85,12 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
         directorsVerified,
         addressVerified,
         employeeSizeVerified,
+        emailVerified,
+        cacVerified,
         isFullyVerified,
     };
 };
+
 
 
 module.exports = {

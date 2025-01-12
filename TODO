@@ -5,3 +5,5 @@ return user detail for validating otp
 
 
 update some user or business info
+
+remove password from request response

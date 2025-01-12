@@ -2,26 +2,10 @@
     "owners_partner_info":
     [
         {
-            "name":"",
-            "phone_number":"",
-            "email":"",
-            "bvn":""
+            "name":"Thread Miller",
+            "phone_number":"09045678945",
+            "email":"threadmiller@clother.com",
+            "bvn":"11994455330"
         }
-    ],
-    "directors_bvn_verification":
-    [
-        {
-            "director_name":"",
-            "email":"",
-            "bvn":""
-        }
-    ],
-    "business_address":
-    {
-        "address":""
-    },
-    "employee_size":
-    {
-        "size":0
-    }
+    ]
 }
