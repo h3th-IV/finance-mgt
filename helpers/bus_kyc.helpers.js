@@ -17,12 +17,10 @@ const fetchBusinessAndKYC = async (businessId) => {
 const combineBusinessKYCData = (kycData, files = {}, kycRecord = {}) => {
     return {
         ...kycData,
-        'business_registration.certificate': files?.['business_registration.certificate']?.[0]?.path
-            || kycRecord?.business_registration?.certificate
-            || undefined,
         'business_address.proof_of_address': files?.['business_address.proof_of_address']?.[0]?.path
             || kycRecord?.business_address?.proof_of_address
             || undefined,
+        'cac.certificate': files?.['cac_certificate']?.[0].path || kycRecord?.cac?.certificate || undefined
     };
 };
 
@@ -36,10 +34,6 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
             owner.bvn &&
             owner.bvn.length === 11 &&
             /^\d+$/.test(owner.bvn)
-    );
-
-    const registrationVerified = Boolean(
-        kycData['business_registration.certificate'] || kycRecord?.business_registration?.certificate
     );
 
     const directorsVerified = kycRecord?.directors_bvn_verification.every(
@@ -72,7 +66,6 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
 
     const isFullyVerified =
         ownersVerified &&
-        registrationVerified &&
         directorsVerified &&
         addressVerified &&
         employeeSizeVerified &&
@@ -81,7 +74,6 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
 
     return {
         ownersVerified,
-        registrationVerified,
         directorsVerified,
         addressVerified,
         employeeSizeVerified,

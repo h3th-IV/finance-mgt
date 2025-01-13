@@ -37,7 +37,6 @@ module.exports = class BusinessControllers {
             'business_address.address': req.body.address || undefined,
             'business_address.proof_of_address': req.files?.['business_address.proof_of_address']?.[0]?.path || undefined,
             'employee_size.size': req.body.employee_size || undefined,
-            'business_registration.certificate': req.files?.['business_registration.certificate']?.[0]?.path || undefined,
             'cac.number': req.body.cac_number || undefined,
             'cac.certificate': req.files?.['cac_certificate']?.[0]?.path || undefined,
         };
@@ -106,29 +105,29 @@ module.exports = class BusinessControllers {
             const allBVNs = [...ownerBVNs, ...directorBVNs];
     
             //check for existing emails and BVNs
-            const existingEmails = await BusinessKYC.checkForExistingEmails(allEmails);
-            const existingBVNs = await BusinessKYC.checkForExistingBVNs(allBVNs);
-            if (existingEmails.length > 0 || existingBVNs.length > 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Some emails or BVNs are already in use.",
-                    errors: {
-                        existingEmails,
-                        existingBVNs,
-                    },
-                });
-            }
+            // const existingEmails = await BusinessKYC.checkForExistingEmails(allEmails);
+            // const existingBVNs = await BusinessKYC.checkForExistingBVNs(allBVNs);
+            // if (existingEmails.length > 0 || existingBVNs.length > 0) {
+            //     return res.status(400).json({
+            //         success: false,
+            //         message: "Some emails or BVNs are already in use.",
+            //         errors: {
+            //             existingEmails,
+            //             existingBVNs,
+            //         },
+            //     });
+            // }
 
             //check cac number
-            if (payload["cac.number"]) {
-                const existCACNumber = await BusinessKYC.findOne({ "cac.number": payload["cac.number"] });
+            // if (payload["cac.number"]) {
+            //     const existCACNumber = await BusinessKYC.findOne({ "cac.number": payload["cac.number"] });
             
-                const isCACNumberUsedByAnother = existCACNumber && (!kycRecord || existCACNumber._id.toString() !== kycRecord._id.toString());
+            //     const isCACNumberUsedByAnother = existCACNumber && (!kycRecord || existCACNumber._id.toString() !== kycRecord._id.toString());
             
-                if (isCACNumberUsedByAnother) {
-                    return errorResponse(res, 400, "The provided CAC number has already been used.");
-                }
-            }
+            //     if (isCACNumberUsedByAnother) {
+            //         return errorResponse(res, 400, "The provided CAC number has already been used.");
+            //     }
+            // }
             const updateData = combineBusinessKYCData(payload, req.files, kycRecord);
 
     
@@ -145,9 +144,12 @@ module.exports = class BusinessControllers {
             }
             if (updatedBusinessKYC) {
                 //dynamically set statuses
-                updatedBusinessKYC.business_registration.status = Boolean(updatedBusinessKYC.business_registration.certificate);
                 updatedBusinessKYC.business_address.status = Boolean(
                     updatedBusinessKYC.business_address.address && updatedBusinessKYC.business_address.proof_of_address
+                );
+                updatedBusinessKYC.cac.status = Boolean(
+                    updatedBusinessKYC.cac.number &&
+                    updatedBusinessKYC.cac.certificate
                 );
                 updatedBusinessKYC.employee_size.status = Boolean(updatedBusinessKYC.employee_size.size >= 1);
     
@@ -213,7 +215,7 @@ module.exports = class BusinessControllers {
             if(!result.success){
                 return errorResponse(res, 400, result.message);
             }
-            return successResponse(res, 200, result.message, null);
+            return successResponse(res, 200, result.message, result.busi_ness );
         }catch(error){
             console.error("Error in BusinessKYCEmailOTPValidation: ", error.message);
             return errorResponse(res, 500, "An unexpected server error occurred.", error); 

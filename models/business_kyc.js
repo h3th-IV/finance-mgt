@@ -58,15 +58,6 @@ const BusinessKYCSchema = new mongoose.Schema(
                 },
             },
         ],
-        business_registration: {
-            certificate: {
-                type: String,
-            },
-            status: {
-                type: Boolean,
-                default: false,
-            },
-        },
         business_address: {
             address: {
                 type: String,
