@@ -305,7 +305,8 @@ module.exports = class UserService {
             kyc.email.otp = "VERIFIED";
             kyc.email.status = true;
             await kyc.save();
-            return { success: true, message: "OTP validated successfully." };
+            const us_er = await User.findById(userId).populate('kyc_verification');
+            return { success: true, message: "OTP validated successfully.", us_er };
         }catch (error){
             console.error("Error validating OTP: ", error);
             return{ success: false, message: "An unexpected error occurred during OTP validation." }

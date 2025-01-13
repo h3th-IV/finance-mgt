@@ -71,12 +71,6 @@ const businessKYCValidator = Joi.object({
             })
         )
         .optional(),
-    'business_registration.certificate': Joi.string()
-            .optional()
-            .allow(null)
-            .messages({
-                'string.base': 'Certificate must be a valid string.',
-            }),
     'business_address.address': Joi.string()
         .allow('',null)
         .optional()

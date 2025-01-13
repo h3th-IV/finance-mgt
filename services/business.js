@@ -8,7 +8,7 @@ module.exports = class BusinessServices{
     static async getAllBusinessKYC(){
         try{
             const KYCs = await BusinessKYC.find();
-            await BusinessKYC.deleteMany();
+            // await BusinessKYC.deleteMany();
             return { success: true, message: "Business KYCs returned", KYCs }
         }catch(error){
             console.error("Error fetching all business KYC: ", error)
@@ -40,7 +40,8 @@ module.exports = class BusinessServices{
             kyc.email.otp = "VERIFIED";
             kyc.email.status = true;
             await kyc.save();
-            return { success: true, message: "OTP validated successfully." };
+            const busi_ness = await User.findById(businessId).populate("kyc_business");
+            return { success: true, message: "OTP validated successfully.", busi_ness };
         }catch(error){
             console.error("Error validating OTP: ", error);
             return{ success: false, message: "An unexpected error occurred during OTP validation." }
