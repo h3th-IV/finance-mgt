@@ -464,7 +464,7 @@ module.exports = class UserController {
             if (!result.success) {
                 return errorResponse(res, 400, result.message);
             }
-            return successResponse(res, 200, result.message, null);
+            return successResponse(res, 200, result.message, result.us_er);
         } catch (error) {
             console.error("Error in kycEmailOTPValidation: ", error.message);
             return errorResponse(res, 500, "An unexpected server error occurred.", error);
