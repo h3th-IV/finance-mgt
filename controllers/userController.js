@@ -151,7 +151,10 @@ module.exports = class UserController {
             const query = identifier.includes('@')
             ? { email: identifier.toLowerCase() }
             : { phone_number: identifier };
-            const user = await User.findOne(query).populate('kyc_verification');
+            const user = await User.findOne(query).populate([
+                { path: 'kyc_verification' },
+                { path: 'kyc_business' }
+            ]);
             if (!user) {
                 return errorResponse(res, 401, `User with ${query.email ? "email" : "Phone Number"} not found`);
             }
@@ -176,7 +179,7 @@ module.exports = class UserController {
                     jwToken: token,
                 }
             if (user.otp && user.otp !== 'VERIFIED'){
-                return errorResponse(res, 400, "Sign up OTP verification is pending verification. Please verify the OTP sent to your phone number.");
+                return errorResponse(res, 422, "Sign up OTP verification is pending verification. Please verify the OTP sent to your phone number.");
             }
             return successResponse(res, 200, "Please complete your KYC verification to continue.", response);
             }
@@ -438,7 +441,7 @@ module.exports = class UserController {
     }
 
     
-    static async getAllUser(req, res){
+    static async getUser(req, res){
         try {
             const response = await UserService.getUserByID(req.params.id);
             return successResponse(res, 200, "Users returned successfully", response);
