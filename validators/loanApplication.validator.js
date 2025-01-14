@@ -19,10 +19,12 @@ const loanApplicationValidator = Joi.object({
         'number.integer': '"Loan duration" must be an integer.',
         'any.required': '"Loan duration" is required.',
     }),
-    // loan_type: Joi.string().valid('individual', 'business').required().messages({
-    //     'string.empty': '"Loan type" is required.',
-    //     'any.only': '"Loan type" must be either "individual" or "business".',
-    // }),
+    loan_purpose: Joi.string().required().messages({
+        'string.empty': 'Loan purpose is required.'
+    }),
+    repayment_mode: Joi.string().required().messages({
+        'string.empty': 'Repayment mode is required.'
+    }),
     "guarantor1.name": Joi.string().when('loan_type', {
         is: 'individual',
         then: Joi.required().messages({
@@ -86,8 +88,8 @@ const loanApplicationCalcValidator = Joi.object({
         'number.integer': '"Loan duration" must be an integer.',
         'any.required': '"Loan duration" is required.',
     }),
-    // loan_type: Joi.string().valid('individual', 'business').required().messages({
-    //     'string.empty': '"Loan type" is required.',
+    // loan_purpose: Joi.string().valid('individual', 'business').required().messages({
+    //     'string.empty': 'Loan purpose is required.',
     //     'any.only': '"Loan type" must be either "individual" or "business".',
     // }),
 });

@@ -30,6 +30,12 @@ const LoanApplication = new mongoose.Schema(
         statement_of_networth: {
             type: String,
         },
+        loan_purpose: {
+            type: String,
+        },
+        repayment_mode: {
+            type: String,
+        },
         security_cheque: {
             type: String,
         },

@@ -39,30 +39,36 @@ const BusinessKYCSchema = new mongoose.Schema(
                 },
             },
         ],
-        directors_bvn_verification: [
-            {
-                director_name: {
-                    type: String,
-                },
-                email: {
-                    type: String,
-                },
-                bvn: {
-                    type: String,
-                    length: 11,
-                    match: /^\d+$/,
-                },
-                status: {
-                    type: Boolean,
-                    default: false,
-                },
-            },
-        ],
-        business_address: {
+        // directors_bvn_verification: [
+        //     {
+        //         director_name: {
+        //             type: String,
+        //         },
+        //         email: {
+        //             type: String,
+        //         },
+        //         bvn: {
+        //             type: String,
+        //             length: 11,
+        //             match: /^\d+$/,
+        //         },
+        //         status: {
+        //             type: Boolean,
+        //             default: false,
+        //         },
+        //     },
+        // ],
+        business_section: {
             address: {
                 type: String,
             },
             proof_of_address: {
+                type: String,
+            },
+            type: {
+                type: String,
+            },
+            date_of_corporation: {
                 type: String,
             },
             status: {
@@ -141,17 +147,17 @@ BusinessKYCSchema.statics.checkForExistingBVNs = async function (bvns) {
 BusinessKYCSchema.methods.calculateStatuses = function () {
     const ownersVerified = this.owners_partner_info.every((owner) => owner.status === true);
     const registrationVerified = Boolean(this.business_registration.status);
-    const directorsVerified = this.directors_bvn_verification.every((director) => director.status === true);
-    const addressVerified = Boolean(this.business_address.status);
+ //   const directorsVerified = this.directors_bvn_verification.every((director) => director.status === true);
+    const addressVerified = Boolean(this.business_section.status);
     const employeeSizeVerified = Boolean(this.employee_size.status);
 
     return {
         ownersVerified,
         registrationVerified,
-        directorsVerified,
+ //       directorsVerified,
         addressVerified,
         employeeSizeVerified,
-        isFullyVerified: ownersVerified && registrationVerified && directorsVerified && addressVerified && employeeSizeVerified,
+        isFullyVerified: ownersVerified && registrationVerified && addressVerified && employeeSizeVerified,
     };
 };
 

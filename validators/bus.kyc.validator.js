@@ -2,12 +2,12 @@ const Joi = require('joi');
 
 const businessKYCValidator = Joi.object({
     'email.address': Joi.string()
-            .email()
-            .allow(null)
-            .optional()
-            .messages({
-                'string.email': '"Email" must be a valid email address.',
-            }),
+        .email()
+        .allow(null)
+        .optional()
+        .messages({
+            'string.email': '"Email" must be a valid email address.',
+        }),
     owners_partner_info: Joi.array()
         .items(
             Joi.object({
@@ -43,41 +43,47 @@ const businessKYCValidator = Joi.object({
             })
         )
         .optional(),
-    directors_bvn_verification: Joi.array()
-        .items(
-            Joi.object({
-                director_name: Joi.string()
-                    .allow('', null)
-                    .optional()
-                    .messages({
-                        'string.base': 'Director name must be a valid string.',
-                    }),
-                email: Joi.string()
-                    .allow('', null)
-                    .optional()
-                    .email()
-                    .messages({
-                        'string.email': 'Director email must be a valid email address.',
-                    }),
-                bvn: Joi.string()
-                    .allow('', null)
-                    .optional()
-                    .length(11)
-                    .pattern(/^\d*$/)
-                    .messages({
-                        'string.length': 'BVN must be exactly 11 digits.',
-                        'string.pattern.base': 'BVN must only contain numbers.',
-                    }),
-            })
-        )
-        .optional(),
-    'business_address.address': Joi.string()
-        .allow('',null)
+    // directors_bvn_verification: Joi.array()
+    //     .items(
+    //         Joi.object({
+    //             director_name: Joi.string()
+    //                 .allow('', null)
+    //                 .optional()
+    //                 .messages({
+    //                     'string.base': 'Director name must be a valid string.',
+    //                 }),
+    //             email: Joi.string()
+    //                 .allow('', null)
+    //                 .optional()
+    //                 .email()
+    //                 .messages({
+    //                     'string.email': 'Director email must be a valid email address.',
+    //                 }),
+    //             bvn: Joi.string()
+    //                 .allow('', null)
+    //                 .optional()
+    //                 .length(11)
+    //                 .pattern(/^\d*$/)
+    //                 .messages({
+    //                     'string.length': 'BVN must be exactly 11 digits.',
+    //                     'string.pattern.base': 'BVN must only contain numbers.',
+    //                 }),
+    //         })
+    //     )
+    //     .optional(),
+    'business_section.address': Joi.string()
+        .allow('', null)
         .optional()
         .messages({
             'string.base': 'Address must be a valid string.',
         }),
-    'business_address.proof_of_address': Joi.string()
+    'business_section.date_of_corporation': Joi.string()
+        .allow('', null)
+        .optional(),
+    'business_section.type': Joi.string()
+        .allow('', null)
+        .optional(),
+    'business_section.proof_of_address': Joi.string()
         .allow(null)
         .optional()
         .messages({
@@ -103,7 +109,7 @@ const businessKYCValidator = Joi.object({
         .messages({
             'string.base': 'cac certificate must be a valid number.',
         })
-    
+
 });
 
 module.exports = {

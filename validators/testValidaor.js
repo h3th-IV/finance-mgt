@@ -63,13 +63,13 @@ const businessKYCValidator = Joi.object({
             })
         )
         .optional(),
-    'business_address.address': Joi.string()
+    'business_section.address': Joi.string()
         .optional()
         .allow(null, '')
         .messages({
             'string.base': 'Address must be a valid string.',
         }),
-    'business_address.proof_of_address': Joi.string()
+    'business_section.proof_of_address': Joi.string()
         .optional()
         .allow(null, '')
         .messages({
