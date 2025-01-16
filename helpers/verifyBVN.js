@@ -33,7 +33,7 @@ async function verifyBVN(bvn) {
 
     try {
         const response = await axios.post(baseURL, body, { headers });
-        console.log(response.data);
+        // console.log(response.data);
         return response.data; //on success retunr data
     } catch (error) {
         const errorResponse = error.response?.data;

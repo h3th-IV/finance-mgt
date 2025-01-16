@@ -1,11 +1,42 @@
 {
-    "owners_partner_info":
-    [
-        {
-            "name":"Thread Miller",
-            "phone_number":"09045678945",
-            "email":"threadmiller@clother.com",
-            "bvn":"11994455330"
-        }
-    ]
+
+    "user": 
+    {
+        "phone_number": "09056432178",
+        "accountType": "business",
+        "first_name": "",
+        "last_name": "",
+        "business_name": "Evil Corp"
+    },
+
+
+    "kyc": 
+    {
+        "email_address": "e-corp@ecorp.com",
+        "bvn": "",
+        "dob": "",
+        "doc_type": "",
+        "doc_no": "",
+        "address": "",
+        "employment_status": "",
+        "employer_name": "",
+        "employer_phone": "",
+        "employer_email": "",
+        "employer_address": "",
+        "job_title": "",
+        "income_per_period": "",
+        "owners_partner_info": [
+            {
+                "name":"THread MIlle",
+                "phone_number":"07089456023",
+                "email":"thread@gmail.com",
+                "bvn":"22412725674"
+            }
+        ],
+        "business_address": "6ehe, uurruf, e8933",
+        "business_type": "Export and Import",
+        "date_of_corporation": "2020-10-10",
+        "employee_size": 50,
+        "cac_number": "676655A454544"
+    }
 }

@@ -1,10 +1,42 @@
 {
-    "directors_bvn_verification":
-    [
-        {
-            "director_name":"Gareth Miller",
-            "email":"garethmiller@clother.com",
-            "bvn":"22334455110"
-        }
-    ]
+
+    "user": 
+    {
+        "phone_number": "1234567890",
+        "accountType": "individual",
+        "first_name": "John",
+        "last_name": "Doe",
+        "business_name": ""
+    },
+
+
+    "kyc": 
+    {
+        "email_address": "johndoe@gmail.com",
+        "bvn": "22412725674",
+        "dob": "2000-10-10",
+        "doc_type": "NIN",
+        "doc_no": "1234576890",
+        "address": "dhjfyu, 7eeemmf, 89ww",
+        "employment_status": "employed",
+        "employer_name": "THread Miller",
+        "employer_phone": "09034672390",
+        "employer_email": "doejohn@gmail.com",
+        "employer_address": "673uhd, 893ddd, gnsns",
+        "job_title": "Staff Engineer",
+        "income_per_period": "1000000",
+        "owners_partner_info": [
+            {
+                "name":"",
+                "phone_number":"",
+                "email":"",
+                "bvn":""
+            }
+        ],
+        "business_address": "",
+        "business_type": "",
+        "date_of_corporation": "",
+        "employee_size": "",
+        "cac_number": ""
+    }
 }
