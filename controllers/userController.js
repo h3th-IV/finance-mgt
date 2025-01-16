@@ -359,6 +359,7 @@ module.exports = class UserController {
                     console.log('bvnData not exist in database');
                     try {
                         const bvnData = await verifyBVN(kycData['bank_verification_number.bvn']);
+                        console.log(bvnData);
                         if (!bvnData || !bvnData.data || bvnData.data.status !== 'found') {
                             return errorResponse(res, 400, "BVN verification failed. Please check the BVN provided.");
                         }
@@ -484,7 +485,13 @@ module.exports = class UserController {
             const otp = generateOTP();
             if (otp){
                 await UserService.updateKYCEmailOTP(userId, otp);
-                mailer.sendOTPEmail(user.email, user.first_name, otp);
+                if(user.accountType === "individual"){
+                    console.log("alaye no get businesss")
+                    mailer.sendOTPEmail(user.email, user.first_name, otp);
+                }else{
+                    console.log("odogwu wey get business");
+                    mailer.sendBusinessOTPEmail(user.email, otp)
+                }
                 return successResponse(res, 200, 'A new OTP has been sent to your email');
             } else{
                 return errorResponse(res, 400, "OTP is still valid. Please try again later.");
