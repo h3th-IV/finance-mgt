@@ -77,8 +77,6 @@ module.exports = class LoanApplicationController {
     
         const { loan_product, loan_amount, loan_duration, loan_type, business_financial, business_collateral } = req.body;
         const loanProductData =await AdminService.getProductsById(loan_product);
-        console.log({loanProductData});
-        
         const files = req.files;
     
         try {
@@ -103,6 +101,8 @@ module.exports = class LoanApplicationController {
                 loan_amount: parseFloat(value.loan_amount),
                 loan_duration: parseInt(value.loan_duration, 10),
                 loan_type: loanProductData.product_group, 
+                loan_purpose: value.loan_purpose, 
+                repayment_mode: value.repayment_mode, 
                 guarantor1: {
                     name: value["guarantor1.name"],
                     email: value["guarantor1.email"],

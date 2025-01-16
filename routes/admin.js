@@ -32,5 +32,10 @@ router.post("/create-loanapp/:customerId", verifyStaffToken, checkPermission("CR
 router.get('/banks', verifyStaffToken, AdminController.getAllBankDetails);
 router.get('/loan-product/:productId', AdminController.getLoanProduct);
 router.delete('/del-user/:userId', verifyStaffToken, UserController.deleteUser);
+router.post("/create-user", verifyStaffToken, checkPermission("CREATE_CUSTOMER"), parser.fields([
+    { name: 'proof_of_address', maxCount: 1 },
+    { name: 'doc_verification', maxCount: 1 },
+    { name: 'cac_certificate', maxCount: 1 },
+  ]), AdminController.createCustomer);
 
 module.exports = router;

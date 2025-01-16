@@ -34,8 +34,8 @@ module.exports = class BusinessControllers {
         const payload = {
             'email.address': req.body.email || undefined,
             ...sanitizedJsonData,
-            'business_address.address': req.body.address || undefined,
-            'business_address.proof_of_address': req.files?.['business_address.proof_of_address']?.[0]?.path || undefined,
+            'business_section.address': req.body.address || undefined,
+            'business_section.proof_of_address': req.files?.['business_section.proof_of_address']?.[0]?.path || undefined,
             'employee_size.size': req.body.employee_size || undefined,
             'cac.number': req.body.cac_number || undefined,
             'cac.certificate': req.files?.['cac_certificate']?.[0]?.path || undefined,
@@ -52,8 +52,6 @@ module.exports = class BusinessControllers {
                 data: null,
             });
         }
-
-        console.log('Validation passed');
         let otpSent = false;
 
         try {
@@ -68,7 +66,6 @@ module.exports = class BusinessControllers {
 
             //check if business email has not been used
             if (payload['email.address']) {
-                console.log("errrrXXXXXXXXX")
                 const existBusinessEmail = await BusinessKYC.findOne({ "email.address": payload["email.address"] });
                 const isEmailUsedByAnother = existBusinessEmail && (!kycRecord || existBusinessEmail._id.toString() !== kycRecord._id.toString());
 
@@ -91,11 +88,8 @@ module.exports = class BusinessControllers {
                 };
                 delete payload['email.address']; //remove the redundant flattened key                
                 otpSent = true;
-                console.log("errrrYYYYYYYYY")
             }
 
-
-    //safely get sanitized emails and BVNs
             const ownerEmails = sanitizedJsonData?.owners_partner_info?.map((owner) => owner.email) || [];
             const ownerBVNs = sanitizedJsonData?.owners_partner_info?.map((owner) => owner.bvn) || [];
             const directorEmails = sanitizedJsonData?.directors_bvn_verification?.map((director) => director.email) || [];
@@ -144,8 +138,8 @@ module.exports = class BusinessControllers {
             }
             if (updatedBusinessKYC) {
                 //dynamically set statuses
-                updatedBusinessKYC.business_address.status = Boolean(
-                    updatedBusinessKYC.business_address.address && updatedBusinessKYC.business_address.proof_of_address
+                updatedBusinessKYC.business_section.status = Boolean(
+                    updatedBusinessKYC.business_section.address && updatedBusinessKYC.business_section.proof_of_address
                 );
                 updatedBusinessKYC.cac.status = Boolean(
                     updatedBusinessKYC.cac.number &&
@@ -158,22 +152,19 @@ module.exports = class BusinessControllers {
                         owner.name && owner.phone_number && owner.email && owner.bvn && owner.bvn.length === 11 && /^\d+$/.test(owner.bvn)
                     );
                 });
-                updatedBusinessKYC.directors_bvn_verification.forEach((director) => {
-                    director.status = Boolean(
-                        director.director_name && director.email && director.bvn && director.bvn.length === 11 && /^\d+$/.test(director.bvn)
-                    );
-                });
+                // updatedBusinessKYC.directors_bvn_verification.forEach((director) => {
+                //     director.status = Boolean(
+                //         director.director_name && director.email && director.bvn && director.bvn.length === 11 && /^\d+$/.test(director.bvn)
+                //     );
+                // });
                 await updatedBusinessKYC.save();
             }
             const { isFullyVerified } = calculateBusinessStatuses(payload, req.files, updatedBusinessKYC);
-            console.log('isFullyVerified:', isFullyVerified);
-    
             business.is_verified = isFullyVerified;
             await business.save();
     
             const updatedBusiness = await User.findById(businessId).populate('kyc_business');
 
-            //alert email top sent...
             let message = "KYC information updated successfully.";
             if (otpSent) message += " An OTP has been sent to your email.";
 
