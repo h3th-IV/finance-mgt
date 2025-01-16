@@ -356,4 +356,8 @@ module.exports = class AdminController {
             return errorResponse(res, 500, 'Internal server Error');
         }
     }
+
+    static async createCustomer(req, res){
+        
+    }
 }   

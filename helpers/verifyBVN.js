@@ -28,11 +28,12 @@ async function verifyBVN(bvn) {
             requestId: `req-${Date.now()}`
         },
         isSubjectConsent: true,
-        premiumBVN: false
+        premiumBVN: true
     };
 
     try {
         const response = await axios.post(baseURL, body, { headers });
+        console.log(response.data);
         return response.data; //on success retunr data
     } catch (error) {
         const errorResponse = error.response?.data;
@@ -79,5 +80,5 @@ async function verifyBVN(bvn) {
 }
 
 
-
+// verifyBVN('22412725674')
 module.exports = verifyBVN;
