@@ -12,6 +12,11 @@ const mailer = require("../config/mailer");
 const { updatePasswordValidator } = require('../validators/staffUpdate.validator');
 const BVNDataService = require('../services/bvnDataService');
 const { listenerCount } = require('../models/loanApplication');
+const verifyBVN = require('../helpers/verifyBVN');
+const { customerDataValidators, kycDataValidators } = require('../validators/adminCustomerValidator');
+const KYC = require("../models/kyc");
+const BVNData = require('../models/bvnData');
+const UserService = require('../services/userService');
 // const { smsOTP } = require('../config/messenger');
 
 
@@ -357,7 +362,65 @@ module.exports = class AdminController {
         }
     }
 
-    static async createCustomer(req, res){
-        
+    static async createCustomer(req, res) {
+        try {
+            const { customer, kyc } = req.body;
+            const customerData = JSON.parse(customer);
+            const kycData = JSON.parse(kyc);
+            const { proof_of_address, doc_verification, cac_certificate } = req.files;
+            let bvnInfo
+            let bvnData
+
+            // Parse and validate customer data
+            const customerValidation = customerDataValidators.validate(customerData);
+            if (customerValidation.error) {
+                return res.status(400).json({
+                    success: false,
+                    message: customerValidation.error.details[0].message,
+                });
+            }
+            console.log(customerData);
+            console.log(kyc);
+            // Attach files to KYC data
+            if (proof_of_address) kycData.proof_of_address = proof_of_address[0].path;
+            if (doc_verification) kycData.doc = doc_verification[0].path;
+            if (cac_certificate) kycData.cac_certificate = cac_certificate[0].path;
+
+            if (customerData.accountType === 'individual') {
+                console.log("test individual")
+                const existBVNKYC = await KYC.findOne({ "bank_verification_number.bvn": kycData.bvn })
+                if (existBVNKYC){
+                    return errorResponse(res, 400, "The provided bvn has been used");
+                }
+                //remove employee size
+                delete kycData.employee_size;
+            }            
+
+            const kycValidation = kycDataValidators.validate(kycData, { context: { accountType: customerData.accountType } });
+            console.log('Validation Context:', { accountType: customerData.accountType });
+            if (kycValidation.error) {
+                return res.status(400).json({
+                    success: false,
+                    message: kycValidation.error.details[0].message,
+                });
+            }
+            // Create user and KYC data
+            const user_exist = await UserService.getUserByPhone(customerData.phone_number)
+            if (user_exist) {
+                return errorResponse(res, 409, "User with this phone number already exists");
+            }
+            const result = await AdminService.createUserCustomer(customerData, kycData);
+            if (!result.success) {
+                return errorResponse(res, 500, result.message)
+            }
+
+            return successResponse(res, 201, result.message, result.user)
+        } catch (error) {
+            console.error("Error in createCustomer controller: ", error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error.",
+            });
+        }
     }
 }   
