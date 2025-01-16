@@ -12,12 +12,15 @@ const { generateOTP } = require('../helpers/otp');
 const BusinessKYC = require("../models/business_kyc");
 const CustomerKYC = require("../models/kyc");
 const BVNData = require('../models/bvnData');
+const UserService = require('./userService');
+const mongoose = require('mongoose');
 
 module.exports = class AdminService{
     static async getAllkyc(){
         try {
             const kycs = await KYC.find();
             // await KYC.deleteMany();
+            // await KYC.findByIdAndDelete("6789384e523dbb43dc035111");
             return kycs;
         } catch (error) {
             return error;
@@ -310,48 +313,52 @@ module.exports = class AdminService{
         }
     }
 
-    static async createUserCustomer(customerData, kycData, bvnData){
+    static async createUserCustomer(customerData, kycData) {
+        const session = await mongoose.startSession(); //start new session
+        session.startTransaction(); //init transaction
+    
         try {
             const newUser = {
                 phone_number: customerData.phone_number,
-                otp: customerData.otp,
+                otp: "VERIFIED",
                 accountType: customerData.accountType,
-                email: kycData.email_address
-            }
-            let kyc = {}
+                email: kycData.email_address,
+                otpCreatedAt: Date.now(),
+            };
+            let kyc = {};
             const email = {
                 address: kycData.email_address,
                 otp: "VERIFIED",
                 otpCreatedAt: Date.now(),
                 status: true,
-            }
-
-            if(customerData.accountType === 'individual'){
+            };
+    
+            if (customerData.accountType === 'individual') {
                 newUser.first_name = customerData.first_name;
                 newUser.last_name = customerData.last_name;
-
-                //kyc section
+    
+                //kyc
                 const bank_verification_number = {
                     bvn: kycData.bvn,
                     dob: kycData.dob,
                     otp: "VERIFIED",
                     otpCreatedAt: Date.now(),
                     status: true,
-                }
-
+                };
+    
                 const document_verification = {
                     doc_type: kycData.doc_type,
                     doc_no: kycData.doc_no,
                     doc: kycData.doc,
                     status: true,
-                }
-
+                };
+    
                 const address = {
                     address: kycData.address,
                     proof_of_address: kycData.proof_of_address,
-                    status: true
-                }
-
+                    status: true,
+                };
+    
                 const employment_info = {
                     employment_status: kycData.employment_status,
                     employer_name: kycData.employer_name,
@@ -361,77 +368,78 @@ module.exports = class AdminService{
                     job_title: kycData.job_title,
                     income_per_period: kycData.income_per_period,
                     status: true,
-                }
-
+                };
+    
                 kyc = {
                     email,
                     bank_verification_number,
                     document_verification,
                     address,
-                    employment_info
-                }
-
-                const bVnData = {
-                    bvn: bvnData.bvn,
-                    firstName: bvnData.firstName,
-                    middleName: bvnData.middleName,
-                    lastName: bvnData.lastName,
-                    image: bvnData.image,
-                    mobile: bvnData.mobile,
-                    dateOfBirth: bvnData.dateOfBirth,
-                    gender: bvnData.gender,
-                    idNumber: bvnData.idNumber,
-                    status: bvnData.status,
-                    allValidationPassed: bvnData.allValidationPassed,
-                    country: bvnData.country,
-                    requestedAt: bvnData.requestedAt,
-                    metaData: bvnData.metaData
-                }
-                await new BVNData(bVnData).save();
-                await new CustomerKYC(kyc).save();
+                    employment_info,
+                };
+    
+                const kycDocument = await new CustomerKYC(kyc).save({ session });
+                newUser.kyc_verification = kycDocument._id;
             }
-
-            if(customerData.accountType === 'business'){
+    
+            if (customerData.accountType === 'business') {
                 newUser.business_name = customerData.business_name;
-
-                const owners_partner_info = kycData.owners_partner_info
+    
+                const owners_partner_info = kycData.owners_partner_info;
                 const business_section = {
                     address: kycData.business_address,
                     proof_of_address: kycData.proof_of_address,
-                    type: kycData.type, //business_type
+                    type: kycData.business_type,
                     date_of_corporation: kycData.date_of_corporation,
                     status: true,
-                }
+                };
                 const employee_size = {
                     size: kycData.employee_size,
                     status: true,
-                }
+                };
                 const cac = {
-                    number: kycData.number,
+                    number: kycData.cac_number,
                     certificate: kycData.certificate,
                     status: true,
-                }
-
+                };
+    
                 kyc = {
-                    email: email,
-                    owners_partner_info: owners_partner_info,
-                    business_section: business_section,
-                    employee_size: employee_size,
-                    cac: cac,
-                }
-
-                await new BusinessKYC(kyc).save();
+                    email,
+                    owners_partner_info,
+                    business_section,
+                    employee_size,
+                    cac,
+                };
+    
+                const kycDocument = await new BusinessKYC(kyc).save({ session });
+                newUser.kyc_business = kycDocument._id;
             }
-            await new User(newUser).save()
+    
+            const savedUser = await new User(newUser).save({ session });
+
             await User.updateOne(
                 { phone_number: newUser.phone_number },
                 { $set: { is_verified: true } },
+                { session }
             );
-            console.log("Customer saved successfully");
-            return { success: true, message: "Customer created successfully" }  
+
+            //commit transaction
+            await session.commitTransaction();
+            session.endSession();
+
+            const user = await User.findById(savedUser._id)
+                .populate([{ path: "kyc_verification" }, { path: "kyc_business" }])
+                .exec();
+
+            console.log("Customer saved successfully", user);
+            return { success: true, message: "Customer created successfully", user };
         } catch (error) {
+            //rollback transaction on error
+            await session.abortTransaction();
+            session.endSession();
+    
             console.error("Error creating customer account ", error);
-            return { success: false, message: "Error creating customer account"}
+            return { success: false, message: "Error creating customer account" };
         }
     }
 }

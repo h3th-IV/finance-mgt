@@ -71,7 +71,10 @@ module.exports = class UserService {
 
     static async getUserByPhone(number){
         try {
-            const user = await User.findOne({ phone_number: number }).populate('kyc_verification');
+            const user = await User.findOne({ phone_number: number }).populate([
+                { path: 'kyc_verification' },
+                { path: 'kyc_business' }
+            ]);
             return user;
         } catch (error) {
             return error;
@@ -165,6 +168,7 @@ module.exports = class UserService {
                 last: `/all?page=${totalPages}&limit=${limit}${is_verified !== undefined ? `&is_verified=${is_verified}` : ""}${search ? `&search=${search}` : ""}`,
             };
             // await User.deleteMany();
+            await User.findByIdAndDelete("6789384e523dbb43dc035113");
             // Response
             return {
                 success: true,
