@@ -399,7 +399,7 @@ module.exports = class AdminService{
                 };
                 const cac = {
                     number: kycData.cac_number,
-                    certificate: kycData.certificate,
+                    certificate: kycData.cac_certificate,
                     status: true,
                 };
     
