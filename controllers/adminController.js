@@ -375,13 +375,8 @@ module.exports = class AdminController {
             // Parse and validate customer data
             const customerValidation = customerDataValidators.validate(customerData);
             if (customerValidation.error) {
-                return res.status(400).json({
-                    success: false,
-                    message: customerValidation.error.details[0].message,
-                });
+                return errorResponse(res, 400, customerValidation.error.details[0].message)
             }
-            console.log(customerData);
-            console.log(kyc);
             // Attach files to KYC data
             if (proof_of_address) kycData.proof_of_address = proof_of_address[0].path;
             if (doc_verification) kycData.doc = doc_verification[0].path;
@@ -400,10 +395,6 @@ module.exports = class AdminController {
   
             if (kycValidation.error) {
                 return errorResponse(res, 400, kycValidation.error.details[0].message)
-                return res.status(400).json({
-                    success: false,
-                    message: kycValidation.error.details[0].message,
-                });
             }
 
             // Create user and KYC data
@@ -415,15 +406,10 @@ module.exports = class AdminController {
             if (!result.success) {
                 return errorResponse(res, 500, result.message)
             }
-
             return successResponse(res, 201, result.message, result.user)
         } catch (error) {
             console.error("Error in createCustomer controller: ", error);
             return errorResponse(res, 500, result.message)
-            // return res.status(500).json({
-            //     success: false,
-            //     message: "Internal server error.",
-            // });
         }
     }
 
