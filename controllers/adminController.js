@@ -375,20 +375,14 @@ module.exports = class AdminController {
             // Parse and validate customer data
             const customerValidation = customerDataValidators.validate(customerData);
             if (customerValidation.error) {
-                return res.status(400).json({
-                    success: false,
-                    message: customerValidation.error.details[0].message,
-                });
+                return errorResponse(res, 400, customerValidation.error.details[0].message)
             }
-            console.log(customerData);
-            console.log(kyc);
             // Attach files to KYC data
             if (proof_of_address) kycData.proof_of_address = proof_of_address[0].path;
             if (doc_verification) kycData.doc = doc_verification[0].path;
             if (cac_certificate) kycData.cac_certificate = cac_certificate[0].path;
 
             if (customerData.accountType === 'individual') {
-                console.log("test individual")
                 const existBVNKYC = await KYC.findOne({ "bank_verification_number.bvn": kycData.bvn })
                 if (existBVNKYC){
                     return errorResponse(res, 400, "The provided bvn has been used");
@@ -398,15 +392,11 @@ module.exports = class AdminController {
             }            
 
             const kycValidation = kycDataValidators.validate(kycData, { context: { accountType: customerData.accountType } });
-            console.log('Validation Context:', { accountType: customerData.accountType });
+  
             if (kycValidation.error) {
-                return res.status(400).json({
-                    success: false,
-                    message: kycValidation.error.details[0].message,
-                });
+                return errorResponse(res, 400, kycValidation.error.details[0].message)
             }
-            console.log("customerData: ", customerData);
-            console.log("kycData: ", kycData);
+
             // Create user and KYC data
             const user_exist = await UserService.getUserByPhone(customerData.phone_number)
             if (user_exist) {
@@ -416,20 +406,15 @@ module.exports = class AdminController {
             if (!result.success) {
                 return errorResponse(res, 500, result.message)
             }
-
             return successResponse(res, 201, result.message, result.user)
         } catch (error) {
             console.error("Error in createCustomer controller: ", error);
-            return res.status(500).json({
-                success: false,
-                message: "Internal server error.",
-            });
+            return errorResponse(res, 500, result.message)
         }
     }
 
     static async getUser(req, res){
         const { userId } = req.params;
-        console.log(userId)
         if(!userId){
             return errorResponse(res, 400, "Missing user id")
         }
