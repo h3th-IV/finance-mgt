@@ -17,6 +17,7 @@ const { customerDataValidators, kycDataValidators } = require('../validators/adm
 const KYC = require("../models/kyc");
 const BVNData = require('../models/bvnData');
 const UserService = require('../services/userService');
+const mongoose = require('mongoose')
 // const { smsOTP } = require('../config/messenger');
 
 
@@ -423,6 +424,23 @@ module.exports = class AdminController {
                 success: false,
                 message: "Internal server error.",
             });
+        }
+    }
+
+    static async getUser(req, res){
+        const { userId } = req.params;
+        console.log(userId)
+        if(!userId){
+            return errorResponse(res, 400, "Missing user id")
+        }
+        try {
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                return errorResponse(res, 400, "Invalid user ID format or missing user ID");
+            }
+            const response = await UserService.getUserByID(userId);
+            return successResponse(res, 200, "Users returned successfully", response);
+        } catch (error) {
+            return errorResponse(res, 500, "Server Error");
         }
     }
 }   

@@ -37,5 +37,6 @@ router.post("/create-user", verifyStaffToken, parser.fields([
     { name: 'doc_verification', maxCount: 1 },
     { name: 'cac_certificate', maxCount: 1 },
   ]), AdminController.createCustomer);
+  router.get("/get-user/:userId", verifyStaffToken, AdminController.getUser);
 
 module.exports = router;
