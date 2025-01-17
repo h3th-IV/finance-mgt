@@ -404,6 +404,8 @@ module.exports = class AdminController {
                     message: kycValidation.error.details[0].message,
                 });
             }
+            console.log("customerData: ", customerData);
+            console.log("kycData: ", kycData);
             // Create user and KYC data
             const user_exist = await UserService.getUserByPhone(customerData.phone_number)
             if (user_exist) {
