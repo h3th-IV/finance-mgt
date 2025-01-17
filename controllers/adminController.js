@@ -425,4 +425,13 @@ module.exports = class AdminController {
             });
         }
     }
+
+    static async getUser(req, res){
+        try {
+            const response = await UserService.getUserByID(req.params.id);
+            return successResponse(res, 200, "Users returned successfully", response);
+        } catch (error) {
+            return errorResponse(res, 500, "Server Error");
+        }
+    }
 }   
