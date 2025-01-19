@@ -338,5 +338,23 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, "An unexpected server error occurred");
         }
     }
+
+    static async getUserLoans(req, res) {
+        const userId = req.params.userId;
+        const { status } = req.query;
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+    
+        try {
+            const response = await LoanApplicationService.getUserLoansWithActivity(userId, { status }, { page, limit });
+            if (response.success) {
+                return successResponse(res, 200, "Loans with activity fetched successfully", response.data);
+            }
+            return errorResponse(res, 400, response.message);
+        } catch (error) {
+            console.error("Error fetching loans with activity:", error);
+            return errorResponse(res, 500, "Server error while fetching loans with activity");
+        }
+    }
 }
 

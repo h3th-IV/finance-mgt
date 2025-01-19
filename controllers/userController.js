@@ -647,5 +647,5 @@ module.exports = class UserController {
             console.error('Error updating password: ', error);
             return errorResponse(res, 500, 'Internal server error');
         }
-    }
+    } 
 };

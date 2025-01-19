@@ -615,4 +615,75 @@ module.exports = class LoanApplicationService {
     }
   }
 
+
+  static async getUserLoansWithActivity(userId, filters, pagination) {
+    const { status } = filters;
+    const { page = 1, limit = 10 } = pagination;
+
+    try {
+        const query = { customer: userId };
+        if (status) {
+            query.status = status;
+        }
+
+        const skip = (page - 1) * limit;
+
+        // Fetch loan applications with the necessary data
+        const loanApplications = await LoanApplication.find(query)
+            .populate("loan_product", "name interest desc")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const totalApplications = await LoanApplication.countDocuments(query);
+        const totalPages = Math.ceil(totalApplications / limit);
+
+        // Fetch activities for each loan
+        const loansWithActivity = await Promise.all(
+            loanApplications.map(async (loan) => {
+                const activityLogs = await ActivityLogService.getActivityLogs("LoanApplication", loan._id);
+                return {
+                    ...loan.toObject(),
+                    activityLogs: activityLogs.success ? activityLogs.data : [],
+                };
+            })
+        );
+
+        const paginationLinks = {
+            first: `/loans/${userId}?page=1&limit=${limit}${status ? `&status=${status}` : ""}`,
+            prev:
+                page > 1
+                    ? `/loans/${userId}?page=${page - 1}&limit=${limit}${status ? `&status=${status}` : ""}`
+                    : null,
+            next:
+                page < totalPages
+                    ? `/loans/${userId}?page=${page + 1}&limit=${limit}${status ? `&status=${status}` : ""}`
+                    : null,
+            last: `/loans/${userId}?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ""}`,
+        };
+
+        return {
+            success: true,
+            data: {
+                loans: loansWithActivity,
+                links: {
+                    first: paginationLinks.first,
+                    prev: paginationLinks.prev,
+                    next: paginationLinks.next,
+                    last: paginationLinks.last,
+                    currentPage: page,
+                    totalPages: totalPages,
+                    totalPerPage: limit,
+                    total: totalApplications,
+                },
+            },
+        };
+    } catch (error) {
+        console.error("Error fetching user's loans with activity:", error);
+        return {
+            success: false,
+            message: "Could not fetch loans with activity",
+        };
+    }
+  }
 };
