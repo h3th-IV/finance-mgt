@@ -10,45 +10,47 @@ const LoanApplication = require("../models/loanApplication");
 const { default: mongoose } = require("mongoose");
 const BusinessKYCSchema = require("../models/business_kyc");
 const KYCSchema = require("../models/kyc");
+const ActivityLogService = require("../services/activityLogService");
+
 
 
 module.exports = class UserService {
-    static async createUser(data) {
-        try {
-            const newUser = {
-                phone_number: data.phone_number,
-                password: data.password,
-                otp: data.otp,
-                accountType: data.accountType,
-            };
-    
-            if (data.accountType === 'individual') {
-                newUser.first_name = data.first_name;
-                newUser.last_name = data.last_name;
-            }
-    
-            if (data.accountType === 'business') {
-                newUser.business_name = data.business_name;
-                newUser.phone_number = data.phone_number;
-            }
-    
-            const response = await new User(newUser).save();
-            console.log("User saved successfully:", response);
-    
+        static async createUser(data) {
             try {
-                const message = `${response.otp}`;
-                await sendSMSOTP(response.phone_number, message);
-                console.log("OTP sent successfully.");
-            } catch (otpError) {
-                console.error("Failed to send OTP:", otpError);
+                const newUser = {
+                    phone_number: data.phone_number,
+                    password: data.password,
+                    otp: data.otp,
+                    accountType: data.accountType,
+                };
+        
+                if (data.accountType === 'individual') {
+                    newUser.first_name = data.first_name;
+                    newUser.last_name = data.last_name;
+                }
+        
+                if (data.accountType === 'business') {
+                    newUser.business_name = data.business_name;
+                    newUser.phone_number = data.phone_number;
+                }
+        
+                const response = await new User(newUser).save();
+                console.log("User saved successfully:", response);
+        
+                try {
+                    const message = `${response.otp}`;
+                    await sendSMSOTP(response.phone_number, message);
+                    console.log("OTP sent successfully.");
+                } catch (otpError) {
+                    console.error("Failed to send OTP:", otpError);
+                }
+        
+                return response;
+            } catch (error) {
+                console.error("Error in createUser:", error);
+                return { error: "Failed to create user.", details: error };
             }
-    
-            return response;
-        } catch (error) {
-            console.error("Error in createUser:", error);
-            return { error: "Failed to create user.", details: error };
         }
-    }
     
     static async deleteUserById(userId) {
         try {
@@ -110,6 +112,19 @@ module.exports = class UserService {
             //pagination
             const skip = (page - 1) * limit;
 
+            // try {
+            //     // Use the Mongoose model's collection to drop the index
+            //     await User.collection.dropIndex("email_1");
+            //     console.log("Dropped the 'email_1' index successfully.");
+            // } catch (error) {
+            //     console.log("redaeeeee")
+            //     if (error.codeName === "IndexNotFound") {
+            //         console.log("The 'email_1' index does not exist or has already been dropped.");
+            //     } else {
+            //         console.error("Error dropping index:", error);
+            //     }
+            // }
+            
             const users = await User.find({
                 ...queryFilter,
                 ...(searchRegex ? {
@@ -168,7 +183,7 @@ module.exports = class UserService {
                 last: `/all?page=${totalPages}&limit=${limit}${is_verified !== undefined ? `&is_verified=${is_verified}` : ""}${search ? `&search=${search}` : ""}`,
             };
             // await User.deleteMany();
-            await User.findByIdAndDelete("6789384e523dbb43dc035113");
+            // await User.findByIdAndDelete("6789384e523dbb43dc035113");
             // Response
             return {
                 success: true,
@@ -507,5 +522,5 @@ module.exports = class UserService {
             console.error('Error updating password: ', error);
             return { success: false, message: 'Error updating password' }
         }
-    }
+    }   
 };
