@@ -28,5 +28,5 @@ router.post(
 // Other routes for loan calculation and fetching a single loan application
 router.post('/calc-loan', LoanApplicationController.calculatorLoan);
 router.get('/get-single-loan/:identifier', verifyToken, LoanApplicationController.getLoanApplication);
-
+router.get('/loans/:userId', verifyToken, LoanApplicationController.getUserLoans)
 module.exports = router;

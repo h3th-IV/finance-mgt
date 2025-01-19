@@ -6,7 +6,8 @@ mongoose.set('strictQuery', true);
 module.exports.connectDB = async () => {
   if (process.env.NODE_ENV === "development") {
     mongoose.connect("mongodb+srv://victor:Maythird1.!@test.4f52hfp.mongodb.net/capitalwise?retryWrites=true&w=majority&appName=test");
- console.log("staging db connected".blue);
+
+    console.log("staging db connected".blue);
   } else if (process.env.NODE_ENV === "production") {
     mongoose.connect("mongodb+srv://victor:Maythird1.!@test.4f52hfp.mongodb.net/capitalwise?retryWrites=true&w=majority&appName=test");
     console.log("production db connected".blue);
