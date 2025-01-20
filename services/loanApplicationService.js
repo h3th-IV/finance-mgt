@@ -133,7 +133,6 @@ module.exports = class LoanApplicationService {
   // }
 
   static async createLoanApplication(loanData, files) {
-    console.log({files})
     try {
       const loanProduct = await LoanProduct.findById(loanData.loan_product);
       if (!loanProduct) {
@@ -192,7 +191,6 @@ module.exports = class LoanApplicationService {
       let businessFinancial = null;
       let businessCollateral = null;
       let otherDocuments = null;
-      console.log({ loanData });
 
       // Process uploaded files based on loan type
       if (loanData.loan_type === "individual") {
