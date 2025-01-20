@@ -20,6 +20,11 @@ const Repayment = new mongoose.Schema({
     due_date: {
         type: Date,
     },
+    status: {
+        type: String,
+        enum: ['unpaid', 'paid'],
+        default: 'unpaid'
+    }
 });
 
 module.exports = mongoose.model("Repayment", Repayment);

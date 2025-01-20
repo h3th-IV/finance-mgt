@@ -684,4 +684,77 @@ module.exports = class LoanApplicationService {
         };
     }
   }
+
+  static async userLoanSummary(userId) {
+    try {
+        const loanApplications = await LoanApplication.find({ customer: userId }).populate("repayments");
+
+        let totalLoanApplications = 0;
+        let totalLoanApplicationAmount = 0;
+        let totalApprovedLoans = 0;
+        let totalApprovedLoanAmount = 0;
+        let totalDisbursedLoans = 0;
+        let totalDisbursedLoanAmount = 0;
+        let totalDeclinedLoans = 0;
+        let totalDeclinedLoanAmount = 0;
+        let totalCompletedRepayments = 0;
+        let totalCompletedRepaymentAmount = 0;
+        let totalDebts = 0;
+        let totalDebtsAmount = 0;
+        let totalInterest = 0;
+
+        loanApplications.forEach((loan) => {
+            totalLoanApplications++;
+            totalLoanApplicationAmount += loan.loan_amount || 0;
+
+            if (loan.status === "approved") {
+                totalApprovedLoans++;
+                totalApprovedLoanAmount += loan.loan_amount || 0;
+            }
+
+            if (loan.status === "disbursed") {
+                totalDisbursedLoans++;
+                totalDisbursedLoanAmount += loan.loan_amount || 0;
+            }
+
+            if (loan.status === "declined") {
+                totalDeclinedLoans++;
+                totalDeclinedLoanAmount += loan.loan_amount || 0;
+            }
+
+            loan.repayments.forEach((repayment) => {
+                if (repayment.status === "paid") {
+                    totalCompletedRepayments++;
+                    totalCompletedRepaymentAmount += repayment.amount || 0;
+                    totalInterest += repayment.interest || 0;
+                } else if (repayment.status === "unpaid") {
+                    totalDebts++;
+                    totalDebtsAmount += repayment.amount || 0;
+                }
+            });
+        });
+
+        return {
+            success: true,
+            data: {
+                totalLoanApplications,
+                totalLoanApplicationAmount,
+                totalApprovedLoans,
+                totalApprovedLoanAmount,
+                totalDisbursedLoans,
+                totalDisbursedLoanAmount,
+                totalDeclinedLoans,
+                totalDeclinedLoanAmount,
+                totalCompletedRepayments,
+                totalCompletedRepaymentAmount,
+                totalDebts,
+                totalDebtsAmount,
+                totalInterest,
+            },
+        };
+    } catch (error) {
+        console.error("Error fetching loan summary:", error);
+        return { success: false, message: "Could not fetch loan summary" };
+    }
+  }
 };

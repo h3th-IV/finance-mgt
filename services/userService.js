@@ -111,20 +111,6 @@ module.exports = class UserService {
             const searchRegex = search ? new RegExp(search, "i") : null;
             //pagination
             const skip = (page - 1) * limit;
-
-            // try {
-            //     // Use the Mongoose model's collection to drop the index
-            //     await User.collection.dropIndex("email_1");
-            //     console.log("Dropped the 'email_1' index successfully.");
-            // } catch (error) {
-            //     console.log("redaeeeee")
-            //     if (error.codeName === "IndexNotFound") {
-            //         console.log("The 'email_1' index does not exist or has already been dropped.");
-            //     } else {
-            //         console.error("Error dropping index:", error);
-            //     }
-            // }
-            
             const users = await User.find({
                 ...queryFilter,
                 ...(searchRegex ? {
@@ -522,5 +508,5 @@ module.exports = class UserService {
             console.error('Error updating password: ', error);
             return { success: false, message: 'Error updating password' }
         }
-    }   
+    }
 };
