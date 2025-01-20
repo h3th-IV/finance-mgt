@@ -29,4 +29,5 @@ router.post(
 router.post('/calc-loan', LoanApplicationController.calculatorLoan);
 router.get('/get-single-loan/:identifier', verifyToken, LoanApplicationController.getLoanApplication);
 router.get('/loans/:userId', verifyToken, LoanApplicationController.getUserLoans)
+router.get('/summary/:userId', verifyToken, LoanApplicationController.userLoanSummary)
 module.exports = router;

@@ -356,5 +356,24 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, "Server error while fetching loans with activity");
         }
     }
+
+    static async userLoanSummary(req, res){
+        try {
+            const { userId } = req.params;
+            if (!userId) {
+                return errorResponse(res, 400, "User ID is required");
+            }
+            const result = await LoanApplicationService.userLoanSummary(userId);
+    
+            if (result.success) {
+                return successResponse(res, 200, "User Loan Summary", result.data)
+            } else {
+                return errorResponse(res, 500, result.message)
+            }
+        } catch (error) {
+            console.error("Error in userLoanSummary controller:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    };
 }
 
