@@ -80,7 +80,8 @@ const LoanApplication = new mongoose.Schema(
                 "fully_paid",
                 "closed",
                 "ready_for_disbursement",
-                "deleted"
+                "deleted",
+                "declined"
             ],
             default: "processing",
         },

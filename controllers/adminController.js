@@ -195,7 +195,8 @@ module.exports = class AdminController {
                     name: staff.name,
                     email: staff.email,
                     role: staff.role,
-                    permissions: staff.role.permissions
+                    permissions: staff.role.permissions,
+                    accountType: "admin"
                 },
             }
             return successResponse(res, 200, "Staff signed in successfully", response);
@@ -207,14 +208,17 @@ module.exports = class AdminController {
     static async getAllLoanProducts(req, res) {
         try {
             let response = []
+console.log({x: req.query});
 
 
-            if (req.query !== null) {
-                console.log({z: req.query.accountType}, "u");
+            if (req?.query.accountType === "admin") {
+                console.log("yoooo");
+                response = await AdminService.getAllLoanProducts();
+ 
+            } else {
+                console.log("hello");
                 
                 response = await AdminService.getAllLoanProducts(req?.query?.accountType);
-            } else {
-                response = await AdminService.getAllLoanProducts();
             }
            
             return successResponse(res, 200, "All loan product returned successfully", response);

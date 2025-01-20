@@ -40,5 +40,6 @@ router.post("/create-user", verifyStaffToken, parser.fields([
 );
 router.get("/get-user/:userId", verifyStaffToken, AdminController.getUser);
 router.get('/banks/:userId', verifyStaffToken, UserController.getUserBankDetails)
+router.get('/loan-summary/:userId', verifyStaffToken, LoanApplicationController.userLoanSummary)
 
 module.exports = router;

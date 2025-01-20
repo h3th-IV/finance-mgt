@@ -33,9 +33,7 @@ module.exports = class UserController {
         }
     
         const { first_name, last_name, phone_number, password, accountType, business_name } = value;
-        console.log({value});
-        
-    
+
         try {
             const user_exist = await UserService.getUserByPhone(phone_number);
             if (user_exist) {
