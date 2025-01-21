@@ -432,4 +432,21 @@ console.log({x: req.query});
             return errorResponse(res, 500, "Server Error");
         }
     }
+
+    static async verifyBVN(req, res){
+        const { bvn } = req.body;
+        try{
+            if(!bvn){
+                return errorResponse(res, 400, "Please provide a bvn to proceed to verification")
+            }
+            const response = await verifyBVN(bvn)
+            return successResponse(res, 200, "BVN verified successfully", response.data)
+        }catch(error){
+            console.error("Error verifying bvn: ", error)
+            if(error.statusCode){
+                return errorResponse(res, error.statusCode, error.message || "BVN verification failed")
+            }
+            return errorResponse(res, 500, "Server Error");
+        }
+    }
 }   
