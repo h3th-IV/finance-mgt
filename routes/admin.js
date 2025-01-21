@@ -39,7 +39,8 @@ router.post("/create-user", verifyStaffToken, parser.fields([
   ]), AdminController.createCustomer
 );
 router.get("/get-user/:userId", verifyStaffToken, AdminController.getUser);
-router.get('/banks/:userId', verifyStaffToken, UserController.getUserBankDetails)
+router.get('/banks/:userId', verifyStaffToken, UserController.getUserBankDetails);
 router.get('/loan-summary/:userId', verifyStaffToken, LoanApplicationController.userLoanSummary)
 router.get('/loans/:userId', verifyStaffToken, LoanApplicationController.getUserLoans)
+router.get('/verify-bvn', verifyStaffToken, AdminController.verifyBVN);
 module.exports = router;
