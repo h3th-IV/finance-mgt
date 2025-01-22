@@ -18,6 +18,8 @@ const KYC = require("../models/kyc");
 const BVNData = require('../models/bvnData');
 const UserService = require('../services/userService');
 const mongoose = require('mongoose')
+const creditReport = require('../helpers/credit_report.helper');
+const CreditReportService = require('../services/creditReportService');
 // const { smsOTP } = require('../config/messenger');
 
 
@@ -447,6 +449,108 @@ console.log({x: req.query});
                 return errorResponse(res, error.statusCode, error.message || "BVN verification failed")
             }
             return errorResponse(res, 500, "Server Error");
+        }
+    }
+
+    static async generateIndividualCreditReport(req, res) {
+        const { consumer_name, dob, bvn, enquiry_reason } = req.body;
+        const { userId } = req.params;
+        try {
+            const consumerDetails = {
+                ConsumerName: consumer_name,
+                DateOfBirth: dob,
+                Identification: bvn,
+                EnquiryReason: enquiry_reason,
+                Accountno: "",
+                ProductID: "45"
+            };
+    
+            const matches = await creditReport.matchConsumer(consumerDetails);
+    
+            if (!matches.length) {
+                return errorResponse(res, 400, "No matching consumer found");
+            }
+    
+            const reportDetails = {
+                EnquiryID: matches[0].EnquiryID,
+                ConsumerID: matches[0].ConsumerID,
+                SubscriberEnquiryEngineID: matches[0].MatchingEngineID
+            };
+    
+            const report = await creditReport.generateConsumerReport(reportDetails);
+            const reportData = report.data;
+
+            const response = await CreditReportService.saveIndividualCreditReport(userId, reportData)
+            if(!response.success){
+                return errorResponse(res, 500, response.message)
+            }
+            return successResponse(res, 200, "Credit report generated successfully", response.creditReport);
+        } catch (error) {
+            console.error("Error fetching individual credit report:", error.message);
+            return errorResponse(res, 500, error.message);
+        }
+    }
+    
+
+    static async generateBusinessCreditReport(req, res){
+        const { business_name, registration_number, enquiry_reason } = req.body;
+        const { userId } = req.params;
+
+        try {
+            const commercialDetails = {
+                BusinessName: business_name,
+                BusinessRegistrationNumber: registration_number,
+                EnquiryReason: enquiry_reason,
+                ProductID: "47"
+            };
+
+            const matches = await creditReport.matchCommercial(commercialDetails);
+            if (!matches || matches.length === 0) {
+                return errorResponse(res, 404, "No matching business found");
+            }            
+
+            if (!matches.length) {
+                return errorResponse(res, 404, "No matching business found")
+            }
+            console.log("matches: ", matches);
+            const reportDetails = {
+                EnquiryID: matches[0].SubscriberEnquiryID,
+                commercialID: matches[0].CommercialID,
+                SubscriberEnquiryEngineID: matches[0].MatchingEngineID
+            };
+            console.log("report details: ", reportDetails);
+            const report = await creditReport.generateBusinessReport(reportDetails);
+            const reportData = report.data;
+    
+            const response = await CreditReportService.saveIndividualCreditReport(userId, reportData)
+
+            if(!response.success){
+                return errorResponse(res, 500, response.message)
+            }
+            return successResponse(res, 200, "Credit report generated successfully", response.creditReport);
+        } catch (error) {
+            console.error("Error fetching business credit report:", error.message);
+            return errorResponse(res, 500, error.message);
+        }
+    }
+
+    static async fetchCreditReports(req, res) {
+        try {
+            const { customerId } = req.params;
+
+            if (!customerId) {
+                return errorResponse(res, 400, "Customer ID is required");
+            }
+
+            const response = await CreditReportService.getCreditReportsByCustomer(customerId);
+
+            if (!response.success) {
+                return errorResponse(res, 500, response.message) 
+            }
+            return successResponse(res, 200, "Credit report fetched successfully", response.creditReports)
+        } catch (error) {
+            console.error("Error fetching credit reports:", error.message);
+            return errorResponse(res, 500, "Server error")
         }
     }
 }   
