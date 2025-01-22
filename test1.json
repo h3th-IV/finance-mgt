@@ -1,42 +1,404 @@
 {
-
-    "user": 
-    {
-        "phone_number": "09056432178",
-        "accountType": "business",
-        "first_name": "",
-        "last_name": "",
-        "business_name": "Evil Corp"
-    },
-
-
-    "kyc": 
-    {
-        "email_address": "e-corp@ecorp.com",
-        "bvn": "",
-        "dob": "",
-        "doc_type": "",
-        "doc_no": "",
-        "address": "",
-        "employment_status": "",
-        "employer_name": "",
-        "employer_phone": "",
-        "employer_email": "",
-        "employer_address": "",
-        "job_title": "",
-        "income_per_period": "",
-        "owners_partner_info": [
+    "success": true,
+    "message": "Credit report generated successfully",
+    "data": {
+        "report": [
             {
-                "name":"THread MIlle",
-                "phone_number":"07089456023",
-                "email":"thread@gmail.com",
-                "bvn":"22412725674"
+                "SubjectList": [
+                    {
+                        "CommercialID": "853535",
+                        "SearchOutput": "OCH TEST DUMMY 5,  - ",
+                        "Reference": "853535"
+                    }
+                ]
+            },
+            {
+                "BusinessData": [
+                    {
+                        "CommercialID": "853535",
+                        "ReferenceNo": null,
+                        "BusinessName": "OCH TEST DUMMY 5",
+                        "TradingName": null,
+                        "IndustrySector": "",
+                        "PreviousBusinessName": "",
+                        "BusinessRegistrationNumber": "",
+                        "PreviousRegistrationNumber": null,
+                        "NoOfDirectors": "0",
+                        "BusinessType": "",
+                        "DateOfIncorporation": "30/07/2018",
+                        "DateOfCommencement": null,
+                        "TaxIdentificationNumber": "",
+                        "VatNumber": null,
+                        "Webaddress": null,
+                        "CommercialEmail1": null,
+                        "CommercialEmail2": null,
+                        "CommercialEmail3": null,
+                        "CommercialEmail4": null,
+                        "CommercialAddress1": "UBA HOUSE 57 MARINA",
+                        "CommercialAddress2": "",
+                        "CommercialAddress3": "",
+                        "CommercialAddress4": "",
+                        "postalAddress1": "UBA HOUSE 57 MARINAADD",
+                        "postalAddress2": "RESS L",
+                        "postalAddress3": "",
+                        "postalAddress4": "",
+                        "Telephone1": null,
+                        "Telephone2": null,
+                        "Telephone3": null,
+                        "Telephone4": null,
+                        "Fax1": null,
+                        "Fax2": null,
+                        "Fax3": null,
+                        "Fax4": null,
+                        "UpdatedOn": "05/03/2023"
+                    }
+                ]
+            },
+            {
+                "HighestDelinquencyRating": [
+                    {
+                        "HighestDelinquencyRating": "10"
+                    }
+                ]
+            },
+            {
+                "FacilityPerformanceSummary": [
+                    {
+                        "TotalMonthlyInstalment": "0.00",
+                        "TotalOutstandingdebt": "3,557,328.00",
+                        "TotalAccountarrear": "1.00",
+                        "TotalAccounts": "1",
+                        "TotalAccounts1": "0",
+                        "Amountarrear": "3,557,328.00",
+                        "TotalaccountinGoodcondition": "0",
+                        "TotalaccountinBadcondition": "1",
+                        "TotalNumberofJudgement": "0",
+                        "TotalJudgementAmount": "0",
+                        "LastJudgementDate": "",
+                        "TotalNumberofDishonoured": "0",
+                        "TotalDishonouredAmount": "0.00",
+                        "LastBouncedChequesDate": null,
+                        "TotalMonthlyInstalment1": "0.00",
+                        "TotalOutstandingdebt1": "0.00",
+                        "TotalAccountarrear1": "0.00",
+                        "Amountarrear1": "0.00",
+                        "TotalaccountinGoodcondition1": "0",
+                        "TotalaccountinBadcondition1": "0",
+                        "TotalNumberofJudgement1": "0",
+                        "TotalJudgementAmount1": "0",
+                        "LastJudgementDate1": "",
+                        "TotalNumberofDishonoured1": "0",
+                        "TotalDishonouredAmount1": "0.00",
+                        "LastBouncedChequesDate1": null,
+                        "TotalNumberofAccounts": "1",
+                        "LastDishonouredChequeDate": "0",
+                        "Rating": "999"
+                    }
+                ]
+            },
+            {
+                "DirectorInformation": [
+                    {
+                        "Directorid": null,
+                        "DateofBirth": null,
+                        "firstName": null,
+                        "othernames": null,
+                        "surname": null,
+                        "Identificationnumber": null,
+                        "DirectorAppointmentdate": null
+                    }
+                ]
+            },
+            {
+                "CreditAgreementSummary": [
+                    {
+                        "DateAccountOpened": "01/01/2000",
+                        "SubscriberName": "United Bank for Africa Lagos",
+                        "AccountNo": "1021392523",
+                        "IndicatorDescription": "COMMERCIAL OVERDRAFT",
+                        "OpeningBalanceAmt": "0.00",
+                        "Currency": "NGN",
+                        "CurrentBalanceDebitInd": "",
+                        "CurrentBalanceAmt": "3,557,327.64",
+                        "InstalmentAmount": "0.00",
+                        "AmountOverdue": "3,557,327.64",
+                        "ClosedDate": null,
+                        "LastUpdatedDate": "08/02/2023",
+                        "PerformanceStatus": "LOST",
+                        "AccountStatus": "OPEN"
+                    }
+                ]
+            },
+            {
+                "AccountMonthlyPaymentHistoryHeader": [
+                    {
+                        "TableName": "Commercial24MonthlyPaymentHeader",
+                        "DisplayText": "Commercial 24 Monthly Payment Header",
+                        "Company": "Company",
+                        "MH24": "AUG 2021",
+                        "MH23": "SEP 2021",
+                        "MH22": "OCT 2021",
+                        "MH21": "NOV 2021",
+                        "MH20": "DEC 2021",
+                        "MH19": "JAN 2022",
+                        "MH18": "FEB 2022",
+                        "MH17": "MAR 2022",
+                        "MH16": "APR 2022",
+                        "MH15": "MAY 2022",
+                        "MH14": "JUN 2022",
+                        "MH13": "JUL 2022",
+                        "MH12": "AUG 2022",
+                        "MH11": "SEP 2022",
+                        "MH10": "OCT 2022",
+                        "MH09": "NOV 2022",
+                        "MH08": "DEC 2022",
+                        "MH07": "JAN 2023",
+                        "MH06": "FEB 2023",
+                        "MH05": "MAR 2023",
+                        "MH04": "APR 2023",
+                        "MH03": "MAY 2023",
+                        "MH02": "JUN 2023",
+                        "MH01": "JUL 2023"
+                    }
+                ]
+            },
+            {
+                "AccountMonthlyPaymentHistory": [
+                    {
+                        "Header": "Details of Credit Agreement with \"United Bank for Africa Lagos\" for Account Number: 1021392523",
+                        "TableName": "Commercial24MonthlyPayment",
+                        "DisplayText": "Commercial 24 Monthly Payment",
+                        "AccountOpenedDate": "Jan  1 2000 12:00AM",
+                        "SubscriberName": "United Bank for Africa Lagos",
+                        "AccountNo": "1021392523",
+                        "Currency": "NGN",
+                        "CurrentBalanceDebitInd": "",
+                        "DateAccountOpened": "01/01/2000",
+                        "IndicatorDescription": "COMMERCIAL OVERDRAFT",
+                        "OpeningBalanceAmt": "0.00",
+                        "CurrentBalanceAmt": "3,557,327.64",
+                        "MonthlyInstalmentAmt": "0.00",
+                        "AmountOverdue": "3,557,327.64",
+                        "ClosedDate": "01/01/2000",
+                        "LastUpdatedDate": "08/02/2023",
+                        "LastPaymentDate": "",
+                        "PerformanceStatus": "LOST",
+                        "SubscriberTypeInd": "C",
+                        "AccountNote": "",
+                        "LoanDuration": "0 Day(s)",
+                        "RepaymentFrequencyCode": "Not Available",
+                        "AccountStatus": "OPEN",
+                        "M24": "#",
+                        "M23": "#",
+                        "M22": "0",
+                        "M21": "0",
+                        "M20": "0",
+                        "M19": "999",
+                        "M18": "#",
+                        "M17": "999",
+                        "M16": "#",
+                        "M15": "999",
+                        "M14": "999",
+                        "M13": "0",
+                        "M12": "999",
+                        "M11": "#",
+                        "M10": "999",
+                        "M09": "999",
+                        "M08": "999",
+                        "M07": "999",
+                        "M06": "#",
+                        "M05": "#",
+                        "M04": "#",
+                        "M03": "#",
+                        "M02": "#",
+                        "M01": "#"
+                    }
+                ]
+            },
+            {
+                "AddressHistory": [
+                    {
+                        "UpDateOnDate": "25/02/2019",
+                        "CommercialAddressType": "P",
+                        "CommercialAddress1": "",
+                        "CommercialAddress2": "RESS L",
+                        "CommercialAddress3": "",
+                        "CommercialAddress4": " "
+                    },
+                    {
+                        "UpDateOnDate": "20/03/2019",
+                        "CommercialAddressType": "P",
+                        "CommercialAddress1": "UBA HOUSE 57 MARINAADD",
+                        "CommercialAddress2": "",
+                        "CommercialAddress3": "",
+                        "CommercialAddress4": " "
+                    },
+                    {
+                        "UpDateOnDate": "27/05/2021",
+                        "CommercialAddressType": "L",
+                        "CommercialAddress1": "UBA HOUSE 57 MARINA",
+                        "CommercialAddress2": "",
+                        "CommercialAddress3": "LAGOS",
+                        "CommercialAddress4": " "
+                    },
+                    {
+                        "UpDateOnDate": "22/06/2022",
+                        "CommercialAddressType": "L",
+                        "CommercialAddress1": "UBA HOUSE 57 MARINA",
+                        "CommercialAddress2": "",
+                        "CommercialAddress3": "",
+                        "CommercialAddress4": " "
+                    },
+                    {
+                        "UpDateOnDate": "05/03/2023",
+                        "CommercialAddressType": "P",
+                        "CommercialAddress1": "UBA HOUSE 57 MARINAADD",
+                        "CommercialAddress2": "RESS L",
+                        "CommercialAddress3": "",
+                        "CommercialAddress4": " "
+                    }
+                ]
+            },
+            {
+                "AdditionalContactHistory": [
+                    {
+                        "CommercialID": "853535",
+                        "ReferenceNo": null,
+                        "BusinessName": "OCH TEST DUMMY 5",
+                        "TradingName": null,
+                        "IndustrySector": "",
+                        "PreviousBusinessName": "",
+                        "BusinessRegistrationNumber": "",
+                        "PreviousRegistrationNumber": null,
+                        "NoOfDirectors": "0",
+                        "BusinessType": "",
+                        "DateOfIncorporation": "30/07/2018",
+                        "DateOfCommencement": null,
+                        "TaxIdentificationNumber": "",
+                        "VatNumber": null,
+                        "Webaddress": null,
+                        "CommercialEmail1": null,
+                        "CommercialEmail2": null,
+                        "CommercialEmail3": null,
+                        "CommercialEmail4": null,
+                        "CommercialAddress1": "UBA HOUSE 57 MARINA",
+                        "CommercialAddress2": "",
+                        "CommercialAddress3": "",
+                        "CommercialAddress4": "",
+                        "postalAddress1": "UBA HOUSE 57 MARINAADD",
+                        "postalAddress2": "RESS L",
+                        "postalAddress3": "",
+                        "postalAddress4": "",
+                        "Telephone1": null,
+                        "Telephone2": null,
+                        "Telephone3": null,
+                        "Telephone4": null,
+                        "Fax1": null,
+                        "Fax2": null,
+                        "Fax3": null,
+                        "Fax4": null,
+                        "UpdatedOn": "05/03/2023"
+                    }
+                ]
+            },
+            {
+                "EnquiryHistoryTop": [
+                    {
+                        "SubscriberEnquiryResultID": "22080301",
+                        "DateRequested": "15/07/2023 18:10:40",
+                        "SubscriberName": "FirstCentral Data - j.imafidon",
+                        "EnquiryReason": "TEST"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051602",
+                        "DateRequested": "22/06/2023 01:37:51",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051601",
+                        "DateRequested": "22/06/2023 01:37:38",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051600",
+                        "DateRequested": "22/06/2023 01:35:08",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051599",
+                        "DateRequested": "22/06/2023 01:30:56",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051598",
+                        "DateRequested": "22/06/2023 01:29:15",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051595",
+                        "DateRequested": "22/06/2023 00:57:13",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051594",
+                        "DateRequested": "22/06/2023 00:55:14",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051593",
+                        "DateRequested": "22/06/2023 00:52:41",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051574",
+                        "DateRequested": "21/06/2023 18:17:20",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051570",
+                        "DateRequested": "21/06/2023 17:29:13",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22051564",
+                        "DateRequested": "21/06/2023 17:05:37",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22047474",
+                        "DateRequested": "19/06/2023 16:53:50",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "Test"
+                    },
+                    {
+                        "SubscriberEnquiryResultID": "22047426",
+                        "DateRequested": "19/06/2023 13:45:35",
+                        "SubscriberName": "Youverify - YOUVERIFYAPI",
+                        "EnquiryReason": "TEST"
+                    }
+                ]
+            },
+            {
+                "EnquiryDetails": [
+                    {
+                        "SubscriberEnquiryResultID": "22080305",
+                        "ProductID": 47,
+                        "MatchingRate": 87,
+                        "SubscriberEnquiryEngineID": "179523242"
+                    }
+                ]
             }
-        ],
-        "business_address": "6ehe, uurruf, e8933",
-        "business_type": "Export and Import",
-        "date_of_corporation": "2020-10-10",
-        "employee_size": 50,
-        "cac_number": "676655A454544"
+        ]
     }
 }
