@@ -3,6 +3,7 @@ const router = express.Router();
 const LoanApplicationController = require("../controllers/loanApplicationController");
 const parser = require("../config/uploader");
 const { verifyToken } = require('../middleware/tokenGenerator');
+const { verifyAnyToken } = require('../middleware/permission');
 
 // Handling loan applications, including files for both individuals and businesses
 router.post(
@@ -28,4 +29,7 @@ router.post(
 // Other routes for loan calculation and fetching a single loan application
 router.post('/calc-loan', LoanApplicationController.calculatorLoan);
 router.get('/get-single-loan/:identifier', verifyToken, LoanApplicationController.getLoanApplication);
+router.get('/user-repayments/:userId', verifyAnyToken, LoanApplicationController.getAllRepaymentsForUser)
+router.get('/loan-repayments/:loanApplicationId', verifyAnyToken, LoanApplicationController.getRepaymentsForLoanApplication)
+router.get('/repayments',  verifyAnyToken, LoanApplicationController.getAllRepayments)
 module.exports = router;

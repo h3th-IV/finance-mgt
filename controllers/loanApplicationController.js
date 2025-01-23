@@ -318,7 +318,6 @@ module.exports = class LoanApplicationController {
 
         try {
             const result = await LoanApplicationService.getLoanApplicationByIdOrLoanId(identifier);
-
             if (!result.success) {
                 const statusCode = result.code === "NOT_FOUND" ? 404 : 500;
                 return errorResponse(res, statusCode, result.message);
@@ -375,5 +374,54 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, "Server error");
         }
     };
+
+    static async getAllRepaymentsForUser(req, res) {
+        try {
+            const { userId } = req.params;
+            const { page = 1, limit = 10 } = req.query;
+
+            const response = await LoanApplicationService.fetchAllRepaymentsForUser(userId, Number(page), Number(limit));
+            if (!response.success) {
+                return errorResponse(res, 500, response.message);
+            }
+
+            return successResponse(res, 200, response.message, response.data);
+        } catch (error) {
+            console.error("Error in getAllRepaymentsForUser:", error);
+            return errorResponse(res, 500, "Failed to fetch repayments");
+        }
+    }
+
+    static async getRepaymentsForLoanApplication(req, res) {
+        try {
+            const { loanApplicationId } = req.params;
+
+            const response = await LoanApplicationService.fetchRepaymentsForLoanApplication(loanApplicationId);
+            if (!response.success) {
+                return errorResponse(res, 500, response.message);
+            }
+
+            return successResponse(res, 200, response.message, response.data);
+        } catch (error) {
+            console.error("Error in getRepaymentsForLoanApplication:", error);
+            return errorResponse(res, 500, "Failed to fetch repayments");
+        }
+    }
+
+    static async getAllRepayments(req, res) {
+        try {
+            const { page = 1, limit = 10 } = req.query;
+
+            const response = await LoanApplicationService.fetchAllRepayments(Number(page), Number(limit));
+            if (!response.success) {
+                return errorResponse(res, 500, response.message);
+            }
+
+            return successResponse(res, 200, response.message, response.data);
+        } catch (error) {
+            console.error("Error in getAllRepayments:", error);
+            return errorResponse(res, 500, "Failed to fetch repayments");
+        }
+    }
 }
 

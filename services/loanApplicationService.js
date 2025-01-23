@@ -570,9 +570,6 @@ module.exports = class LoanApplicationService {
       const loanApplication = await LoanApplication.findOne(query)
         .populate({
           path: "customer",
-          populate: {
-            path: "kyc_verification",
-          },
         })
         .populate("loan_product")
         .populate("repayments");
@@ -755,6 +752,101 @@ module.exports = class LoanApplicationService {
     } catch (error) {
         console.error("Error fetching loan summary:", error);
         return { success: false, message: "Could not fetch loan summary" };
+    }
+  }
+
+
+  static async fetchAllRepaymentsForUser(userId, page = 1, limit = 10) {
+    try {
+        const skip = (page - 1) * limit;
+
+        const loanApplications = await LoanApplication.find({ customer: userId }).select('repayments');
+        const repaymentIds = loanApplications.flatMap(app => app.repayments);
+
+        // Fetch repayments
+        const totalRepayments = await Repayment.countDocuments({ _id: { $in: repaymentIds } });
+        const repayments = await Repayment.find({ _id: { $in: repaymentIds } })
+            .skip(skip)
+            .limit(limit);
+
+        const totalPages = Math.ceil(totalRepayments / limit);
+
+        const paginationLinks = {
+          first: `/user-repayments/${userId}?page=1&limit=${limit}`,
+          prev: page > 1 ? `/user-repayments/${userId}?page=${page - 1}&limit=${limit}` : null,
+          next: page < totalPages ? `/user-repayments/${userId}?page=${page + 1}&limit=${limit}` : null,
+          last: `/user-repayments/${userId}?page=${totalPages}&limit=${limit}`,
+        };
+
+        const data = {
+            repayments,
+            links: {
+                ...paginationLinks,
+                currentPage: page,
+                totalPages,
+                totalPerPage: limit,
+                total: totalRepayments,
+            },
+        };
+
+        return { success: true, message: "Repayments fetched successfully", data };
+    } catch (error) {
+        console.error("Error fetching repayments for user:", error);
+        return { success: false, message: "Failed to fetch repayments" };
+    }
+  }
+
+
+static async fetchRepaymentsForLoanApplication(loanApplicationId) {
+    try {
+        const loanApplication = await LoanApplication.findById(loanApplicationId).populate('repayments');
+
+        if (!loanApplication) {
+            return { success: false, message: "Loan application not found" };
+        }
+
+        return { success: true, message: "Repayments fetched successfully", data: loanApplication.repayments };
+    } catch (error) {
+        console.error("Error fetching repayments for loan application:", error);
+        return { success: false, message: "Failed to fetch repayments" };
+    }
+  }
+
+
+static async fetchAllRepayments(page = 1, limit = 10) {
+    try {
+        const skip = (page - 1) * limit;
+
+        const totalRepayments = await Repayment.countDocuments();
+        const repayments = await Repayment.find()
+            .skip(skip)
+            .limit(limit);
+
+        const totalPages = Math.ceil(totalRepayments / limit);
+
+        const paginationLinks = {
+          first: `/repayments?page=1&limit=${limit}`,
+          prev: page > 1 ? `/repayments?page=${page - 1}&limit=${limit}` : null,
+          next: page < totalPages ? `/repayments?page=${page + 1}&limit=${limit}` : null,
+          last: `/repayments?page=${totalPages}&limit=${limit}`,
+      };
+      
+
+        const data = {
+            repayments,
+            links: {
+                ...paginationLinks,
+                currentPage: page,
+                totalPages,
+                totalPerPage: limit,
+                total: totalRepayments,
+            },
+        };
+
+        return { success: true, message: "All repayments fetched successfully", data };
+    } catch (error) {
+        console.error("Error fetching all repayments:", error);
+        return { success: false, message: "Failed to fetch repayments" };
     }
   }
 };

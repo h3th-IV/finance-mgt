@@ -1,4 +1,4 @@
-const KYC  = require('../models/kyc');
+const KYC = require('../models/kyc');
 const LoanProduct = require('../models/loanProduct');
 const User = require('../models/user');
 const Staff = require('../models/staff');
@@ -15,8 +15,8 @@ const BVNData = require('../models/bvnData');
 const UserService = require('./userService');
 const mongoose = require('mongoose');
 
-module.exports = class AdminService{
-    static async getAllkyc(){
+module.exports = class AdminService {
+    static async getAllkyc() {
         try {
             const kycs = await KYC.find();
             // await KYC.deleteMany();
@@ -40,10 +40,10 @@ module.exports = class AdminService{
                 duration: product_data.duration,
                 product_group: product_data.product_group, // Add product_group here
             }
-    
+
             // Create and save the new loan product
             const loanProduct = await new LoanProduct(newloanProduct).save();
-    
+
             // Log the creation activity including product_group
             await ActivityLogService.LogActivity(
                 "create",
@@ -67,7 +67,7 @@ module.exports = class AdminService{
             return error; // or you can throw the error based on your error-handling strategy
         }
     }
-    
+
 
     static async getLoanProduct(productId) {
         try {
@@ -75,23 +75,23 @@ module.exports = class AdminService{
             if (!product) {
                 return { success: false, message: "Loan Product not found" };
             }
-    
+
             const productActivity = await ActivityLogService.getActivityLogs("LoanProduct", productId);
-    
-            return { 
-                success: true, 
-                message: "Loan Product returned successfully", 
+
+            return {
+                success: true,
+                message: "Loan Product returned successfully",
                 data: {
                     product,
                     productActivity: productActivity.success ? productActivity.data : [],
-                } 
+                }
             };
         } catch (error) {
             console.error("Error getting loan product: ", error);
             return { success: false, message: "Error fetching loan product" };
         }
     }
-    
+
 
     static async updateLoanProduct(productId, updateData, updatedBy) {
         try {
@@ -100,11 +100,11 @@ module.exports = class AdminService{
             if (!loanProduct) {
                 return { success: false, message: "Loan product not found" };
             }
-    
+
             // Allowed fields to be updated
             const updatableFields = ["interest", "max", "min", "status", "interest_type", "product_group", "duration"];
             const changes = {};
-    
+
             // Check and collect changes for updatable fields
             updatableFields.forEach((field) => {
                 if (updateData[field] !== undefined && loanProduct[field] !== updateData[field]) {
@@ -115,15 +115,15 @@ module.exports = class AdminService{
                     loanProduct[field] = updateData[field]; // Apply the update
                 }
             });
-    
+
             // If no changes are detected, return early
             if (Object.keys(changes).length === 0) {
                 return { success: false, message: "No changes made to the loan product" };
             }
-    
+
             // Save the updated loan product
             await loanProduct.save();
-    
+
             // Log the activity of updating the loan product
             await ActivityLogService.LogActivity(
                 "update",
@@ -133,18 +133,18 @@ module.exports = class AdminService{
                 productId,
                 changes
             );
-    
+
             return {
                 success: true,
                 loanProduct,
             };
-    
+
         } catch (error) {
             console.log('Error updating loan product: ', error);
             return { success: false, message: 'Error updating loan product' };
         }
     }
-    
+
     static async createStaff({ first_name, last_name, email, dob, roleId, otp }) {
         try {
             const role = await Role.findById(roleId);
@@ -172,17 +172,17 @@ module.exports = class AdminService{
     }
 
 
-    static async getAllLoanProducts(accountType){
+    static async getAllLoanProducts(accountType) {
         try {
-            console.log({accountType});
-            
+            console.log({ accountType });
+
             let response = [];
-            if(accountType){
-                response = await loanProduct.find({product_group: accountType});
+            if (accountType) {
+                response = await loanProduct.find({ product_group: accountType });
             } else {
                 response = await loanProduct.find();
             }
-        
+
             return response;
         } catch (error) {
             return error;
@@ -216,20 +216,20 @@ module.exports = class AdminService{
     }
 
     static async getRoles() {
-        try{
+        try {
             // await Role.deleteMany();
             return await Role.find();
-        } catch(error){
+        } catch (error) {
             throw new Error('Error fetching roles');
         }
     }
 
-    static async getStaffs(){
-        try{
+    static async getStaffs() {
+        try {
             const staff = await Staff.find().populate('role');
             // await Staff.deleteMany();
             return staff;
-        } catch(error){
+        } catch (error) {
             throw new Error('Error fetching staffs');
         }
     }
@@ -304,7 +304,7 @@ module.exports = class AdminService{
         }
     }
 
-    static async getProductsById(id){
+    static async getProductsById(id) {
         try {
             const response = await loanProduct.findById(id);
             return response;
@@ -316,7 +316,7 @@ module.exports = class AdminService{
     static async createUserCustomer(customerData, kycData) {
         const session = await mongoose.startSession(); //start new session
         session.startTransaction(); //init transaction
-    
+
         try {
             const newUser = {
                 phone_number: customerData.phone_number,
@@ -332,11 +332,11 @@ module.exports = class AdminService{
                 otpCreatedAt: Date.now(),
                 status: true,
             };
-    
+
             if (customerData.accountType === 'individual') {
                 newUser.first_name = customerData.first_name;
                 newUser.last_name = customerData.last_name;
-    
+
                 //kyc
                 const bank_verification_number = {
                     bvn: kycData.bvn,
@@ -345,20 +345,20 @@ module.exports = class AdminService{
                     otpCreatedAt: Date.now(),
                     status: true,
                 };
-    
+
                 const document_verification = {
                     doc_type: kycData.doc_type,
                     doc_no: kycData.doc_no,
                     doc: kycData.doc,
                     status: true,
                 };
-    
+
                 const address = {
                     address: kycData.address,
                     proof_of_address: kycData.proof_of_address,
                     status: true,
                 };
-    
+
                 const employment_info = {
                     employment_status: kycData.employment_status,
                     employer_name: kycData.employer_name,
@@ -369,7 +369,7 @@ module.exports = class AdminService{
                     income_per_period: kycData.income_per_period,
                     status: true,
                 };
-    
+
                 kyc = {
                     email,
                     bank_verification_number,
@@ -377,14 +377,14 @@ module.exports = class AdminService{
                     address,
                     employment_info,
                 };
-    
+
                 const kycDocument = await new CustomerKYC(kyc).save({ session });
                 newUser.kyc_verification = kycDocument._id;
             }
-    
+
             if (customerData.accountType === 'business') {
                 newUser.business_name = customerData.business_name;
-    
+
                 const owners_partner_info = kycData.owners_partner_info;
                 const business_section = {
                     address: kycData.business_address,
@@ -402,7 +402,7 @@ module.exports = class AdminService{
                     certificate: kycData.cac_certificate,
                     status: true,
                 };
-    
+
                 kyc = {
                     email,
                     owners_partner_info,
@@ -410,11 +410,11 @@ module.exports = class AdminService{
                     employee_size,
                     cac,
                 };
-    
+
                 const kycDocument = await new BusinessKYC(kyc).save({ session });
                 newUser.kyc_business = kycDocument._id;
             }
-    
+
             const savedUser = await new User(newUser).save({ session });
 
             await User.updateOne(
@@ -437,9 +437,17 @@ module.exports = class AdminService{
             //rollback transaction on error
             await session.abortTransaction();
             session.endSession();
-    
+
             console.error("Error creating customer account ", error);
             return { success: false, message: "Error creating customer account" };
+        }
+    }
+
+    static async getRoleById(id) {
+        try {
+            return await Role.findById(id);
+        } catch (error) {
+            throw new Error('Error fetching roles');
         }
     }
 }
