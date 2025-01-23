@@ -318,7 +318,6 @@ module.exports = class LoanApplicationController {
 
         try {
             const result = await LoanApplicationService.getLoanApplicationByIdOrLoanId(identifier);
-
             if (!result.success) {
                 const statusCode = result.code === "NOT_FOUND" ? 404 : 500;
                 return errorResponse(res, statusCode, result.message);

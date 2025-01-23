@@ -451,6 +451,7 @@ console.log({x: req.query});
             return errorResponse(res, 500, "Server Error");
         }
     }
+<<<<<<< Updated upstream
 
     static async generateIndividualCreditReport(req, res) {
         const { consumer_name, dob, bvn, enquiry_reason } = req.body;
@@ -553,4 +554,20 @@ console.log({x: req.query});
             return errorResponse(res, 500, "Server error")
         }
     }
+=======
+    static async getSingleRole(req, res) {
+        try {
+            const role = await AdminService.getRoleById(req.params.id);
+            if (!role) {
+                return errorResponse(res, 404, "No role found");
+            }
+            return successResponse(res, 200, "Role fetched successfully", role);
+        } catch (error) {
+            console.error("Error fetching role:", error);
+            return errorResponse(res, 500, "Server error while fetching role");
+        }
+    }
+
+
+>>>>>>> Stashed changes
 }   
