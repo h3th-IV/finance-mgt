@@ -73,5 +73,50 @@ const verifyStaffToken = async (req, res, next) => {
     }
 };
 
+const verifyAnyToken = async (req, res, next) => {
+    let token =
+        req.body.token ||
+        req.query.token ||
+        req.header("x-auth-token") ||
+        req.headers["authorization"];
 
-module.exports = { checkPermission, verifyStaffToken };
+    if (req.headers["authorization"]) {
+        const bearer = token.split(" ");
+        token = bearer[1];
+    }
+
+    if (!token) {
+        return res.status(401).json({ msg: "No Permission: Token missing." });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "thugnificient@lethalinterjections.com");
+
+        if (decoded.isStaff) {
+            const staff = await Staff.findById(decoded.id).populate("role");
+
+            if (!staff) {
+                return res.status(404).json({ msg: "Staff not found." });
+            }
+
+            req.user = {
+                id: decoded.id,
+                role: decoded.role,
+                isStaff: true,
+            };
+        } else {
+            req.user = decoded;
+        }
+
+        next();
+    } catch (error) {
+        if (error.name === "TokenExpiredError") {
+            return res.status(401).json({ msg: "Token has expired. Please log in again." });
+        }
+
+        console.error("Error verifying token:", error);
+        return res.status(400).json({ msg: "Invalid token." });
+    }
+};
+
+module.exports = { checkPermission, verifyStaffToken, verifyAnyToken };
