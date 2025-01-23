@@ -451,7 +451,6 @@ console.log({x: req.query});
             return errorResponse(res, 500, "Server Error");
         }
     }
-<<<<<<< Updated upstream
 
     static async generateIndividualCreditReport(req, res) {
         const { consumer_name, dob, bvn, enquiry_reason } = req.body;
@@ -513,13 +512,11 @@ console.log({x: req.query});
             if (!matches.length) {
                 return errorResponse(res, 404, "No matching business found")
             }
-            console.log("matches: ", matches);
             const reportDetails = {
                 EnquiryID: matches[0].SubscriberEnquiryID,
                 commercialID: matches[0].CommercialID,
                 SubscriberEnquiryEngineID: matches[0].MatchingEngineID
             };
-            console.log("report details: ", reportDetails);
             const report = await creditReport.generateBusinessReport(reportDetails);
             const reportData = report.data;
     
@@ -554,7 +551,6 @@ console.log({x: req.query});
             return errorResponse(res, 500, "Server error")
         }
     }
-=======
     static async getSingleRole(req, res) {
         try {
             const role = await AdminService.getRoleById(req.params.id);
@@ -569,5 +565,4 @@ console.log({x: req.query});
     }
 
 
->>>>>>> Stashed changes
 }   
