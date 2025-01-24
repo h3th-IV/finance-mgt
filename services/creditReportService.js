@@ -1,11 +1,12 @@
 const CreditReport = require("../models/creditReport");
 
 module.exports = class CreditReportService {
-    static async saveIndividualCreditReport(customerId, reportData) {
+    static async saveCreditReport(customerId, reportData, pdf_report) {
         try {
             const creditReport = new CreditReport({
                 customer: customerId,
-                report: reportData,
+                report: reportData || [],
+                pdf_report: pdf_report || ""
             });
 
             await creditReport.save();
