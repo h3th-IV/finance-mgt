@@ -20,6 +20,7 @@ const UserService = require('../services/userService');
 const mongoose = require('mongoose')
 const creditReport = require('../helpers/credit_report.helper');
 const CreditReportService = require('../services/creditReportService');
+const uploadToCloudinary = require('../utils/uploader');
 // const { smsOTP } = require('../config/messenger');
 
 
@@ -453,9 +454,10 @@ console.log({x: req.query});
     }
 
     static async generateIndividualCreditReport(req, res) {
-        const { consumer_name, dob, bvn, enquiry_reason } = req.body;
+        const { consumer_name, dob, bvn, enquiry_reason, report_type } = req.body;
         const { userId } = req.params;
         try {
+            let credit_report_url;
             const consumerDetails = {
                 ConsumerName: consumer_name,
                 DateOfBirth: dob,
@@ -476,15 +478,34 @@ console.log({x: req.query});
                 ConsumerID: matches[0].ConsumerID,
                 SubscriberEnquiryEngineID: matches[0].MatchingEngineID
             };
-    
-            const report = await creditReport.generateConsumerReport(reportDetails);
-            const reportData = report.data;
+            if (report_type === "pdf") {
+                const pdfReport = await creditReport.generateConsumerReportPDF(reportDetails);            
+                const pdfBuffer = Buffer.from(pdfReport.data, 'base64');
+                const pdfFileName = `CW_CREDIT-REPORT-${Date.now()}`;
+                const result = await uploadToCloudinary(pdfBuffer, pdfFileName);
+                credit_report_url = result.url;
 
-            const response = await CreditReportService.saveIndividualCreditReport(userId, reportData)
-            if(!response.success){
-                return errorResponse(res, 500, response.message)
+                const response = await CreditReportService.saveCreditReport(userId, [], credit_report_url)
+                if(!response.success){
+                    return errorResponse(res, 500, response.message)
+                }
+            
+                return successResponse(
+                    res,
+                    200,
+                    "Credit report generated successfully",
+                    response.creditReport
+                );
+            }else{
+                const report = await creditReport.generateConsumerReport(reportDetails);
+                const reportData = report.data;
+
+                const response = await CreditReportService.saveCreditReport(userId, reportData, "")
+                if(!response.success){
+                    return errorResponse(res, 500, response.message)
+                }
+                return successResponse(res, 200, "Credit report generated successfully", response.creditReport);
             }
-            return successResponse(res, 200, "Credit report generated successfully", response.creditReport);
         } catch (error) {
             console.error("Error fetching individual credit report:", error.message);
             return errorResponse(res, 500, error.message);
@@ -493,7 +514,7 @@ console.log({x: req.query});
     
 
     static async generateBusinessCreditReport(req, res){
-        const { business_name, registration_number, enquiry_reason } = req.body;
+        const { business_name, registration_number, enquiry_reason, report_type } = req.body;
         const { userId } = req.params;
 
         try {
@@ -503,6 +524,7 @@ console.log({x: req.query});
                 EnquiryReason: enquiry_reason,
                 ProductID: "47"
             };
+            let credit_report_url;
 
             const matches = await creditReport.matchCommercial(commercialDetails);
             if (!matches || matches.length === 0) {
@@ -517,15 +539,34 @@ console.log({x: req.query});
                 commercialID: matches[0].CommercialID,
                 SubscriberEnquiryEngineID: matches[0].MatchingEngineID
             };
-            const report = await creditReport.generateBusinessReport(reportDetails);
-            const reportData = report.data;
-    
-            const response = await CreditReportService.saveIndividualCreditReport(userId, reportData)
+            if (report_type === "pdf"){
+                const pdfReport = await creditReport.generateBusinessReportPDF(reportDetails);            
+                const pdfBuffer = Buffer.from(pdfReport.data, 'base64');
+                const pdfFileName = `CW_CREDIT-REPORT-${Date.now()}`;
+                const result = await uploadToCloudinary(pdfBuffer, pdfFileName);
+                credit_report_url = result.url;
+                const response = await CreditReportService.saveCreditReport(userId, [], credit_report_url)
 
-            if(!response.success){
-                return errorResponse(res, 500, response.message)
+                if(!response.success){
+                    return errorResponse(res, 500, response.message)
+                }
+                return successResponse(
+                    res,
+                    200,
+                    "Credit report generated successfully",
+                    response.creditReport
+                );
+            }else{
+                const report = await creditReport.generateBusinessReport(reportDetails);
+                const reportData = report.data;
+    
+                const response = await CreditReportService.saveCreditReport(userId, reportData, "")
+
+                if(!response.success){
+                    return errorResponse(res, 500, response.message)
+                }
+                return successResponse(res, 200, "Credit report generated successfully", response.creditReport);
             }
-            return successResponse(res, 200, "Credit report generated successfully", response.creditReport);
         } catch (error) {
             console.error("Error fetching business credit report:", error.message);
             return errorResponse(res, 500, error.message);
