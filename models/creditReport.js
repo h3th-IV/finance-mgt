@@ -1,3 +1,4 @@
+const { string } = require("joi");
 const mongoose = require("mongoose");
 
 const CreditReportSchema = new mongoose.Schema({
@@ -8,7 +9,9 @@ const CreditReportSchema = new mongoose.Schema({
     },
     report: {
         type: Array,    
-        required: true,
+    },
+    pdf_report: {
+        type: String,
     },
     createdAt: {
         type: Date,

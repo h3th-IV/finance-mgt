@@ -93,6 +93,25 @@ async function generateConsumerReport(reportDetails) {
     }
 }
 
+async function generateConsumerReportPDF(reportDetails) {
+    // const ticket = await getDataTicket() || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImRlbW8iLCJwYXNzd29yZCI6ImRlbW9AMTIzIiwiaWF0IjoxNzM3NTQwNTQ2LCJleHAiOjE3NTU1NDA1NDZ9.wS6iaTEt1paKT1mvGAFYXj8Hfz5M1zHgYAwdQZF7D0s";
+
+    const ticket = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImRlbW8iLCJwYXNzd29yZCI6ImRlbW9AMTIzIiwiaWF0IjoxNzM3NTQwNTQ2LCJleHAiOjE3NTU1NDA1NDZ9.wS6iaTEt1paKT1mvGAFYXj8Hfz5M1zHgYAwdQZF7D0s";
+
+    try {
+        const response = await axios.post(`${API_BASE_URL}/GetConsumerFullCreditBinaryReport`, {
+            DataTicket: ticket,
+            ...reportDetails
+        }, {
+            headers: { "Content-Type": "application/json" }
+        });
+        return response
+    } catch (error) {
+        console.error("Error during report generation:", error.response?.data || error.message);
+        throw new Error("Failed to generate report.");
+    }
+}
+
 async function generateBusinessReport(reportDetails) {
     // const ticket = await getDataTicket() || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImRlbW8iLCJwYXNzd29yZCI6ImRlbW9AMTIzIiwiaWF0IjoxNzM3NTQwNTQ2LCJleHAiOjE3NTU1NDA1NDZ9.wS6iaTEt1paKT1mvGAFYXj8Hfz5M1zHgYAwdQZF7D0s";
 
@@ -111,10 +130,31 @@ async function generateBusinessReport(reportDetails) {
     }
 }
 
+
+async function generateBusinessReportPDF(reportDetails) {
+    // const ticket = await getDataTicket() || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImRlbW8iLCJwYXNzd29yZCI6ImRlbW9AMTIzIiwiaWF0IjoxNzM3NTQwNTQ2LCJleHAiOjE3NTU1NDA1NDZ9.wS6iaTEt1paKT1mvGAFYXj8Hfz5M1zHgYAwdQZF7D0s";
+
+    const ticket = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImRlbW8iLCJwYXNzd29yZCI6ImRlbW9AMTIzIiwiaWF0IjoxNzM3NTQwNTQ2LCJleHAiOjE3NTU1NDA1NDZ9.wS6iaTEt1paKT1mvGAFYXj8Hfz5M1zHgYAwdQZF7D0s";
+    try {
+        const response = await axios.post(`${API_BASE_URL}/GetCommercialFullCreditBinaryReport`, {
+            DataTicket: ticket,
+            ...reportDetails
+        }, {
+            headers: { "Content-Type": "application/json" }
+        });
+        return response
+    } catch (error) {
+        console.error("Error during report generation:", error.response?.data || error.message);
+        throw new Error("Failed to generate report.");
+    }
+}
+
 module.exports = {
     authenticate,
     matchConsumer,
     matchCommercial,
     generateConsumerReport,
-    generateBusinessReport
+    generateBusinessReport,
+    generateConsumerReportPDF,
+    generateBusinessReportPDF
 };
