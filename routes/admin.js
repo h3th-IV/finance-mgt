@@ -42,7 +42,7 @@ router.get("/get-user/:userId", verifyStaffToken, AdminController.getUser);
 router.get('/banks/:userId', verifyStaffToken, UserController.getUserBankDetails);
 router.get('/loan-summary/:userId', verifyStaffToken, LoanApplicationController.userLoanSummary)
 router.get('/loans/:userId', verifyStaffToken, LoanApplicationController.getUserLoans)
-router.get('/verify-bvn', verifyStaffToken, AdminController.verifyBVN);
+router.post('/verify-bvn', verifyStaffToken, AdminController.verifyBVN);
 router.post('/credit-report-individual/:userId', verifyStaffToken, AdminController.generateIndividualCreditReport)
 router.post('/credit-report-business/:userId', verifyStaffToken, AdminController.generateBusinessCreditReport)
 router.get('/credit-report/:customerId', verifyStaffToken, AdminController.fetchCreditReports);
