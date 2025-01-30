@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Permission = require('../models/permission');
 
 const permissions = [
+    { name: "VIEW_CREATED_LOAN_APP", description: "View Created loan applications" },
     { name: "VIEW_LOAN_APP", description: "View loan applications" },
     { name: "CREATE_LOAN_PRODUCT", description: "Create loan products" },
     { name: "CREATE_LOAN_APP", description: "Create loan application" },

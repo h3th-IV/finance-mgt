@@ -291,7 +291,9 @@ module.exports = class LoanApplicationService {
   }
 
   static async getAllLoanApplication(filters, pagination) {
-    const { status, search } = filters;
+    const { status, search , createdBy} = filters;
+    console.log({createdBy});
+    
     const { page = 1, limit = 10 } = pagination;
 
     try {
@@ -300,6 +302,11 @@ module.exports = class LoanApplicationService {
       if (status) {
         queryFilter.status = status;
       }
+
+      if (createdBy) {
+        queryFilter.createdBy = createdBy;
+      }
+
 
 
       const searchRegex = search ? new RegExp(search, "i") : null;

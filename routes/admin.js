@@ -12,7 +12,7 @@ router.post("/createRole", verifyStaffToken, checkPermission("CREATE_ROLE"), Adm
 router.get("/get-kycs", verifyStaffToken, AdminController.getAllkycs);
 router.post("/create-loanproduct/:staffId", verifyStaffToken, checkPermission("CREATE_LOAN_PRODUCT"), AdminController.createLoanProduct);
 router.patch("/update-loanapp/:loanApplicationId", verifyStaffToken, checkPermission("UPDATE_LOAN_APP"), LoanApplicationController.updateLoanApplication);
-router.get("/loan-apps", verifyStaffToken, checkPermission("VIEW_LOAN_APP"), LoanApplicationController.getAllLoanApplication);
+router.get("/loan-apps", verifyStaffToken, checkPermission("VIEW_CREATED_LOAN_APP", "VIEW_LOAN_APP"), LoanApplicationController.getAllLoanApplication);
 router.patch("/update-product/:productId", verifyStaffToken, checkPermission("UPDATE_LOAN_PRODUCT"), AdminController.updateLoanProduct);
 router.get("/loanProducts",AdminController.getAllLoanProducts);
 router.post('/add-staff', verifyStaffToken, checkPermission("CREATE_STAFF"), AdminController.createStaff);
