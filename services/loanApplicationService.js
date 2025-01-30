@@ -567,9 +567,12 @@ module.exports = class LoanApplicationService {
         ? { _id: identifier }
         : { loan_id: identifier };
 
-      const loanApplication = await LoanApplication.findOne(query)
+        const loanApplication = await LoanApplication.findOne(query)
         .populate({
-          path: "customer",
+            path: "customer",
+            populate: {
+                path: "kyc_verification"
+            }
         })
         .populate("loan_product")
         .populate("repayments");

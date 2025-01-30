@@ -13,7 +13,7 @@ const BusinessKYC = require("../models/business_kyc");
 const CustomerKYC = require("../models/kyc");
 const BVNData = require('../models/bvnData');
 const UserService = require('./userService');
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); 
 
 module.exports = class AdminService {
     static async getAllkyc() {
