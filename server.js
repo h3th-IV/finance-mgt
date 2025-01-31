@@ -14,6 +14,7 @@ const loanApp = require('./routes/loanApplication');
 const cron = require("node-cron");
 const userModel = require("./models/user");
 const business = require("./routes/business");
+const approval = require("./routes/approval");
 
 app.use(
   session({
@@ -78,6 +79,7 @@ app.use("/api/v1/admin", admin);
 app.use("/api/v1/loanapp", loanApp);
 app.post('/api/v1/loan-calculator', LoanApplicationController.loanCalculator);
 app.use("/api/v1/business", business);
+app.use("/api/v1/approval", approval);
 // app.post('/api/v1/sms', AdminController.sendSMS);
 const PORT = process.env.PORT || 8000;
 sever.listen(PORT, () => {

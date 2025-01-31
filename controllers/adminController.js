@@ -238,6 +238,7 @@ console.log({x: req.query});
         try {
             //get d valid permissions from the database
             const validPermissions = await AdminService.getAllPermissions();
+            console.log("valid permission", validPermissions)
             const permissionNames = validPermissions.map((perm) => perm.name);
 
             const { error } = validateCreateRole({ name, permissions }, permissionNames);
@@ -510,7 +511,7 @@ console.log({x: req.query});
             console.error("Error fetching individual credit report:", error.message);
             return errorResponse(res, 500, error.message);
         }
-    }
+    }   
     
 
     static async generateBusinessCreditReport(req, res){
@@ -605,5 +606,32 @@ console.log({x: req.query});
         }
     }
 
-
+    static async getStaffWithPerm(req, res) {
+        const { permission } = req.params;
+    
+        try {
+          const response = await AdminService.getStaffWithPerm(permission);
+    
+          if (response.success) {
+            return res.status(200).json({
+              success: true,
+              message: response.message,
+              staff: response.staff,
+            });
+          } else {
+            return res.status(404).json({
+              success: false,
+              message: response.message,
+              code: response.code,
+            });
+          }
+        } catch (error) {
+          console.error("Error in getStaffWithPerm controller:", error);
+          return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            code: "INTERNAL_ERROR",
+          });
+        }
+    }
 }   
