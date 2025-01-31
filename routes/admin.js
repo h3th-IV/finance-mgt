@@ -12,7 +12,7 @@ router.post("/createRole", verifyStaffToken, checkPermission("CREATE_ROLE"), Adm
 router.get("/get-kycs", verifyStaffToken, AdminController.getAllkycs);
 router.post("/create-loanproduct/:staffId", verifyStaffToken, checkPermission("CREATE_LOAN_PRODUCT"), AdminController.createLoanProduct);
 router.patch("/update-loanapp/:loanApplicationId", verifyStaffToken, checkPermission("UPDATE_LOAN_APP"), LoanApplicationController.updateLoanApplication);
-router.get("/loan-apps", verifyStaffToken, checkPermission("VIEW_LOAN_APP"), LoanApplicationController.getAllLoanApplication);
+router.get("/loan-apps", verifyStaffToken, checkPermission("VIEW_CREATED_LOAN_APP", "VIEW_LOAN_APP"), LoanApplicationController.getAllLoanApplication);
 router.patch("/update-product/:productId", verifyStaffToken, checkPermission("UPDATE_LOAN_PRODUCT"), AdminController.updateLoanProduct);
 router.get("/loanProducts",AdminController.getAllLoanProducts);
 router.post('/add-staff', verifyStaffToken, checkPermission("CREATE_STAFF"), AdminController.createStaff);
@@ -42,12 +42,13 @@ router.get("/get-user/:userId", verifyStaffToken, AdminController.getUser);
 router.get('/banks/:userId', verifyStaffToken, UserController.getUserBankDetails);
 router.get('/loan-summary/:userId', verifyStaffToken, LoanApplicationController.userLoanSummary)
 router.get('/loans/:userId', verifyStaffToken, LoanApplicationController.getUserLoans)
-router.get('/verify-bvn', verifyStaffToken, AdminController.verifyBVN);
+router.post('/verify-bvn', verifyStaffToken, AdminController.verifyBVN);
 router.post('/credit-report-individual/:userId', verifyStaffToken, AdminController.generateIndividualCreditReport)
 router.post('/credit-report-business/:userId', verifyStaffToken, AdminController.generateBusinessCreditReport)
 router.get('/credit-report/:customerId', verifyStaffToken, AdminController.fetchCreditReports);
 
 router.get('/role/:id', verifyStaffToken, AdminController.getSingleRole);
+router.get('/staff/:permission', verifyStaffToken, AdminController.getStaffWithPerm)
 
 
 module.exports = router;

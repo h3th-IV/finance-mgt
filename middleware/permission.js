@@ -3,7 +3,7 @@ const Role = require('../models/role');
 const jwt = require("jsonwebtoken");
 
 
-const checkPermission = (requiredPermission) => {
+const checkPermission = (...requiredPermissions) => {
     return async (req, res, next) => {
         try {
             const staffId = req.user.id;
@@ -15,17 +15,21 @@ const checkPermission = (requiredPermission) => {
 
             const { permissions } = staff.role;
 
-            if (!permissions.includes(requiredPermission)) {
+            // Check if any of the required permissions exist in the staff's permissions
+            const hasPermission = requiredPermissions.some(permission => permissions.includes(permission));
+
+            if (!hasPermission) {
                 return res.status(403).json({ message: "Access denied: Permission not granted." });
             }
 
-            next(); 
+            next();
         } catch (error) {
             console.error("Permission check error:", error);
             return res.status(500).json({ message: "Server error during permission check." });
         }
     };
 };
+
 
 
 const verifyStaffToken = async (req, res, next) => {

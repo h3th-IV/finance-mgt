@@ -7,6 +7,7 @@ const { sendGuarantorMail } = require("../config/mailer");
 const { default: mongoose } = require("mongoose");
 const GuarantorsDataService = require("./guarantorsDataService");
 const ActivityLogService = require("../services/activityLogService");
+const ApprovalService = require("./loanApprovalService");
 
 module.exports = class LoanApplicationService {
   // static async createLoanApplication(loanData, files) {
@@ -234,6 +235,7 @@ module.exports = class LoanApplicationService {
       const _loanApplication = await LoanApplication.findById(savedLoanApplication._id)
         .populate("customer", "name")
         .populate("loan_product", "name");
+        console.log("here loanApplication: ",_loanApplication)
 
       // Send emails to guarantors
       await Promise.all([
@@ -275,10 +277,13 @@ module.exports = class LoanApplicationService {
         }
       );
 
+      const approvals = await ApprovalService.createApprovals(_loanApplication._id)
+
       return {
         success: true,
         loanApplication: _loanApplication,
         repaymentPlan,
+        approvals
       };
     } catch (error) {
       console.error("Error creating loan application", error);
@@ -291,7 +296,9 @@ module.exports = class LoanApplicationService {
   }
 
   static async getAllLoanApplication(filters, pagination) {
-    const { status, search } = filters;
+    const { status, search , createdBy} = filters;
+    console.log({createdBy});
+    
     const { page = 1, limit = 10 } = pagination;
 
     try {
@@ -300,6 +307,11 @@ module.exports = class LoanApplicationService {
       if (status) {
         queryFilter.status = status;
       }
+
+      if (createdBy) {
+        queryFilter.createdBy = createdBy;
+      }
+
 
 
       const searchRegex = search ? new RegExp(search, "i") : null;
@@ -567,9 +579,12 @@ module.exports = class LoanApplicationService {
         ? { _id: identifier }
         : { loan_id: identifier };
 
-      const loanApplication = await LoanApplication.findOne(query)
+        const loanApplication = await LoanApplication.findOne(query)
         .populate({
-          path: "customer",
+            path: "customer",
+            populate: {
+                path: "kyc_verification"
+            }
         })
         .populate("loan_product")
         .populate("repayments");

@@ -13,7 +13,7 @@ const BusinessKYC = require("../models/business_kyc");
 const CustomerKYC = require("../models/kyc");
 const BVNData = require('../models/bvnData');
 const UserService = require('./userService');
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); 
 
 module.exports = class AdminService {
     static async getAllkyc() {
@@ -233,6 +233,40 @@ module.exports = class AdminService {
             throw new Error('Error fetching staffs');
         }
     }
+
+    static async getStaffWithPerm(permission) {
+        try {
+            const normalizedPermission = permission.toUpperCase();
+    
+            const staff = await Staff.find().populate('role');
+    
+            const filteredStaff = staff.filter(member => 
+                member.role && member.role.permissions.includes(normalizedPermission)
+            );
+    
+            if (filteredStaff.length === 0) {
+                return {
+                    success: false,
+                    message: "No staff found with the given permission.",
+                    code: "NOT_FOUND",
+                };
+            }
+    
+            return {
+                success: true,
+                message: "Staff with the specified permission fetched successfully.",
+                staff: filteredStaff,
+            };
+        } catch (error) {
+            console.error("Error fetching staff with permission:", error);
+            return {
+                success: false,
+                message: `Error: ${error.message}`,
+                code: "INTERNAL_ERROR",
+            };
+        }
+    }
+    
 
     static async updatePassword(staffId, otp, pass) {
         try {

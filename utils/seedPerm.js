@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Permission = require('../models/permission');
 
 const permissions = [
+    { name: "VIEW_CREATED_LOAN_APP", description: "View Created loan applications" },
     { name: "VIEW_LOAN_APP", description: "View loan applications" },
     { name: "CREATE_LOAN_PRODUCT", description: "Create loan products" },
     { name: "CREATE_LOAN_APP", description: "Create loan application" },
@@ -18,6 +19,11 @@ const permissions = [
     {name: "ARCHIVE_LOAN_PRODUCT", description: "Archive Loan Product" },
     {name: "DELETE_CUSTOMER", description: "Delete Customer Account" },
     {name: "CREATE_CUSTOMER", description: "Create Customer Account" },
+    {name: "APPROVAL-1", description: "Loan Approval level 1" },
+    {name: "APPROVAL-2", description: "Loan Approval level 2" },
+    {name: "APPROVAL-3", description: "Loan Approval level 3" },
+    {name: "APPROVAL-4", description: "Loan Approval level 4" },
+    {name: "APPROVAL-5", description: "Loan Approval level 5" },
 ]
 
 const seedPermissions = async () => {

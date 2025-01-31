@@ -89,7 +89,7 @@ module.exports = class LoanApplicationController {
             if (fileError) {
                 return errorResponse(res, 400, fileError);
             }
-    
+
             const createdByType = isStaff ? "Staff" : "User";
             const createdBy = id;
             const processingFee = parseFloat(value.loan_amount) * 0.01;
@@ -119,7 +119,7 @@ module.exports = class LoanApplicationController {
                 business_financial,  
                 business_collateral, 
             };
-    
+
             const response = await LoanApplicationService.createLoanApplication(loanData, files);
             if (!response.success) {
                 switch (response.code) {
@@ -186,10 +186,22 @@ module.exports = class LoanApplicationController {
 
     static async getAllLoanApplication(req, res) {
         try {
-            const filters = {
-                status: req.query.status,
-                search: req.query.search, // Add search parameter
-            };
+          let filters = null
+
+            if(req.user.role.permissions.includes("VIEW_CREATED_LOAN_APP") && !req.user.role.permissions.includes("VIEW_LOAN_APP") ){
+                filters = {
+                    status: req.query.status,
+                    search: req.query.search,
+                    createdBy: req.user.id
+                };
+            } else {
+                filters = {
+                    status: req.query.status,
+                    search: req.query.search, // Add search parameter
+                };
+            }
+            
+         
 
             const pagination = {
                 page: parseInt(req.query.page, 10) || 1,
