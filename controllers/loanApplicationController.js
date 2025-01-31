@@ -89,7 +89,7 @@ module.exports = class LoanApplicationController {
             if (fileError) {
                 return errorResponse(res, 400, fileError);
             }
-    
+
             const createdByType = isStaff ? "Staff" : "User";
             const createdBy = id;
             const processingFee = parseFloat(value.loan_amount) * 0.01;
@@ -119,7 +119,7 @@ module.exports = class LoanApplicationController {
                 business_financial,  
                 business_collateral, 
             };
-    
+
             const response = await LoanApplicationService.createLoanApplication(loanData, files);
             if (!response.success) {
                 switch (response.code) {

@@ -48,6 +48,7 @@ router.post('/credit-report-business/:userId', verifyStaffToken, AdminController
 router.get('/credit-report/:customerId', verifyStaffToken, AdminController.fetchCreditReports);
 
 router.get('/role/:id', verifyStaffToken, AdminController.getSingleRole);
+router.get('/staff/:permission', verifyStaffToken, AdminController.getStaffWithPerm)
 
 
 module.exports = router;

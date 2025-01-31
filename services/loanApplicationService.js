@@ -7,6 +7,7 @@ const { sendGuarantorMail } = require("../config/mailer");
 const { default: mongoose } = require("mongoose");
 const GuarantorsDataService = require("./guarantorsDataService");
 const ActivityLogService = require("../services/activityLogService");
+const ApprovalService = require("./loanApprovalService");
 
 module.exports = class LoanApplicationService {
   // static async createLoanApplication(loanData, files) {
@@ -234,6 +235,7 @@ module.exports = class LoanApplicationService {
       const _loanApplication = await LoanApplication.findById(savedLoanApplication._id)
         .populate("customer", "name")
         .populate("loan_product", "name");
+        console.log("here loanApplication: ",_loanApplication)
 
       // Send emails to guarantors
       await Promise.all([
@@ -275,10 +277,13 @@ module.exports = class LoanApplicationService {
         }
       );
 
+      const approvals = await ApprovalService.createApprovals(_loanApplication._id)
+
       return {
         success: true,
         loanApplication: _loanApplication,
         repaymentPlan,
+        approvals
       };
     } catch (error) {
       console.error("Error creating loan application", error);
