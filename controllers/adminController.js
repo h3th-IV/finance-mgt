@@ -250,6 +250,7 @@ console.log({x: req.query});
             const role = await AdminService.createRole(roleData);
             return successResponse(res, 201, "Role created successfully and permissions granted", role);
         } catch (error) {
+            console.error(error)
             return errorResponse(res, 500, "Server error", error.message);
         }
     }
@@ -608,30 +609,16 @@ console.log({x: req.query});
 
     static async getStaffWithPerm(req, res) {
         const { permission } = req.params;
-    
         try {
           const response = await AdminService.getStaffWithPerm(permission);
-    
           if (response.success) {
-            return res.status(200).json({
-              success: true,
-              message: response.message,
-              staff: response.staff,
-            });
+            return successResponse(res, 200, response.message, response.staff)
           } else {
-            return res.status(404).json({
-              success: false,
-              message: response.message,
-              code: response.code,
-            });
+            return errorResponse(res, 404, response.message)
           }
         } catch (error) {
           console.error("Error in getStaffWithPerm controller:", error);
-          return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            code: "INTERNAL_ERROR",
-          });
+          return successResponse(res, 500, "Internal server error")
         }
     }
 }   

@@ -61,7 +61,7 @@ module.exports = class LoanApprovalController {
 
     static async requestApproval(req, res) {
         const { approvalId } = req.params;
-        const { assigneeId, requestNote } = req.body;    
+        const { assigneeId, requestNote } = req.body;
         try {
             if(!approvalId){
                 return errorResponse(res, 400, "Missing approvalId in request parameters");
@@ -86,15 +86,18 @@ module.exports = class LoanApprovalController {
         }
       }
 
-    static async declineApproval(req, res) {
+      static async declineApproval(req, res) {
         const { approvalId } = req.params;
-        const { declineNote } = req.body; 
+        const { declineNote } = req.body;
+        const staffId = req.user.id;
+      
         try {
-            if(!approvalId){
-                return errorResponse(res, 400, "Missing approvalId in request parameters");
-            }
-          const result = await LoanApprovalService.declineApproval(approvalId, declineNote);
-    
+          if (!approvalId) {
+            return errorResponse(res, 400, "Missing approvalId in request parameters");
+          }
+      
+          const result = await LoanApprovalService.declineApproval(approvalId, declineNote, staffId);
+      
           if (!result.success) {
             switch (result.code) {
               case "NOT_FOUND":
@@ -103,43 +106,50 @@ module.exports = class LoanApprovalController {
                 return errorResponse(res, 400, result.message);
               case "MISSING_DECLINE_NOTE":
                 return errorResponse(res, 400, result.message);
+              case "UNAUTHORIZED":
+                return errorResponse(res, 403, result.message);
               default:
                 return errorResponse(res, 500, result.message);
             }
           }
-    
+      
           return successResponse(res, 200, result.message, result.approval);
         } catch (error) {
           console.error("Controller Error - declineApproval:", error);
           return errorResponse(res, 500, "Server error");
         }
-    }
+      }
 
 
     static async approveApproval(req, res) {
         const { approvalId } = req.params;
         const { approvalNote } = req.body;
+        const staffId = req.user.id;
+      
         try {
-            if(!approvalId){
-                return errorResponse(res, 400, "Missing approvalId in request parameters");
-            }
-          const result = await LoanApprovalService.approveApproval(approvalId, approvalNote);
-    
+          if (!approvalId) {
+            return errorResponse(res, 400, "Missing approvalId in request parameters");
+          }
+      
+          const result = await LoanApprovalService.approveApproval(approvalId, approvalNote, staffId);
+      
           if (!result.success) {
             switch (result.code) {
               case "NOT_FOUND":
                 return errorResponse(res, 404, result.message);
               case "INVALID_STATUS":
                 return errorResponse(res, 400, result.message);
+              case "UNAUTHORIZED":
+                return errorResponse(res, 403, result.message);
               default:
                 return errorResponse(res, 500, result.message);
             }
           }
-    
+      
           return successResponse(res, 200, result.message, result.approval);
         } catch (error) {
           console.error("Controller Error - approveApproval:", error);
           return errorResponse(res, 500, "Server error");
         }
-    }
+      }
 };

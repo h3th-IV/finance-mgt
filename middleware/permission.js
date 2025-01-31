@@ -1,34 +1,39 @@
 const Staff = require('../models/staff');
 const Role = require('../models/role');
 const jwt = require("jsonwebtoken");
+const LoanApproval = require("../models/loanApproval");
 
 
 const checkPermission = (...requiredPermissions) => {
     return async (req, res, next) => {
-        try {
-            const staffId = req.user.id;
-            const staff = await Staff.findById(staffId).populate("role");
-            
-            if (!staff || !staff.role) {
-                return res.status(403).json({ message: "Access denied: No role assigned." });
-            }
-
-            const { permissions } = staff.role;
-
-            // Check if any of the required permissions exist in the staff's permissions
-            const hasPermission = requiredPermissions.some(permission => permissions.includes(permission));
-
-            if (!hasPermission) {
-                return res.status(403).json({ message: "Access denied: Permission not granted." });
-            }
-
-            next();
-        } catch (error) {
-            console.error("Permission check error:", error);
-            return res.status(500).json({ message: "Server error during permission check." });
+      try {
+        const staffId = req.user.id;
+        const staff = await Staff.findById(staffId).populate("role");
+  
+        if (!staff || !staff.role) {
+          return res.status(403).json({ message: "Access denied: No role assigned." });
         }
+  
+        const { permissions } = staff.role;
+        console.log('staff permissions: ', permissions)
+  
+        const permissionsToCheck = requiredPermissions.length > 0 ? requiredPermissions : [req.approvalAction.toUpperCase()];
+        console.log(permissionsToCheck)
+  
+        //check if any of the required permissions exist in the staff's permissions
+        const hasPermission = permissionsToCheck.some((permission) => permissions.includes(permission));
+  
+        if (!hasPermission) {
+          return res.status(403).json({ message: "Access denied: Permission not granted." });
+        }
+  
+        next();
+      } catch (error) {
+        console.error("Permission check error:", error);
+        return res.status(500).json({ message: "Server error during permission check." });
+      }
     };
-};
+  };
 
 
 
@@ -123,4 +128,32 @@ const verifyAnyToken = async (req, res, next) => {
     }
 };
 
-module.exports = { checkPermission, verifyStaffToken, verifyAnyToken };
+
+
+const fetchApprovalAction = async (req, res, next) => {
+  const { approvalId } = req.params;
+
+  try {
+    const approval = await LoanApproval.findById(approvalId);
+    if (!approval) {
+      return res.status(404).json({
+        success: false,
+        message: "Approval not found.",
+        code: "NOT_FOUND",
+      });
+    }
+
+    //attach the approval action to the request object
+    req.approvalAction = approval.approvalAction;
+    next();
+  } catch (error) {
+    console.error("Error fetching approval action:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      code: "INTERNAL_ERROR",
+    });
+  }
+};
+
+module.exports = { checkPermission, verifyStaffToken, verifyAnyToken, fetchApprovalAction };
