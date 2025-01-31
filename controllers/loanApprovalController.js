@@ -6,7 +6,9 @@ module.exports = class LoanApprovalController {
     static async fetchApprovalsForLoanApplication(req, res) {
         try {
             const { loanApplicationId } = req.params;
-            //check is loanAppId not passed
+            if (!loanApplicationId){
+                return errorResponse(res, 400, "Missing loanApplicationId")
+            }
             if (loanApplicationId == ":loanApplicationId"){
                 return errorResponse(res, 400, "Missing loanApplicationId")
             }
@@ -41,6 +43,9 @@ module.exports = class LoanApprovalController {
     static async fetchApprovalsByAssignee(req, res) {
         try {
             const { assigneeId } = req.params;
+            if (!assigneeId){
+                return errorResponse(res, 400, "Missing assigneeId in request parameters");
+            }
             const result = await LoanApprovalService.fetchApprovalsByAssignee(assigneeId);
             
             if (!result.success) {
@@ -56,9 +61,11 @@ module.exports = class LoanApprovalController {
 
     static async requestApproval(req, res) {
         const { approvalId } = req.params;
-        const { assigneeId, requestNote } = req.body;
-    
+        const { assigneeId, requestNote } = req.body;    
         try {
+            if(!approvalId){
+                return errorResponse(res, 400, "Missing approvalId in request parameters");
+            }
           const response = await LoanApprovalService.requestApproval(approvalId, assigneeId, requestNote);
     
           if (!response.success) {
@@ -82,9 +89,11 @@ module.exports = class LoanApprovalController {
     static async declineApproval(req, res) {
         const { approvalId } = req.params;
         const { declineNote } = req.body; 
-    
         try {
-          const result = await ApprovalService.declineApproval(approvalId, declineNote);
+            if(!approvalId){
+                return errorResponse(res, 400, "Missing approvalId in request parameters");
+            }
+          const result = await LoanApprovalService.declineApproval(approvalId, declineNote);
     
           if (!result.success) {
             switch (result.code) {
@@ -110,9 +119,11 @@ module.exports = class LoanApprovalController {
     static async approveApproval(req, res) {
         const { approvalId } = req.params;
         const { approvalNote } = req.body;
-    
         try {
-          const result = await ApprovalService.approveApproval(approvalId, approvalNote);
+            if(!approvalId){
+                return errorResponse(res, 400, "Missing approvalId in request parameters");
+            }
+          const result = await LoanApprovalService.approveApproval(approvalId, approvalNote);
     
           if (!result.success) {
             switch (result.code) {
