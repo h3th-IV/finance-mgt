@@ -203,6 +203,7 @@ module.exports = class AdminService {
             await role.save();
             return role;
         } catch (error) {
+            console.error(error)
             throw new Error("Error creating role");
         }
     }
