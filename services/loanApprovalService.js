@@ -158,7 +158,7 @@ module.exports = class ApprovalService {
     }
   }
 
-  static async approveApproval(approvalId, approvalNote) {
+  static async approveApproval(approvalId, approvalNote, staffId) {
     try {
       const approval = await LoanApproval.findById(approvalId);
       if (!approval) {
@@ -168,7 +168,15 @@ module.exports = class ApprovalService {
           code: "NOT_FOUND",
         };
       }
-
+  
+      if (approval.assignee.toString() !== staffId) {
+        return {
+          success: false,
+          message: "You are not authorized to approve this approval.",
+          code: "UNAUTHORIZED",
+        };
+      }
+  
       if (approval.status !== "Requested") {
         return {
           success: false,
@@ -176,12 +184,12 @@ module.exports = class ApprovalService {
           code: "INVALID_STATUS",
         };
       }
-
+  
       approval.status = "Approved";
       approval.approvalNote = approvalNote || "";
-
+  
       const updatedApproval = await approval.save();
-
+  
       return {
         success: true,
         message: "Approval approved successfully.",
@@ -197,7 +205,7 @@ module.exports = class ApprovalService {
     }
   }
 
-  static async declineApproval(approvalId, declineNote) {
+  static async declineApproval(approvalId, declineNote, staffId) {
     try {
       const approval = await LoanApproval.findById(approvalId);
       if (!approval) {
@@ -207,7 +215,16 @@ module.exports = class ApprovalService {
           code: "NOT_FOUND",
         };
       }
-
+  
+      // Check if the staff member is the assignee
+      if (approval.assignee.toString() !== staffId) {
+        return {
+          success: false,
+          message: "You are not authorized to decline this approval.",
+          code: "UNAUTHORIZED",
+        };
+      }
+  
       if (approval.status !== "Requested") {
         return {
           success: false,
@@ -215,7 +232,7 @@ module.exports = class ApprovalService {
           code: "INVALID_STATUS",
         };
       }
-
+  
       if (!declineNote || declineNote.trim() === "") {
         return {
           success: false,
@@ -223,12 +240,12 @@ module.exports = class ApprovalService {
           code: "MISSING_DECLINE_NOTE",
         };
       }
-
+  
       approval.status = "Declined";
       approval.declineNote = declineNote;
-
+  
       const updatedApproval = await approval.save();
-
+  
       return {
         success: true,
         message: "Approval declined successfully.",
