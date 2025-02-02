@@ -8,13 +8,13 @@ const LoanApprovalSchema = new mongoose.Schema({
   },
   approvalAction: {
     type: String,
-    enum: ['action-1', 'action-2', 'action-3', 'action-4', 'action-5'],
-    default: "action-1"
+    enum: ['Credit Check', 'Internal Control', 'Approve Borrowers Credit', 'Loan Disursement'],
+    default: "Credit Check"
   },
   approvalTitle: {
     type: String,
-    enum: ['title-1', 'title-2', 'title-3', 'title-4', 'title-5'],
-    default: "title-1"
+    enum: ['Credit Check', 'Internal Control', 'Approve Borrowers Credit', 'Loan Disursement'],
+    default: "Credit Check"
   },
   assignee: {
     type: mongoose.Schema.Types.ObjectId,

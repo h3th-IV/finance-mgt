@@ -7,11 +7,10 @@ module.exports = class ApprovalService {
 
       //define approval levels, actions, and titles
       const approvalLevels = [
-        { level: 1, action: "action-1", title: "title-1" },
-        { level: 2, action: "action-2", title: "title-2" },
-        { level: 3, action: "action-3", title: "title-3" },
-        { level: 4, action: "action-4", title: "title-4" },
-        { level: 5, action: "action-5", title: "title-5" },
+        { level: 1, action: "Credit Check", title: "Credit Check" },
+        { level: 2, action: "Internal Control", title: "Internal Control" },
+        { level: 3, action: "Approve Borrowers Credit", title: "Approve Borrowers Credit" },
+        { level: 4, action: "Loan Disursement", title: "Loan Disursement" },
       ];
 
       for (const { level, action, title } of approvalLevels) {
