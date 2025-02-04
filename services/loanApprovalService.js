@@ -1,3 +1,4 @@
+const LoanApplication = require("../models/loanApplication");
 const LoanApproval = require("../models/loanApproval");
 
 module.exports = class ApprovalService {
@@ -189,9 +190,23 @@ module.exports = class ApprovalService {
   
       const updatedApproval = await approval.save();
   
+      //update the loan appli status (ignore err for non-last approvals)
+      const loanApplicationUpdateResult = await this.updateLoanApplicationStatus(approval.loanApplication);
+  
+      //only return loan app update result if it's a success
+      if (loanApplicationUpdateResult.success) {
+        return {
+          success: true,
+          message: "Approval approved successfully.",
+          approval: updatedApproval,
+          loanApplication: loanApplicationUpdateResult.loanApplication,
+        };
+      }
+  
+      //if loan app status update failed (e.g., last approval not completed), still return success for the approval
       return {
         success: true,
-        message: "Approval approved successfully.",
+        message: "Approval approved successfully. Loan application status not updated (last approval not completed).",
         approval: updatedApproval,
       };
     } catch (error) {
@@ -215,7 +230,6 @@ module.exports = class ApprovalService {
         };
       }
   
-      // Check if the staff member is the assignee
       if (approval.assignee.toString() !== staffId) {
         return {
           success: false,
@@ -245,13 +259,83 @@ module.exports = class ApprovalService {
   
       const updatedApproval = await approval.save();
   
+      //update the loan application status (ignore err for not last approvals)
+      const loanApplicationUpdateResult = await this.updateLoanApplicationStatus(approval.loanApplication);
+  
+      //only return the loan application update result if it's a success
+      if (loanApplicationUpdateResult.success) {
+        return {
+          success: true,
+          message: "Approval declined successfully.",
+          approval: updatedApproval,
+          loanApplication: loanApplicationUpdateResult.loanApplication,
+        };
+      }
+  
+      //if the loan application status update failed (e.g., last approval not completed), still return success
       return {
         success: true,
-        message: "Approval declined successfully.",
+        message: "Approval declined successfully. Loan application status not updated (last approval not completed).",
         approval: updatedApproval,
       };
     } catch (error) {
       console.error("Error declining approval:", error);
+      return {
+        success: false,
+        message: `Error: ${error.message}`,
+        code: "INTERNAL_ERROR",
+      };
+    }
+  }
+
+
+  static async updateLoanApplicationStatus(loanApplicationId) {
+    try {
+      const approvals = await LoanApproval.find({ loanApplication: loanApplicationId })
+        .sort({ approvalLevel: -1 }) //descending order
+        .limit(1); //get the last approval level
+  
+      if (!approvals || approvals.length === 0) { 
+        return {
+          success: false,
+          message: "No approvals found for this loan application.",
+          code: "NOT_FOUND",
+        };
+      }
+  
+      const lastApproval = approvals[0]; //get the last approval
+  
+      const loanApplication = await LoanApplication.findById(loanApplicationId);
+      if (!loanApplication) {
+        return {
+          success: false,
+          message: "Loan application not found.",
+          code: "NOT_FOUND",
+        };
+      }
+  
+      if (lastApproval.status === "Approved") {
+        loanApplication.status = "approved";
+      } else if (lastApproval.status === "Declined") {
+        loanApplication.status = "declined";
+      } else {
+        return {
+          success: false,
+          message: "The last approval level is not yet completed.",
+          code: "INVALID_STATUS",
+        };
+      }
+  
+      //save the updated loan app
+      const updatedLoanApplication = await loanApplication.save();
+  
+      return {
+        success: true,
+        message: "Loan application status updated successfully.",
+        loanApplication: updatedLoanApplication,
+      };
+    } catch (error) {
+      console.error("Error updating loan application status:", error);
       return {
         success: false,
         message: `Error: ${error.message}`,
