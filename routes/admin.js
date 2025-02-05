@@ -50,5 +50,16 @@ router.get('/credit-report/:customerId', verifyStaffToken, AdminController.fetch
 router.get('/role/:id', verifyStaffToken, AdminController.getSingleRole);
 router.get('/staff/:permission', verifyStaffToken, AdminController.getStaffWithPerm)
 
+router.get("/active-loans", verifyStaffToken, AdminController.getTotalActiveLoans);
+router.get("/delinquent-loans", verifyStaffToken, AdminController.getTotalDelinquentLoans);
+router.get("/loans-ready-to-disburse", verifyStaffToken, AdminController.getTotalLoansReadyToDisburse);
+router.get("/total-loan-amount", verifyStaffToken, AdminController.getTotalLoanAmount);
+router.get("/total-business-loans", verifyStaffToken, AdminController.getTotalBusinessLoansAmount);
+router.get("/total-individual-loans", verifyStaffToken, AdminController.getTotalIndividualLoansAmount);
+router.get("/total-fully-paid-loans", verifyStaffToken, AdminController.getTotalFullyPaidLoans);
+router.get("/total-repaid-amount", verifyStaffToken, AdminController.getTotalRepaidAmount);
+router.get("/loan-product-distribution", verifyStaffToken, AdminController.getLoanProductDistribution);
+router.get("/delinquency-rate-over-time", verifyStaffToken, AdminController.getDelinquencyRateOverTime);
+
 
 module.exports = router;
