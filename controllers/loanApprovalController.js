@@ -145,7 +145,6 @@ module.exports = class LoanApprovalController {
                 return errorResponse(res, 500, result.message);
             }
           }
-      
           return successResponse(res, 200, result.message, result.approval);
         } catch (error) {
           console.error("Controller Error - approveApproval:", error);

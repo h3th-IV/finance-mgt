@@ -11,7 +11,7 @@ module.exports = class ApprovalService {
         { level: 1, action: "Credit Check", title: "Credit Check" },
         { level: 2, action: "Internal Control", title: "Internal Control" },
         { level: 3, action: "Approve Borrowers Credit", title: "Approve Borrowers Credit" },
-        { level: 4, action: "Loan Disursement", title: "Loan Disursement" },
+        { level: 4, action: "Loan Disbursement", title: "Loan Disbursement" },
       ];
 
       for (const { level, action, title } of approvalLevels) {
@@ -169,19 +169,19 @@ module.exports = class ApprovalService {
         };
       }
   
-      if (approval.assignee.toString() !== staffId) {
-        return {
-          success: false,
-          message: "You are not authorized to approve this approval.",
-          code: "UNAUTHORIZED",
-        };
-      }
-  
       if (approval.status !== "Requested") {
         return {
           success: false,
           message: `Approval cannot be approved because it is ${approval.status.toLowerCase()}.`,
           code: "INVALID_STATUS",
+        };
+      }
+      
+      if (approval.assignee.toString() !== staffId) {
+        return {
+          success: false,
+          message: "You are not authorized to approve this approval.",
+          code: "UNAUTHORIZED",
         };
       }
   
@@ -197,7 +197,7 @@ module.exports = class ApprovalService {
       if (loanApplicationUpdateResult.success) {
         return {
           success: true,
-          message: "Approval approved successfully.",
+          message: "Approval approved successfully, Loan Application is ready for disbursement",
           approval: updatedApproval,
           loanApplication: loanApplicationUpdateResult.loanApplication,
         };
@@ -230,19 +230,19 @@ module.exports = class ApprovalService {
         };
       }
   
-      if (approval.assignee.toString() !== staffId) {
-        return {
-          success: false,
-          message: "You are not authorized to decline this approval.",
-          code: "UNAUTHORIZED",
-        };
-      }
-  
       if (approval.status !== "Requested") {
         return {
           success: false,
           message: `Approval cannot be declined because it is ${approval.status.toLowerCase()}.`,
           code: "INVALID_STATUS",
+        };
+      }
+
+      if (approval.assignee.toString() !== staffId) {
+        return {
+          success: false,
+          message: "You are not authorized to decline this approval.",
+          code: "UNAUTHORIZED",
         };
       }
   
@@ -266,7 +266,7 @@ module.exports = class ApprovalService {
       if (loanApplicationUpdateResult.success) {
         return {
           success: true,
-          message: "Approval declined successfully.",
+          message: "Approval declined successfully. Loan Application has been declined",
           approval: updatedApproval,
           loanApplication: loanApplicationUpdateResult.loanApplication,
         };
@@ -315,7 +315,7 @@ module.exports = class ApprovalService {
       }
   
       if (lastApproval.status === "Approved") {
-        loanApplication.status = "approved";
+        loanApplication.status = "ready_for_disbursement";
       } else if (lastApproval.status === "Declined") {
         loanApplication.status = "declined";
       } else {
