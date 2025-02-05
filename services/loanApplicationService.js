@@ -278,6 +278,8 @@ module.exports = class LoanApplicationService {
       );
 
       const approvals = await ApprovalService.createApprovals(_loanApplication._id)
+      console.log({approvals});
+      
 
       return {
         success: true,
@@ -608,9 +610,12 @@ module.exports = class LoanApplicationService {
         ),
       ]);
       const applicationActivity = await ActivityLogService.getActivityLogs("LoanApplication", loanApplication._id)
+      const approvals = await ApprovalService.createApprovals(loanApplication._id)
+      console.log({approvals});
       return {
         success: true,
         loanApplication,
+        approvals,
         guarantor1: guarantor1 || null,
         guarantor2: guarantor2 || null,
         appActivity: applicationActivity.success ? applicationActivity.data : [],

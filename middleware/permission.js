@@ -16,9 +16,11 @@ const checkPermission = (...requiredPermissions) => {
   
         const { permissions } = staff.role;
         console.log('staff permissions: ', permissions)
+
+        const toUpperUnderscore = (str) => str.toUpperCase().replace(/ /g, '_');
   
-        const permissionsToCheck = requiredPermissions.length > 0 ? requiredPermissions : [req.approvalAction.toUpperCase()];
-        console.log(permissionsToCheck)
+        const permissionsToCheck = requiredPermissions.length > 0 ? requiredPermissions : [toUpperUnderscore(req.approvalAction)];
+        console.log(permissionsToCheck);
   
         //check if any of the required permissions exist in the staff's permissions
         const hasPermission = permissionsToCheck.some((permission) => permissions.includes(permission));

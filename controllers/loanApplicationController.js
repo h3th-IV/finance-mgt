@@ -342,7 +342,8 @@ module.exports = class LoanApplicationController {
             return successResponse(res, 200, "Loan application retrieved successfully", {
                 loanApplication: result.loanApplication,
                 guarantors,
-                activityLog: result.appActivity
+                activityLog: result.appActivity,
+                approval: result.approvals
             });
         } catch (error) {
             console.error("Error in getLoanApplication controller:", error);
