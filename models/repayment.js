@@ -25,6 +25,6 @@ const Repayment = new mongoose.Schema({
         enum: ['unpaid', 'paid'],
         default: 'unpaid'
     }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("Repayment", Repayment);

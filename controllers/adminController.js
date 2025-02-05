@@ -621,4 +621,119 @@ console.log({x: req.query});
           return successResponse(res, 500, "Internal server error")
         }
     }
+
+
+    static async getTotalActiveLoans(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getActiveLoansCount(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Active loans fetched successfully", result.data);
+    }
+
+
+    static async getTotalDelinquentLoans(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getDelinquentLoansCounts(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Delinquent loans fetched successfully", result.data);
+    }
+
+
+    static async getTotalLoansReadyToDisburse(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getLoansReadyToDisburseCount(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Loans ready to disburse fetched successfully", result.data);
+    }
+
+
+    static async getTotalLoanAmount(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getTotalLoanAmount(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Total loan amount fetched successfully", result.data);
+    }
+
+    static async getTotalBusinessLoansAmount(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getTotalBusinessLoansAmount(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Total business loans fetched successfully", result.data);
+    }
+
+    static async getTotalIndividualLoansAmount(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getTotalIndividualLoansAmount(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Total individual loans fetched successfully", result.data);
+    }
+
+    static async getTotalFullyPaidLoans(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getTotalFullyPaidLoans(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Total fully paid loans fetched successfully", result.data);
+    }
+
+    static async getTotalRepaidAmount(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getTotalRepaidAmount(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Total repaid amount fetched successfully", result.data);
+    }
+
+    static async getLoanProductDistribution(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getLoanProductDistribution(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Loan product distribution fetched successfully", result.data);
+    }
+
+    //deliqunt graph
+    static async getDelinquencyRateOverTime(req, res) {
+        const { startDate, endDate } = req.query;
+        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    
+        const result = await AdminService.getDelinquencyRateOverTime(dateFilter);
+        if (!result.success) {
+            return errorResponse(res, 500, result.message);
+        }
+        return successResponse(res, 200, "Delinquency rate over time fetched successfully", result.data);
+    }
 }   
