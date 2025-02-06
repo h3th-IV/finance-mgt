@@ -261,7 +261,7 @@ module.exports = class LoanApplicationService {
         ),
       ]);
 
-      const lOanProDuct = await LoanProduct.findById(_loanApplication.loan_product);
+      const apploanProduct = await LoanProduct.findById(_loanApplication.loan_product);
       // Log the activity
       await ActivityLogService.LogActivity(
         "create",
@@ -270,7 +270,7 @@ module.exports = class LoanApplicationService {
         "LoanApplication",
         _loanApplication._id,
         {
-          loanProductDetails: lOanProDuct,
+          loanProductDetails: apploanProduct,
           loanAmount: _loanApplication.loan_amount,
           loanDuration: _loanApplication.loan_duration,
           loanStatus: _loanApplication.status,
@@ -610,7 +610,7 @@ module.exports = class LoanApplicationService {
         ),
       ]);
       const applicationActivity = await ActivityLogService.getActivityLogs("LoanApplication", loanApplication._id)
-      const approvals = await ApprovalService.createApprovals(loanApplication._id)
+      const approvals = await ApprovalService.fetchApprovalsForLoanApplication(loanApplication._id)
       console.log({approvals});
       return {
         success: true,

@@ -7,7 +7,7 @@ const { verifyStaffToken, checkPermission, fetchApprovalAction } = require("../m
 router.get("/:loanApplicationId/approvals", LoanApprovalController.fetchApprovalsForLoanApplication);
 router.get("/approvals", LoanApprovalController.fetchAllApprovals);
 router.get("/approvals/:assigneeId",  verifyStaffToken,LoanApprovalController.fetchApprovalsByAssignee);
-router.post("/request/:approvalId", verifyStaffToken, LoanApprovalController.requestApproval);
-router.post("/decline/:approvalId",  verifyStaffToken, fetchApprovalAction, checkPermission(), LoanApprovalController.declineApproval);
-router.post("/approve/:approvalId",  verifyStaffToken, fetchApprovalAction, checkPermission(), LoanApprovalController.approveApproval);
+router.patch("/request/:approvalId", verifyStaffToken, LoanApprovalController.requestApproval);
+router.patch("/decline/:approvalId",  verifyStaffToken, fetchApprovalAction, checkPermission(), LoanApprovalController.declineApproval);
+router.patch("/approve/:approvalId",  verifyStaffToken, fetchApprovalAction, checkPermission(), LoanApprovalController.approveApproval);
 module.exports = router;
