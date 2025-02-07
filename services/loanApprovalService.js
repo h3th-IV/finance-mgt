@@ -47,11 +47,7 @@ module.exports = class ApprovalService {
         };
       }
 
-      return {
-        success: true,
-        message: "All approvals fetched successfully",
-        approvals,
-      };
+      return approvals;
     } catch (error) {
       console.error("Error fetching approvals for loan application:", error);
       return {

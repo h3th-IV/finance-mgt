@@ -611,7 +611,6 @@ module.exports = class LoanApplicationService {
       ]);
       const applicationActivity = await ActivityLogService.getActivityLogs("LoanApplication", loanApplication._id)
       const approvals = await ApprovalService.fetchApprovalsForLoanApplication(loanApplication._id)
-      console.log({approvals});
       return {
         success: true,
         loanApplication,
