@@ -731,8 +731,6 @@ console.log({x: req.query});
         const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
     
         const result = await AdminService.getAllLoanStats(dateFilter);
-        console.log({result});
-        
         if (!result.success) {
             return errorResponse(res, 500, result.message);
         }
