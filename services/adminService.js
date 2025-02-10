@@ -488,247 +488,344 @@ module.exports = class AdminService {
         }
     }
 
-    static async getActiveLoansCount(dateFilter) {
-        try {
-            const query = { status: "processing" };
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const activeLoans = await LoanApplication.countDocuments(query);
-            return {
-                success: true,
-                data: activeLoans,
-            };
-        } catch (error) {
-            console.error("Error fetching active loans:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching active loans.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
+    // static async getActiveLoansCount(dateFilter) {
+    //     try {
+    //         const query = { status: "processing" };
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const activeLoans = await LoanApplication.countDocuments(query);
+    //         return {
+    //             success: true,
+    //             data: activeLoans,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching active loans:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching active loans.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
 
-    static async getDelinquentLoansCounts(dateFilter) {
-        try {
-            const query = { status: "overdue" };
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const delinquentLoans = await LoanApplication.countDocuments(query);
-            return {
-                success: true,
-                data: delinquentLoans,
-            };
-        } catch (error) {
-            console.error("Error fetching delinquent loans:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching delinquent loans.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
+    // static async getDelinquentLoansCounts(dateFilter) {
+    //     try {
+    //         const query = { status: "overdue" };
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const delinquentLoans = await LoanApplication.countDocuments(query);
+    //         return {
+    //             success: true,
+    //             data: delinquentLoans,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching delinquent loans:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching delinquent loans.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
 
-    static async getLoansReadyToDisburseCount(dateFilter) {
-        try {
-            const query = { status: "ready_for_disbursement" };
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const loansReadyToDisburse = await LoanApplication.countDocuments(query);
-            return {
-                success: true,
-                data: loansReadyToDisburse,
-            };
-        } catch (error) {
-            console.error("Error fetching loans ready to disburse:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching loans ready to disburse.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
+    // static async getLoansReadyToDisburseCount(dateFilter) {
+    //     try {
+    //         const query = { status: "ready_for_disbursement" };
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const loansReadyToDisburse = await LoanApplication.countDocuments(query);
+    //         return {
+    //             success: true,
+    //             data: loansReadyToDisburse,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching loans ready to disburse:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching loans ready to disburse.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
 
-    static async getTotalLoanAmount(dateFilter) {
+    // static async getTotalLoanAmount(dateFilter) {
+    //     try {
+    //         const query = {};
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const totalLoanAmount = await LoanApplication.aggregate([
+    //             { $match: query },
+    //             { $group: { _id: null, total: { $sum: "$loan_amount" } } },
+    //         ]);
+    //         return {
+    //             success: true,
+    //             data: totalLoanAmount[0]?.total || 0,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching total loan amount:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching total loan amount.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
+
+    // static async getTotalBusinessLoansAmount(dateFilter) {
+    //     try {
+    //         const query = { loan_type: "business" };
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const totalBusinessLoans = await LoanApplication.aggregate([
+    //             { $match: query },
+    //             { $group: { _id: null, total: { $sum: "$loan_amount" } } },
+    //         ]);
+    //         return {
+    //             success: true,
+    //             data: totalBusinessLoans[0]?.total || 0,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching total business loans:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching total business loans.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
+
+
+    // static async getTotalIndividualLoansAmount(dateFilter) {
+    //     try {
+    //         const query = { loan_type: "individual" };
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const totalIndividualLoans = await LoanApplication.aggregate([
+    //             { $match: query },
+    //             { $group: { _id: null, total: { $sum: "$loan_amount" } } },
+    //         ]);
+    //         return {
+    //             success: true,
+    //             data: totalIndividualLoans[0]?.total || 0,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching total individual loans:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching total individual loans.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
+
+    // static async getTotalFullyPaidLoans(dateFilter) {
+    //     try {
+    //         const query = { status: "fully_paid" };
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const totalFullyPaidLoans = await LoanApplication.countDocuments(query);
+    //         return {
+    //             success: true,
+    //             data: totalFullyPaidLoans,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching total fully paid loans:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching total fully paid loans.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
+
+    // static async getTotalRepaidAmount(dateFilter) {
+    //     try {
+    //         const query = {};
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const totalRepaidAmount = await Repayment.aggregate([
+    //             { $match: query },
+    //             { $group: { _id: null, total: { $sum: "$amount" } } },
+    //         ]);
+    //         return {
+    //             success: true,
+    //             data: totalRepaidAmount[0]?.total || 0,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching total repaid amount:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching total repaid amount.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
+
+    // //loan product pie chart
+    // static async getLoanProductDistribution(dateFilter) {
+    //     try {
+    //         const query = {};
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const loanProductDistribution = await LoanApplication.aggregate([
+    //             { $match: query },
+    //             { $group: { _id: "$loan_product", count: { $sum: 1 } } },
+    //             { $lookup: { from: "loanproducts", localField: "_id", foreignField: "_id", as: "loan_product" } },
+    //             { $unwind: "$loan_product" },
+    //             { $project: { _id: 0, loan_product: "$loan_product.name", count: 1 } },
+    //         ]);
+    //         return {
+    //             success: true,
+    //             data: loanProductDistribution,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching loan product distribution:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching loan product distribution.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
+    
+    // //delquent rate graph
+    // static async fetchAllLoanData(dateFilter) {
+    //     try {
+    //         const query = { status: "overdue" };
+    //         if (dateFilter) {
+    //             query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
+    //         }
+    //         const delinquencyRateOverTime = await LoanApplication.aggregate([
+    //             { $match: query },
+    //             {
+    //                 $group: {
+    //                     _id: {
+    //                         year: { $year: "$createdAt" },
+    //                         month: { $month: "$createdAt" },
+    //                     },
+    //                     count: { $sum: 1 },
+    //                 },
+    //             },
+    //             { $sort: { "_id.year": 1, "_id.month": 1 } },
+    //             { $project: { _id: 0, year: "$_id.year", month: "$_id.month", count: 1 } },
+    //         ]);
+    //         return {
+    //             success: true,
+    //             data: delinquencyRateOverTime,
+    //         };
+    //     } catch (error) {
+    //         console.error("Error fetching delinquency rate over time:", error);
+    //         return {
+    //             success: false,
+    //             message: "An unexpected error occurred while fetching delinquency rate over time.",
+    //             code: "SERVER_ERROR",
+    //         };
+    //     }
+    // }
+
+    static async getAllLoanStats(dateFilter) {
         try {
-            const query = {};
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const totalLoanAmount = await LoanApplication.aggregate([
-                { $match: query },
-                { $group: { _id: null, total: { $sum: "$loan_amount" } } },
+            const queryFilter = dateFilter
+                ? { createdAt: { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) } }
+                : {};
+    
+            const [
+                activeLoansCount,
+                delinquentLoansCount,
+                loansReadyToDisburseCount,
+                totalLoanAmount,
+                totalBusinessLoansAmount,
+                totalIndividualLoansAmount,
+                totalFullyPaidLoans,
+                totalRepaidAmount,
+                totalLoanCount, // Total count of loans for percentage calculation
+                loanProductDistribution,
+                delinquencyRateOverTime
+            ] = await Promise.all([
+                LoanApplication.countDocuments({ ...queryFilter, status: "processing" }),
+                LoanApplication.countDocuments({ ...queryFilter, status: "overdue" }),
+                LoanApplication.countDocuments({ ...queryFilter, status: "ready_for_disbursement" }),
+                LoanApplication.aggregate([
+                    { $match: queryFilter },
+                    { $group: { _id: null, total: { $sum: "$loan_amount" } } }
+                ]),
+                LoanApplication.aggregate([
+                    { $match: { ...queryFilter, loan_type: "business" } },
+                    { $group: { _id: null, total: { $sum: "$loan_amount" } } }
+                ]),
+                LoanApplication.aggregate([
+                    { $match: { ...queryFilter, loan_type: "individual" } },
+                    { $group: { _id: null, total: { $sum: "$loan_amount" } } }
+                ]),
+                LoanApplication.countDocuments({ ...queryFilter, status: "fully_paid" }),
+                Repayment.aggregate([
+                    { $match: queryFilter },
+                    { $group: { _id: null, total: { $sum: "$amount" } } }
+                ]),
+                LoanApplication.countDocuments(queryFilter), // Get the total count of loans
+                LoanApplication.aggregate([
+                    { $match: queryFilter },
+                    { $group: { _id: "$loan_product", count: { $sum: 1 } } },
+                    { $lookup: { from: "loanproducts", localField: "_id", foreignField: "_id", as: "loan_product" } },
+                    { $unwind: "$loan_product" },
+                    { $project: { _id: 0, loan_product: "$loan_product.name", count: 1 } }
+                ]),
+                LoanApplication.aggregate([
+                    { $match: { ...queryFilter, status: "overdue" } },
+                    {
+                        $group: {
+                            _id: {
+                                year: { $year: "$createdAt" },
+                                month: { $month: "$createdAt" },
+                            },
+                            count: { $sum: 1 },
+                        },
+                    },
+                    { $sort: { "_id.year": 1, "_id.month": 1 } },
+                    { $project: { _id: 0, year: "$_id.year", month: "$_id.month", count: 1 } }
+                ])
             ]);
+    
+            // Calculate percentages for loanProductDistribution
+            const loanProductDistributionWithPercentages = loanProductDistribution.map(product => ({
+                loan_product: product.loan_product,
+                count: product.count,
+                percentage: totalLoanCount > 0 ? ((product.count / totalLoanCount) * 100).toFixed() : 0
+            }));
+    
             return {
                 success: true,
-                data: totalLoanAmount[0]?.total || 0,
+                data: {
+                    activeLoansCount,
+                    delinquentLoansCount,
+                    loansReadyToDisburseCount,
+                    totalLoanAmount: totalLoanAmount[0]?.total || 0,
+                    totalBusinessLoansAmount: totalBusinessLoansAmount[0]?.total || 0,
+                    totalIndividualLoansAmount: totalIndividualLoansAmount[0]?.total || 0,
+                    totalFullyPaidLoans,
+                    totalRepaidAmount: totalRepaidAmount[0]?.total || 0,
+                    loanProductDistribution: loanProductDistributionWithPercentages,
+                    delinquencyRateOverTime
+                }
             };
         } catch (error) {
-            console.error("Error fetching total loan amount:", error);
+            console.error("Error fetching loan stats:", error);
             return {
                 success: false,
-                message: "An unexpected error occurred while fetching total loan amount.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
-
-    static async getTotalBusinessLoansAmount(dateFilter) {
-        try {
-            const query = { loan_type: "business" };
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const totalBusinessLoans = await LoanApplication.aggregate([
-                { $match: query },
-                { $group: { _id: null, total: { $sum: "$loan_amount" } } },
-            ]);
-            return {
-                success: true,
-                data: totalBusinessLoans[0]?.total || 0,
-            };
-        } catch (error) {
-            console.error("Error fetching total business loans:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching total business loans.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
-
-
-    static async getTotalIndividualLoansAmount(dateFilter) {
-        try {
-            const query = { loan_type: "individual" };
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const totalIndividualLoans = await LoanApplication.aggregate([
-                { $match: query },
-                { $group: { _id: null, total: { $sum: "$loan_amount" } } },
-            ]);
-            return {
-                success: true,
-                data: totalIndividualLoans[0]?.total || 0,
-            };
-        } catch (error) {
-            console.error("Error fetching total individual loans:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching total individual loans.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
-
-    static async getTotalFullyPaidLoans(dateFilter) {
-        try {
-            const query = { status: "fully_paid" };
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const totalFullyPaidLoans = await LoanApplication.countDocuments(query);
-            return {
-                success: true,
-                data: totalFullyPaidLoans,
-            };
-        } catch (error) {
-            console.error("Error fetching total fully paid loans:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching total fully paid loans.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
-
-    static async getTotalRepaidAmount(dateFilter) {
-        try {
-            const query = {};
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const totalRepaidAmount = await Repayment.aggregate([
-                { $match: query },
-                { $group: { _id: null, total: { $sum: "$amount" } } },
-            ]);
-            return {
-                success: true,
-                data: totalRepaidAmount[0]?.total || 0,
-            };
-        } catch (error) {
-            console.error("Error fetching total repaid amount:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching total repaid amount.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
-
-    //loan product pie chart
-    static async getLoanProductDistribution(dateFilter) {
-        try {
-            const query = {};
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const loanProductDistribution = await LoanApplication.aggregate([
-                { $match: query },
-                { $group: { _id: "$loan_product", count: { $sum: 1 } } },
-                { $lookup: { from: "loanproducts", localField: "_id", foreignField: "_id", as: "loan_product" } },
-                { $unwind: "$loan_product" },
-                { $project: { _id: 0, loan_product: "$loan_product.name", count: 1 } },
-            ]);
-            return {
-                success: true,
-                data: loanProductDistribution,
-            };
-        } catch (error) {
-            console.error("Error fetching loan product distribution:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching loan product distribution.",
-                code: "SERVER_ERROR",
+                message: "An unexpected error occurred while fetching loan stats.",
+                code: "SERVER_ERROR"
             };
         }
     }
     
-    //delquent rate graph
-    static async getDelinquencyRateOverTime(dateFilter) {
-        try {
-            const query = { status: "overdue" };
-            if (dateFilter) {
-                query.createdAt = { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) };
-            }
-            const delinquencyRateOverTime = await LoanApplication.aggregate([
-                { $match: query },
-                {
-                    $group: {
-                        _id: {
-                            year: { $year: "$createdAt" },
-                            month: { $month: "$createdAt" },
-                        },
-                        count: { $sum: 1 },
-                    },
-                },
-                { $sort: { "_id.year": 1, "_id.month": 1 } },
-                { $project: { _id: 0, year: "$_id.year", month: "$_id.month", count: 1 } },
-            ]);
-            return {
-                success: true,
-                data: delinquencyRateOverTime,
-            };
-        } catch (error) {
-            console.error("Error fetching delinquency rate over time:", error);
-            return {
-                success: false,
-                message: "An unexpected error occurred while fetching delinquency rate over time.",
-                code: "SERVER_ERROR",
-            };
-        }
-    }
+    
 }
