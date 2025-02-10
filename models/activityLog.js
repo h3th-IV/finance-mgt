@@ -28,7 +28,7 @@ const ActivityLog = new mongoose.Schema(
     targetModel: {
       type: String,
       required: true,
-      enum: ["LoanApplication", "LoanProduct"],
+      enum: ["LoanApplication", "LoanProduct", "LoanApproval"],
     },
     target: {
       type: mongoose.Schema.Types.ObjectId,
