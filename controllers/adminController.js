@@ -726,14 +726,16 @@ console.log({x: req.query});
     }
 
     //deliqunt graph
-    static async getDelinquencyRateOverTime(req, res) {
+    static async getAllLoanData(req, res) {
         const { startDate, endDate } = req.query;
         const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
     
-        const result = await AdminService.getDelinquencyRateOverTime(dateFilter);
+        const result = await AdminService.getAllLoanStats(dateFilter);
+        console.log({result});
+        
         if (!result.success) {
             return errorResponse(res, 500, result.message);
         }
-        return successResponse(res, 200, "Delinquency rate over time fetched successfully", result.data);
+        return successResponse(res, 200, "Loan metrics fetched successfully", result.data);
     }
 }   

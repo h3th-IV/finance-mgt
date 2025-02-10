@@ -59,7 +59,7 @@ router.get("/total-individual-loans", verifyStaffToken, AdminController.getTotal
 router.get("/total-fully-paid-loans", verifyStaffToken, AdminController.getTotalFullyPaidLoans);
 router.get("/total-repaid-amount", verifyStaffToken, AdminController.getTotalRepaidAmount);
 router.get("/loan-product-distribution", verifyStaffToken, AdminController.getLoanProductDistribution);
-router.get("/delinquency-rate-over-time", verifyStaffToken, AdminController.getDelinquencyRateOverTime);
+router.get("/all-loan-data", verifyStaffToken, AdminController.getAllLoanData);
 
 
 module.exports = router;
