@@ -2,28 +2,27 @@ const LoanApprovalService = require("../services/loanApprovalService");
 const { successResponse, errorResponse } = require('../utils/responses');
 
 module.exports = class LoanApprovalController {
-    
-    static async fetchApprovalsForLoanApplication(req, res) {
-        try {
-            const { loanApplicationId } = req.params;
-            if (!loanApplicationId){
-                return errorResponse(res, 400, "Missing loanApplicationId")
-            }
-            if (loanApplicationId == ":loanApplicationId"){
-                return errorResponse(res, 400, "Missing loanApplicationId")
-            }
-            const result = await LoanApprovalService.fetchApprovalsForLoanApplication(loanApplicationId);
-            
-            if (!result.success) {
-                return errorResponse(res, 404, result.message);
-            }
-            
-            return successResponse(res, 200, result.message, result.approvals);
-        } catch (error) {
-            console.error("Controller Error - fetchApprovalsForLoanApplication:", error);
-            return errorResponse(res, 500, "Server error");
+  static async fetchApprovalsForLoanApplication(req, res) {
+    try {
+        const { loanApplicationId } = req.params;
+
+        if (!loanApplicationId || loanApplicationId === ":loanApplicationId") {
+            return errorResponse(res, 400, "Missing or invalid loanApplicationId");
         }
+
+        const approvals = await LoanApprovalService.fetchApprovalsForLoanApplication(loanApplicationId);
+
+        return successResponse(res, 200, "Approvals fetched successfully", approvals);
+    } catch (error) {
+        console.error("Controller Error - fetchApprovalsForLoanApplication:", error);
+
+        if (error.message === "No approvals found for this loan application.") {
+            return errorResponse(res, 404, "No approvals found for this loan application.");
+        }
+
+        return errorResponse(res, 500, "An unexpected server error occurred.");
     }
+  }
 
     static async fetchAllApprovals(req, res) {
         try {
@@ -60,13 +59,14 @@ module.exports = class LoanApprovalController {
     }
 
     static async requestApproval(req, res) {
+        const staffId = req.user.id;
         const { approvalId } = req.params;
         const { assigneeId, requestNote } = req.body;
         try {
             if(!approvalId){
                 return errorResponse(res, 400, "Missing approvalId in request parameters");
             }
-          const response = await LoanApprovalService.requestApproval(approvalId, assigneeId, requestNote);
+          const response = await LoanApprovalService.requestApproval(approvalId, assigneeId, requestNote, staffId);
     
           if (!response.success) {
             switch (response.code) {
@@ -84,7 +84,7 @@ module.exports = class LoanApprovalController {
           console.error("Controller Error - requestApproval:", error);
           return errorResponse(res, 500, "Server error");
         }
-      }
+    }
 
       static async declineApproval(req, res) {
         const { approvalId } = req.params;

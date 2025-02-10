@@ -1,5 +1,7 @@
 const LoanApplication = require("../models/loanApplication");
 const LoanApproval = require("../models/loanApproval");
+const staff = require("../models/staff");
+const ActivityLogService = require("./activityLogService");
 
 module.exports = class ApprovalService {
   static async createApprovals(loanApplicationId) {
@@ -36,27 +38,18 @@ module.exports = class ApprovalService {
 
   static async fetchApprovalsForLoanApplication(loanApplicationId) {
     try {
-      const approvals = await LoanApproval.find({ loanApplication: loanApplicationId })
-        .populate("assignee", "first_name email")
+        const approvals = await LoanApproval.find({ loanApplication: loanApplicationId })
+            .populate("assignee", "first_name email");
 
-      if (!approvals || approvals.length === 0) {
-        return {
-          success: false,
-          message: "No approvals found for this loan application.",
-          code: "NOT_FOUND",
-        };
-      }
-
-      return approvals;
+        if (!approvals || approvals.length === 0) {
+            throw new Error("No approvals found for this loan application.");
+        }
+        return approvals;
     } catch (error) {
-      console.error("Error fetching approvals for loan application:", error);
-      return {
-        success: false,
-        message: `Error: ${error.message}`,
-        code: "INTERNAL_ERROR",
-      };
+        console.error("Error fetching approvals for loan application:", error);
+        throw error;
     }
-  }
+}
 
   static async fetchAllApprovals() {
     try {
@@ -114,43 +107,92 @@ module.exports = class ApprovalService {
     }
   }
 
-  static async requestApproval(approvalId, assigneeId, requestNote) {
+  static async validatePrecedingLevels(loanApplicationId, currentLevel) {
     try {
-      const approval = await LoanApproval.findById(approvalId);
-      if (!approval) {
-        return {
-          success: false,
-          message: "Approval not found.",
-          code: "NOT_FOUND",
-        };
-      }
+        const approvals = await LoanApproval.find({
+            loanApplication: loanApplicationId,
+            approvalLevel: { $lt: currentLevel },
+        }).sort({ approvalLevel: 1 });
 
-      if (approval.status !== "New") {
-        return {
-          success: false,
-          message: `Approval is already ${approval.status.toLowerCase()}.`,
-          code: "INVALID_STATUS",
-        };
-      }
+        for (const approval of approvals) {
+            if (approval.status !== "Approved") {
+                return {
+                    success: false,
+                    message: `Approval level ${approval.approvalLevel} must be approved before proceeding.`,
+                    code: "PREVIOUS_LEVEL_NOT_APPROVED",
+                };
+            }
+        }
 
-      approval.status = "Requested";
-      approval.assignee = assigneeId;
-      approval.requestNote = requestNote;
-
-      const updatedApproval = await approval.save();
-
-      return {
-        success: true,
-        message: "Approval requested successfully.",
-        approval: updatedApproval,
-      };
+        return { success: true };
     } catch (error) {
-      console.error("Error requesting approval:", error);
-      return {
-        success: false,
-        message: `Error: ${error.message}`,
-        code: "INTERNAL_ERROR",
-      };
+        console.error("Error validating preceding levels:", error);
+        return {
+            success: false,
+            message: "An unexpected error occurred while validating preceding levels.",
+            code: "SERVER_ERROR",
+        };
+    }
+  }
+
+  static async requestApproval(approvalId, assigneeId, requestNote, staffId) {
+    try {
+        const approval = await LoanApproval.findById(approvalId);
+        if (!approval) {
+            return {
+                success: false,
+                message: "Approval not found.",
+                code: "NOT_FOUND",
+            };
+        }
+
+        if (approval.status !== "New") {
+            return {
+                success: false,
+                message: `Approval is already ${approval.status.toLowerCase()}.`,
+                code: "INVALID_STATUS",
+            };
+        }
+
+        //chek preceding levels
+        const validationResult = await this.validatePrecedingLevels(
+            approval.loanApplication,
+            approval.approvalLevel
+        );
+        if (!validationResult.success) {
+            return validationResult;
+        }
+
+        approval.status = "Requested";
+        approval.assignee = assigneeId;
+        approval.requestNote = requestNote;
+        const updatedApproval = await approval.save();
+
+        const req_staff = await staff.findById(staffId);
+        const name = `${req_staff.first_name} ${req_staff.last_name}`;
+        await ActivityLogService.LogActivity(
+          "update",
+          "Staff",
+          staffId,
+          "LoanApplication",
+          approval.loanApplication,
+          {
+            message: `${name} Requested ${approval.approvalAction} Approval for this Loan Application`,
+          }
+        )
+
+        return {
+            success: true,
+            message: "Approval requested successfully.",
+            approval: updatedApproval,
+        };
+    } catch (error) {
+        console.error("Error requesting approval:", error);
+        return {
+            success: false,
+            message: `Error: ${error.message}`,
+            code: "INTERNAL_ERROR",
+        };
     }
   }
 
@@ -168,7 +210,7 @@ module.exports = class ApprovalService {
       if (approval.status !== "Requested") {
         return {
           success: false,
-          message: `Approval cannot be approved because it is ${approval.status.toLowerCase()}.`,
+          message: `Approval cannot be approved because it is of status ${approval.status.toLowerCase()}.`,
           code: "INVALID_STATUS",
         };
       }
@@ -181,6 +223,15 @@ module.exports = class ApprovalService {
         };
       }
   
+      //check preceding levels
+      const validationResult = await this.validatePrecedingLevels(
+          approval.loanApplication,
+          approval.approvalLevel
+      );
+      if (!validationResult.success) {
+          return validationResult;
+      }
+
       approval.status = "Approved";
       approval.approvalNote = approvalNote || "";
   
@@ -199,6 +250,18 @@ module.exports = class ApprovalService {
         };
       }
   
+      const req_staff = await staff.findById(staffId);
+      const name = `${req_staff.first_name} ${req_staff.last_name}`;
+        await ActivityLogService.LogActivity(
+          "update",
+          "Staff",
+          staffId,
+          "LoanApplication",
+          approval.loanApplication,
+          {
+            message: `${name} Approved ${approval.approvalAction} Approval for this Loan Application`,
+          }
+        )
       //if loan app status update failed (e.g., last approval not completed), still return success for the approval
       return {
         success: true,
@@ -229,7 +292,7 @@ module.exports = class ApprovalService {
       if (approval.status !== "Requested") {
         return {
           success: false,
-          message: `Approval cannot be declined because it is ${approval.status.toLowerCase()}.`,
+          message: `Approval cannot be declined because it is of status ${approval.status.toLowerCase()}.`,
           code: "INVALID_STATUS",
         };
       }
@@ -249,6 +312,15 @@ module.exports = class ApprovalService {
           code: "MISSING_DECLINE_NOTE",
         };
       }
+
+      //check prev levels
+      const validationResult = await this.validatePrecedingLevels(
+        approval.loanApplication,
+        approval.approvalLevel
+      );
+      if (!validationResult.success) {
+          return validationResult;
+      }
   
       approval.status = "Declined";
       approval.declineNote = declineNote;
@@ -267,6 +339,19 @@ module.exports = class ApprovalService {
           loanApplication: loanApplicationUpdateResult.loanApplication,
         };
       }
+
+      const req_staff = await staff.findById(staffId);
+      const name = `${req_staff.first_name} ${req_staff.last_name}`;
+        await ActivityLogService.LogActivity(
+          "update",
+          "Staff",
+          staffId,
+          "LoanApplication",
+          approval.loanApplication,
+          {
+            message: `${name} Declined ${approval.approvalAction} Approval for this Loan Application`,
+          }
+        )
   
       //if the loan application status update failed (e.g., last approval not completed), still return success
       return {
