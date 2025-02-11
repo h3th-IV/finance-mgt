@@ -58,13 +58,17 @@ class GuarantorsDataService {
 
     static async deleteGuarantor(id) {
         try {
-            const deletedGuarantor = await GuarantorsData.findByIdAndDelete(id);
-            if (!deletedGuarantor) {
+            const updatedGuarantor = await GuarantorsData.findByIdAndUpdate(
+                id,
+                { isActive: 'inactive' },
+                { new: true }
+            );
+            if (!updatedGuarantor) {
                 return { success: false, message: "Guarantor not found" };
             }
-            return { success: true, message: "Guarantor deleted successfully" };
+            return { success: true, message: "Guarantor soft-deleted successfully", guarantor: updatedGuarantor };
         } catch (error) {
-            console.error("Error deleting guarantor:", error);
+            console.error("Error soft-deleting guarantor:", error);
             return { success: false, message: error.message };
         }
     }

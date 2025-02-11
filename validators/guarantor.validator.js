@@ -1,12 +1,12 @@
 const Joi = require('joi');
 
 const guarantorValidator = Joi.object({
-    loanApplicationId: Joi.string()
-        .required()
-        .messages({
-            'string.base': '"Loan Application ID" must be a string.',
-            'any.required': '"Loan Application ID" is required.',
-        }),
+    // loanApplicationId: Joi.string()
+    //     .required()
+    //     .messages({
+    //         'string.base': '"Loan Application ID" must be a string.',
+    //         'any.required': '"Loan Application ID" is required.',
+    //     }),
 
     firstName: Joi.string()
         .required()
