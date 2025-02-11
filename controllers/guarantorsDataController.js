@@ -17,6 +17,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
             const { firstName, middleName, lastName, email, mobile, dateOfBirth, gender, idNumber } = value;
 
             const data = {
+                loanApplicationId,
                 firstName,
                 middleName,
                 lastName,
