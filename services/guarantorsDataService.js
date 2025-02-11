@@ -66,7 +66,7 @@ class GuarantorsDataService {
             if (!updatedGuarantor) {
                 return { success: false, message: "Guarantor not found" };
             }
-            return { success: true, message: "Guarantor soft-deleted successfully", guarantor: updatedGuarantor };
+            return { success: true, message: "Guarantor deleted successfully", guarantor: updatedGuarantor };
         } catch (error) {
             console.error("Error soft-deleting guarantor:", error);
             return { success: false, message: error.message };
