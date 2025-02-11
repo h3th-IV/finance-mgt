@@ -5,7 +5,7 @@ const parser = require("../config/uploader");
 const { verifyToken } = require('../middleware/tokenGenerator');
 
 
-router.post('/create', parser.fields([
+router.post('/create/:loanApplicationId', parser.fields([
     { name: "file", maxCount: 1 }]), GuarantorsDataController.createGuarantor);
 router.get('/guarantor/:id', verifyToken, GuarantorsDataController.getGuarantor);
 router.put('/guarantor/:id', verifyToken, GuarantorsDataController.updateGuarantor);

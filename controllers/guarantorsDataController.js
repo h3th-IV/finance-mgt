@@ -5,7 +5,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
  class GuarantorsDataController {
     static async createGuarantor(req, res) {
         try {
-            // Validate request body
+            const { loanApplicationId } = req.params;
             const { error, value } = guarantorValidator.validate(req.body);
             const files = req.files;
             console.log({ files });
@@ -14,8 +14,18 @@ const {GuarantorsData} = require("../models/guarantorsData");
                 return errorResponse(res, 400, error.details[0].message);
             }
     
-            const { loanApplicationId, email } = value;
-    
+            const { firstName, middleName, lastName, email, mobile, dateOfBirth, gender, idNumber } = value;
+
+            const data = {
+                firstName,
+                middleName,
+                lastName,
+                email,
+                mobile,
+                dateOfBirth,
+                gender,
+                idNumber
+            }
             // Check for duplicate entries
             const existingGuarantor = await  GuarantorsDataService.getGuarantorByLoanIdAndEmail(loanApplicationId, email);
             console.log({existingGuarantor});
@@ -24,13 +34,12 @@ const {GuarantorsData} = require("../models/guarantorsData");
             if (existingGuarantor.success === true) {
                 return errorResponse(
                     res,
-                    409, // HTTP status code for conflict
+                    409,
                     `A guarantor with email "${email}" for this loan application already exists.`
                 );
             }
     
-            // Create the guarantor entry
-            const response = await GuarantorsDataService.createGuarantor(value, files);
+            const response = await GuarantorsDataService.createGuarantor(data, files);
     
             if (!response.success) {
                 return errorResponse(res, 500, response.message);
@@ -66,8 +75,18 @@ const {GuarantorsData} = require("../models/guarantorsData");
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
             }
-
-            const response = await GuarantorsDataService.updateGuarantor(id, value);
+            const { firstName, middleName, lastName, email, mobile, dateOfBirth, gender, idNumber } = value;
+            const data = {
+                firstName,
+                middleName,
+                lastName,
+                email,
+                mobile,
+                dateOfBirth,
+                gender,
+                idNumber
+            }
+            const response = await GuarantorsDataService.updateGuarantor(id, data);
             if (!response.success) {
                 return errorResponse(res, 404, response.message);
             }
@@ -79,6 +98,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
         }
     }
 
+    //softDelete
     static async deleteGuarantor(req, res) {
         try {
             const { id } = req.params;

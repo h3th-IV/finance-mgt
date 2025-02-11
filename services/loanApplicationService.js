@@ -8,6 +8,8 @@ const { default: mongoose } = require("mongoose");
 const GuarantorsDataService = require("./guarantorsDataService");
 const ActivityLogService = require("../services/activityLogService");
 const ApprovalService = require("./loanApprovalService");
+const staff = require("../models/staff");
+
 
 module.exports = class LoanApplicationService {
   // static async createLoanApplication(loanData, files) {
