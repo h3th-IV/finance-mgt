@@ -42,6 +42,11 @@ const GuarantorsData = new mongoose.Schema({
     idNumber: { 
         type: String,
         required: true
+    },
+    isActive: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active',
     }
 }, { timestamps: true });
 
