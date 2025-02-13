@@ -264,6 +264,13 @@ module.exports = class LoanApplicationService {
       ]);
 
       const apploanProduct = await LoanProduct.findById(_loanApplication.loan_product);
+      let createdBy;
+      if(loanData.createdByType == "Staff"){
+        createdBy = await staff.findById(loanData.createdBy)
+      }else{
+        createdBy = await User.findById(loanData.createdBy)
+      }
+      const name = `${createdBy.first_name} ${createdBy.last_name}`;
       // Log the activity
       await ActivityLogService.LogActivity(
         "create",
@@ -276,6 +283,7 @@ module.exports = class LoanApplicationService {
           loanAmount: _loanApplication.loan_amount,
           loanDuration: _loanApplication.loan_duration,
           loanStatus: _loanApplication.status,
+          message: `This Loan Application was created by ${loanData.createdByType}, ${name}`,
         }
       );
 
