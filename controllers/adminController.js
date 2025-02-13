@@ -36,38 +36,29 @@ module.exports = class AdminController {
 
     // Create Loan Product
     static async createLoanProduct(req, res) {
-        const staffId = req.params.staffId;
-
-        // Validate the request body using Joi schema
+        const { id } = req.user;
         const { error } = createLoanProductSchema.validate(req.body);
         if (error) {
             return errorResponse(res, 400, error.details[0].message);
         }
 
-        // Destructure the valid fields from the request body
         const { name, description, interest, max, min, interest_type, duration, product_group } = req.body;
 
         try {
-            // Prepare the product data
             const product_data = {
                 name,
                 desc: description,
                 interest,
                 max,
                 min,
-                createdBy: staffId,
+                createdBy: id,
                 interest_type,
                 duration,
-                product_group, // Ensure we include product_group
+                product_group,
             };
-
-            console.log("Product Data:", product_data);
-
-            // Call the service to create the loan product
             const loanProduct = await AdminService.createLoanProduct(product_data);
             console.log("Loan Product Created:", loanProduct);
 
-            // Send a successful response with the created loan product
             return successResponse(res, 201, "Loan product created successfully", loanProduct);
 
         } catch (error) {
@@ -76,34 +67,23 @@ module.exports = class AdminController {
         }
     }
 
-    // Update Loan Product
     static async updateLoanProduct(req, res) {
-        const { id } = req.user; // Get the user ID from the request user object
+        const { id } = req.user;
         const productId = req.params.productId;
-
-        // Validate the request body using the update schema
         const { error } = updateLoanProductSchema.validate(req.body);
         if (error) {
             return errorResponse(res, 400, error.details[0].message);
         }
-
         const updateData = req.body;
 
         try {
-            // Check if productId is provided in the request params
             if (!productId) {
                 return errorResponse(res, 400, "Loan productId is required");
             }
-
-            // Call the service to update the loan product
             const response = await AdminService.updateLoanProduct(productId, updateData, id);
-
-            // If no loan product was found or no changes were made, return a descriptive error
             if (!response.success) {
                 return errorResponse(res, 400, response.message || "Error updating loan product");
             }
-
-            // Return success response with the updated loan product details
             return successResponse(res, 200, "Loan product updated successfully", response.loanProduct);
 
         } catch (error) {
@@ -177,6 +157,7 @@ module.exports = class AdminController {
             return errorResponse(res, 400, error.details[0].message);
         }
         const { identifier, password } = req.body;
+        console.log(identifier)
         try {
             const query = identifier.includes('@') ? { email: identifier.toLowerCase() } : { phone_number: identifier };
             const staff = await Staff.findOne(query).populate('role');
