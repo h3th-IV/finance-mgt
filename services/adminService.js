@@ -15,14 +15,12 @@ const BVNData = require('../models/bvnData');
 const UserService = require('./userService');
 const mongoose = require('mongoose');
 const LoanApplication = require('../models/loanApplication');
-const Repayment = require('../models/repayment')
+const Repayment = require('../models/repayment');
 
 module.exports = class AdminService {
     static async getAllkyc() {
         try {
             const kycs = await KYC.find();
-            // await KYC.deleteMany();
-            // await KYC.findByIdAndDelete("6789384e523dbb43dc035111");
             return kycs;
         } catch (error) {
             return error;
@@ -40,13 +38,17 @@ module.exports = class AdminService {
                 createdBy: product_data.createdBy,
                 interest_type: product_data.interest_type,
                 duration: product_data.duration,
-                product_group: product_data.product_group, // Add product_group here
+                product_group: product_data.product_group,
             }
+            console.log(newloanProduct.createdBy)
 
-            // Create and save the new loan product
             const loanProduct = await new LoanProduct(newloanProduct).save();
+            const req_staff = await Staff.findById(product_data.createdBy)
+            const req_s = await Staff.findById("67adb949b4c4438a2089f203")
+            console.log(req_staff);
+            console.log("checked user: ",req_s);
+            const name = `${req_staff.first_name} ${req_staff.last_name}`;
 
-            // Log the creation activity including product_group
             await ActivityLogService.LogActivity(
                 "create",
                 "Staff",
@@ -60,13 +62,14 @@ module.exports = class AdminService {
                     min: product_data.min,
                     interest_type: product_data.interest_type,
                     duration: product_data.duration,
-                    product_group: product_data.product_group, // Log product_group as well
+                    product_group: product_data.product_group,
+                    message: `Loan product ${product_data.name}, created by Staff, ${name}`
                 }
             );
             return loanProduct;
         } catch (error) {
             console.error('Error creating loan product: ', error);
-            return error; // or you can throw the error based on your error-handling strategy
+            return error;
         }
     }
 
@@ -97,26 +100,27 @@ module.exports = class AdminService {
 
     static async updateLoanProduct(productId, updateData, updatedBy) {
         try {
-            // Find the existing loan product by its ID
             const loanProduct = await LoanProduct.findById(productId);
             if (!loanProduct) {
                 return { success: false, message: "Loan product not found" };
             }
+            const staff = await Staff.findById(updatedBy);
+            const name = `${staff.first_name} ${staff.last_name}`;
 
-            // Allowed fields to be updated
+            //allowed fields to be updated
             const updatableFields = ["interest", "max", "min", "status", "interest_type", "product_group", "duration"];
             const changes = {};
 
-            // Check and collect changes for updatable fields
             updatableFields.forEach((field) => {
                 if (updateData[field] !== undefined && loanProduct[field] !== updateData[field]) {
                     changes[field] = {
                         oldValue: loanProduct[field],
                         newValue: updateData[field],
                     };
-                    loanProduct[field] = updateData[field]; // Apply the update
+                    loanProduct[field] = updateData[field];
                 }
             });
+            changes.message = `Loan Product ${loanProduct.name} was updated by Staff, ${name}`
 
             // If no changes are detected, return early
             if (Object.keys(changes).length === 0) {

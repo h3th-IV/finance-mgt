@@ -10,7 +10,7 @@ const parser = require("../config/uploader");
 router.get("/all", verifyStaffToken, UserController.getAllUsers);
 router.post("/createRole", verifyStaffToken, checkPermission("CREATE_ROLE"), AdminController.createRolePermission);
 router.get("/get-kycs", verifyStaffToken, AdminController.getAllkycs);
-router.post("/create-loanproduct/:staffId", verifyStaffToken, checkPermission("CREATE_LOAN_PRODUCT"), AdminController.createLoanProduct);
+router.post("/create-loanproduct", verifyStaffToken, checkPermission("CREATE_LOAN_PRODUCT"), AdminController.createLoanProduct);
 router.patch("/update-loanapp/:loanApplicationId", verifyStaffToken, checkPermission("UPDATE_LOAN_APP"), LoanApplicationController.updateLoanApplication);
 router.get("/loan-apps", verifyStaffToken, checkPermission("VIEW_CREATED_LOAN_APP", "VIEW_LOAN_APP"), LoanApplicationController.getAllLoanApplication);
 router.patch("/update-product/:productId", verifyStaffToken, checkPermission("UPDATE_LOAN_PRODUCT"), AdminController.updateLoanProduct);
