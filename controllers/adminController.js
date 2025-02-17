@@ -75,7 +75,6 @@ module.exports = class AdminController {
             return errorResponse(res, 400, error.details[0].message);
         }
         const updateData = req.body;
-
         try {
             if (!productId) {
                 return errorResponse(res, 400, "Loan productId is required");
