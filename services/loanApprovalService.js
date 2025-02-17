@@ -129,6 +129,9 @@ module.exports = class ApprovalService {
         approvalLevel: { $lt: currentLevel },
       }).sort({ approvalLevel: 1 });
 
+      console.log({approvals});
+      
+
       for (const approval of approvals) {
         if (approval.status !== "Approved") {
           return {
@@ -221,7 +224,8 @@ module.exports = class ApprovalService {
           code: "NOT_FOUND",
         };
       }
-
+  
+      // Check status before attempting to approve
       if (approval.status !== "Requested") {
         return {
           success: false,
@@ -229,7 +233,8 @@ module.exports = class ApprovalService {
           code: "INVALID_STATUS",
         };
       }
-
+  
+      // Check if the staff member is authorized to approve
       if (approval.assignee.toString() !== staffId) {
         return {
           success: false,
@@ -237,8 +242,8 @@ module.exports = class ApprovalService {
           code: "UNAUTHORIZED",
         };
       }
-
-      //check preceding levels
+  
+      // Check preceding levels
       const validationResult = await this.validatePrecedingLevels(
         approval.loanApplication,
         approval.approvalLevel
@@ -246,16 +251,17 @@ module.exports = class ApprovalService {
       if (!validationResult.success) {
         return validationResult;
       }
-
+  
+      // Now update the status after all checks
       approval.status = "Approved";
       approval.approvalNote = approvalNote || "";
-
+  
       const updatedApproval = await approval.save();
-
-      //update the loan appli status (ignore err for non-last approvals)
+  
+      // Update the loan application status (ignore error for non-last approvals)
       const loanApplicationUpdateResult = await this.updateLoanApplicationStatus(approval.loanApplication);
-
-      //only return loan app update result if it's a success
+  
+      // Return loan app update result only if it's a success
       if (loanApplicationUpdateResult.success) {
         return {
           success: true,
@@ -264,8 +270,8 @@ module.exports = class ApprovalService {
           loanApplication: loanApplicationUpdateResult.loanApplication,
         };
       }
-
-      const req_staff = await staff.findById(staffId);
+  
+      const req_staff = await Staff.findById(staffId);
       const name = `${req_staff.first_name} ${req_staff.last_name}`;
       await ActivityLogService.LogActivity(
         "update",
@@ -276,8 +282,9 @@ module.exports = class ApprovalService {
         {
           message: `${name} Approved ${approval.approvalAction} Approval for this Loan Application`,
         }
-      )
-      //if loan app status update failed (e.g., last approval not completed), still return success for the approval
+      );
+  
+      // If loan application status update failed, still return success for the approval
       return {
         success: true,
         message: "Approval approved successfully. Loan application status not updated (last approval not completed).",
@@ -292,6 +299,7 @@ module.exports = class ApprovalService {
       };
     }
   }
+  
 
   static async declineApproval(approvalId, declineNote, staffId) {
     try {
@@ -303,7 +311,7 @@ module.exports = class ApprovalService {
           code: "NOT_FOUND",
         };
       }
-
+  
       if (approval.status !== "Requested") {
         return {
           success: false,
@@ -311,7 +319,7 @@ module.exports = class ApprovalService {
           code: "INVALID_STATUS",
         };
       }
-
+  
       if (approval.assignee.toString() !== staffId) {
         return {
           success: false,
@@ -319,7 +327,8 @@ module.exports = class ApprovalService {
           code: "UNAUTHORIZED",
         };
       }
-
+  
+      // Validate that a decline note is provided
       if (!declineNote || declineNote.trim() === "") {
         return {
           success: false,
@@ -327,8 +336,8 @@ module.exports = class ApprovalService {
           code: "MISSING_DECLINE_NOTE",
         };
       }
-
-      //check prev levels
+  
+      // Check preceding approval levels
       const validationResult = await this.validatePrecedingLevels(
         approval.loanApplication,
         approval.approvalLevel
@@ -336,27 +345,29 @@ module.exports = class ApprovalService {
       if (!validationResult.success) {
         return validationResult;
       }
-
+  
+      // Change the status to "Declined" and save the decline note
       approval.status = "Declined";
       approval.declineNote = declineNote;
-
+  
       const updatedApproval = await approval.save();
-
-      //update the loan application status (ignore err for not last approvals)
+  
+      // Update the loan application status (ignoring errors if not the last approval)
       const loanApplicationUpdateResult = await this.updateLoanApplicationStatus(approval.loanApplication);
-
-      //only return the loan application update result if it's a success
+  
+      // Only return the loan application update result if it's a success
       if (loanApplicationUpdateResult.success) {
         return {
           success: true,
-          message: "Approval declined successfully. Loan Application has been declined",
+          message: "Approval declined successfully. Loan Application has been declined.",
           approval: updatedApproval,
           loanApplication: loanApplicationUpdateResult.loanApplication,
         };
       }
-
-      const req_staff = await staff.findById(staffId);
-      const name = `${req_staff.first_name} ${req_staff.last_name}`;
+  
+      // Log the activity if the loan application status update failed (e.g., if it's not the last approval)
+      const reqStaff = await Staff.findById(staffId); // Fix staff lookup
+      const name = `${reqStaff.first_name} ${reqStaff.last_name}`;
       await ActivityLogService.LogActivity(
         "update",
         "Staff",
@@ -366,9 +377,9 @@ module.exports = class ApprovalService {
         {
           message: `${name} Declined ${approval.approvalAction} Approval for this Loan Application`,
         }
-      )
-
-      //if the loan application status update failed (e.g., last approval not completed), still return success
+      );
+  
+      // Return success for the approval even if loan application status update failed
       return {
         success: true,
         message: "Approval declined successfully. Loan application status not updated (last approval not completed).",
@@ -383,6 +394,7 @@ module.exports = class ApprovalService {
       };
     }
   }
+  
 
 
   static async updateLoanApplicationStatus(loanApplicationId) {

@@ -125,6 +125,9 @@ module.exports = class LoanApprovalController {
         const { approvalId } = req.params;
         const { approvalNote } = req.body;
         const staffId = req.user.id;
+
+        console.log({staffId});
+        
       
         try {
           if (!approvalId) {
@@ -132,6 +135,9 @@ module.exports = class LoanApprovalController {
           }
       
           const result = await LoanApprovalService.approveApproval(approvalId, approvalNote, staffId);
+
+          console.log({result});
+          
       
           if (!result.success) {
             switch (result.code) {
