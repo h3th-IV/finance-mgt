@@ -36,11 +36,6 @@ const calculateRepaymentPlan = (loanAmount, loanDuration, interestRate, interest
         }
 
         totalPayment = loanAmount + totalInterest + processing_fee;
-        console.log('Outside loop:');
-        console.log('Per month payment:', monthlyPayment);
-        console.log('Total payment:', totalPayment);
-        console.log('Initial loan amount:', totalCapital);
-        console.log('Total interest:', totalInterest);
     } else {
         throw new Error("Invalid interest type");
     }

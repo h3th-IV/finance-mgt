@@ -344,7 +344,7 @@ module.exports = class LoanApplicationController {
                 guarantors,
                 activityLog: result.appActivity,
                 approval: result.approvals
-            });
+            }); 
         } catch (error) {
             console.error("Error in getLoanApplication controller:", error);
             return errorResponse(res, 500, "An unexpected server error occurred");

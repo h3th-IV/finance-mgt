@@ -24,6 +24,21 @@ module.exports = class LoanApprovalController {
     }
   }
 
+  static async getApprovalById(req, res) {
+    try {
+        const { id } = req.params;
+        const approval = await LoanApprovalService.getApprovalById(id);
+        return successResponse(res, 200, "Approval fetched successfully", approval);
+    } catch (error) {
+        console.error("Error fetching approval by ID:", error);
+        if (error.message === "Approval not found") {
+            return errorResponse(res, 404, "Approval not found");
+        }
+
+        return errorResponse(res, 500, "An unexpected error occurred while fetching the approval.");
+    }
+  }
+
     static async fetchAllApprovals(req, res) {
         try {
             const result = await LoanApprovalService.fetchAllApprovals();
@@ -125,6 +140,9 @@ module.exports = class LoanApprovalController {
         const { approvalId } = req.params;
         const { approvalNote } = req.body;
         const staffId = req.user.id;
+
+        console.log({staffId});
+        
       
         try {
           if (!approvalId) {
@@ -132,6 +150,9 @@ module.exports = class LoanApprovalController {
           }
       
           const result = await LoanApprovalService.approveApproval(approvalId, approvalNote, staffId);
+
+          console.log({result});
+          
       
           if (!result.success) {
             switch (result.code) {
@@ -151,4 +172,35 @@ module.exports = class LoanApprovalController {
           return errorResponse(res, 500, "Server error");
         }
       }
+
+
+    static async requestComment(req, res) {
+      const { approvalId } = req.params;
+      const { comment } = req.body;
+      const staffId = req.user.id;
+      try {
+        if (!approvalId) {
+          return errorResponse(res, 400, "Missing approvalId in request parameters");
+        }
+    
+        const result = await LoanApprovalService.addComment(approvalId, comment, staffId);
+    
+        if (!result.success) {
+          switch (result.code) {
+            case "NOT_FOUND":
+              return errorResponse(res, 404, result.message);
+            case "INVALID_STATUS":
+              return errorResponse(res, 400, result.message);
+            case "UNAUTHORIZED":
+              return errorResponse(res, 403, result.message);
+            default:
+              return errorResponse(res, 500, result.message);
+          }
+        }
+        return successResponse(res, 200, result.message, result.approval);
+      } catch (error) {
+        console.error("Controller Error - request comment:", error);
+        return errorResponse(res, 500, "Server error");
+      }
+    }
 };

@@ -19,11 +19,9 @@ const permissions = [
     {name: "ARCHIVE_LOAN_PRODUCT", description: "Archive Loan Product" },
     {name: "DELETE_CUSTOMER", description: "Delete Customer Account" },
     {name: "CREATE_CUSTOMER", description: "Create Customer Account" },
-    {name: "ACTION-1", description: "Loan Approval level 1" },
-    {name: "ACTION-2", description: "Loan Approval level 2" },
-    {name: "ACTION-3", description: "Loan Approval level 3" },
-    {name: "ACTION-4", description: "Loan Approval level 4" },
-    {name: "ACTION-5", description: "Loan Approval level 5" },
+    {name: "CREDIT_CHECK", description: "Credit check for customer" },
+    {name: "INTERNAL_CONTROL", description: "Internal Control for Loans" },
+    {name: "LOAN_DISBURSEMENT", description: "Loan disbursement" },
 ]
 
 const seedPermissions = async () => {

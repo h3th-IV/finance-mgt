@@ -17,7 +17,7 @@ const checkPermission = (...requiredPermissions) => {
         const { permissions } = staff.role;
         console.log('staff permissions: ', permissions)
 
-        const toUpperUnderscore = (str) => str.toUpperCase().replace(/ /g, '_');
+        const toUpperUnderscore = (str) => str?.toUpperCase().replace(/ /g, '_');
   
         const permissionsToCheck = requiredPermissions.length > 0 ? requiredPermissions : [toUpperUnderscore(req.approvalAction)];
         console.log(permissionsToCheck);

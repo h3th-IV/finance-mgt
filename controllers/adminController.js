@@ -75,7 +75,6 @@ module.exports = class AdminController {
             return errorResponse(res, 400, error.details[0].message);
         }
         const updateData = req.body;
-
         try {
             if (!productId) {
                 return errorResponse(res, 400, "Loan productId is required");
@@ -192,9 +191,6 @@ module.exports = class AdminController {
     static async getAllLoanProducts(req, res) {
         try {
             let response = []
-console.log({x: req.query});
-
-
             if (req?.query.accountType === "admin") {
                 console.log("yoooo");
                 response = await AdminService.getAllLoanProducts();

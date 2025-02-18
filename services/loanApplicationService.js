@@ -237,9 +237,6 @@ module.exports = class LoanApplicationService {
       const _loanApplication = await LoanApplication.findById(savedLoanApplication._id)
         .populate("customer", "name")
         .populate("loan_product", "name");
-        console.log("here loanApplication: ",_loanApplication)
-
-      // Send emails to guarantors
       await Promise.all([
         sendGuarantorMail(
           _loanApplication.guarantor1.email,
@@ -309,8 +306,6 @@ module.exports = class LoanApplicationService {
 
   static async getAllLoanApplication(filters, pagination) {
     const { status, search , createdBy} = filters;
-    console.log({createdBy});
-    
     const { page = 1, limit = 10 } = pagination;
 
     try {
