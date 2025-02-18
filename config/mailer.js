@@ -897,3 +897,99 @@ module.exports.sendApprovalDeclinedEmail = async (requesterEmail, requesterName,
         `,
     });
 };
+
+
+module.exports.sendDisbursementEmail = async (customerEmail, customerName, loanAmount, loanDuration, loanProductName, loanApplicationId) => {
+    const magicLink = `https://capitalwise-fe.onrender.com/loanapp/get-single-loan/${loanApplicationId}`; // Update the link dynamically
+
+    await sender.sendMail({
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
+        to: customerEmail,
+        subject: "Your Loan Has Been Successfully Disbursed",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f8f8f8;
+                    margin: 0;
+                    padding: 20px;
+                    color: #333;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    border-top: 10px solid #32CD32; /* Lime green */
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #32CD32;
+                    font-size: 24px;
+                    margin: 0;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content p {
+                    font-size: 16px;
+                    margin: 10px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #32CD32;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    font-size: 14px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Capitalwise Dynamic Pay</h1>
+                </div>
+                <div class="content">
+                    <p>Dear ${customerName},</p>
+                    <p>We are pleased to inform you that your loan application has been successfully disbursed.</p>
+                    <p><strong>Loan Details:</strong></p>
+                    <ul style="list-style-type: none; padding: 0; text-align: left;">
+                        <li><strong>Loan Product:</strong> ${loanProductName}</li>
+                        <li><strong>Loan Amount:</strong> $${loanAmount.toFixed(2)}</li>
+                        <li><strong>Loan Duration:</strong> ${loanDuration} month(s)</li>
+                    </ul>
+                    <p>The funds have been transferred to the bank account associated with your account. Please ensure that the account details provided are correct.</p>
+                    <p>Your repayment schedule is available in your account dashboard. Your first repayment is due 30 days from the disbursement date.</p>
+                    <p>You can view your loan details by clicking the button below:</p>
+                    <a href="${magicLink}" class="btn">View Loan Details</a>
+                    <p>If you have any questions or need further assistance, please contact our support team at support@capitalwisedynamicpay.com.</p>
+                </div>
+                <div class="footer">
+                    &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    });
+};
