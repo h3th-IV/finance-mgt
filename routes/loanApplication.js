@@ -4,6 +4,8 @@ const LoanApplicationController = require("../controllers/loanApplicationControl
 const parser = require("../config/uploader");
 const { verifyToken } = require('../middleware/tokenGenerator');
 const { verifyAnyToken } = require('../middleware/permission');
+const { verifyStaffToken, checkPermission } = require("../middleware/permission");
+
 
 // Handling loan applications, including files for both individuals and businesses
 router.post(
@@ -32,4 +34,5 @@ router.get('/get-single-loan/:identifier', verifyToken, LoanApplicationControlle
 router.get('/user-repayments/:userId', verifyAnyToken, LoanApplicationController.getAllRepaymentsForUser)
 router.get('/loan-repayments/:loanApplicationId', verifyAnyToken, LoanApplicationController.getRepaymentsForLoanApplication)
 router.get('/repayments',  verifyAnyToken, LoanApplicationController.getAllRepayments)
+router.patch("/:id/disburse", verifyStaffToken, checkPermission("DISBURSE_LOAN_APP"), LoanApplicationController.disburseLoan);
 module.exports = router;

@@ -9,6 +9,8 @@ const GuarantorsDataService = require("./guarantorsDataService");
 const ActivityLogService = require("../services/activityLogService");
 const ApprovalService = require("./loanApprovalService");
 const staff = require("../models/staff");
+const mailer = require("../config/mailer");
+
 
 
 module.exports = class LoanApplicationService {
@@ -871,6 +873,140 @@ static async fetchAllRepayments(page = 1, limit = 10) {
     } catch (error) {
         console.error("Error fetching all repayments:", error);
         return { success: false, message: "Failed to fetch repayments" };
+    }
+  }
+
+
+  static async disburseLoan(loanApplicationId) {
+    try {
+        const loanApplication = await LoanApplication.findById(loanApplicationId)
+            .populate("loan_product", "interest interest_type")
+            .populate("customer", "first_name email business_name");
+            console.log("zeroth ", loanApplication); 
+        if (!loanApplication) {
+            return {
+                success: false,
+                message: "Loan application not found",
+                code: "NOT_FOUND",
+            };
+        }
+        const customer = await User.findById(loanApplication.customer);
+        console.log(customer);
+
+        if (loanApplication.status !== "ready_for_disbursement") {
+            return {
+                success: false,
+                message: "Loan application is not ready for disbursement",
+                code: "INVALID_STATUS",
+            };
+        }
+
+        //calculate repayment plan
+        const repaymentPlan = calculateRepaymentPlan(
+            loanApplication.loan_amount,
+            loanApplication.loan_duration,
+            loanApplication.interest_rate,
+            loanApplication.loan_product.interest_type,
+            loanApplication.processing_fee
+        );
+
+        //gen repayments array
+        const repayments = [];
+        let remainingPrincipal = loanApplication.loan_amount;
+
+        //get the last repayment ID from the database to ensure sequential IDs
+        const lastRepayment = await Repayment.findOne({}, { repayment_id: 1 })
+            .sort({ createdAt: -1 })
+            .limit(1);
+
+        let nextRepaymentId = 1; //default start value
+        if (lastRepayment && lastRepayment.repayment_id) {
+            const lastNumber = parseInt(lastRepayment.repayment_id.split("-")[1], 10);
+            nextRepaymentId = lastNumber + 1;
+        }
+
+        if (loanApplication.loan_product.interest_type === "flat_rate") {
+            //for flat rate, populate repayments with calculated values
+            const monthlyPayment = repaymentPlan.monthlyPayment;
+            const totalInterest = repaymentPlan.totalInterest;
+
+            for (let i = 0; i < loanApplication.loan_duration; i++) {
+                const dueDate = new Date();
+                dueDate.setMonth(dueDate.getMonth() + i + 1); //add months for each repayment
+
+                const repayment = new Repayment({
+                    repayment_id: `CWRP-${nextRepaymentId.toString().padStart(6, "0")}`,
+                    principal: (loanApplication.loan_amount / loanApplication.loan_duration),
+                    remaining_principal: remainingPrincipal - (loanApplication.loan_amount / loanApplication.loan_duration),
+                    interest: totalInterest / loanApplication.loan_duration,
+                    amount: monthlyPayment,
+                    due_date: dueDate,
+                    status: "unpaid",
+                });
+
+                repayments.push(repayment);
+                remainingPrincipal -= (loanApplication.loan_amount / loanApplication.loan_duration);
+                nextRepaymentId++; //ncrement for the next repayment
+            }
+        } else if (loanApplication.loan_product.interest_type === "reducing_balance") {
+            //for reducing balance, simulate detailed repayment schedule
+            const monthlyPrincipal = loanApplication.loan_amount / loanApplication.loan_duration;
+
+            for (let i = 0; i < loanApplication.loan_duration; i++) {
+                const dueDate = new Date();
+                dueDate.setMonth(dueDate.getMonth() + i + 1); //add months for each repayment
+
+                const interest = (remainingPrincipal * (loanApplication.interest_rate / 100)) / 12;
+                const principal = monthlyPrincipal;
+                const amount = principal + interest;
+
+                const repayment = new Repayment({
+                    repayment_id: `CWRP-${nextRepaymentId.toString().padStart(6, "0")}`,
+                    principal: principal,
+                    remaining_principal: remainingPrincipal - principal,
+                    interest: interest,
+                    amount: amount,
+                    due_date: dueDate,
+                    status: "unpaid",
+                });
+
+                repayments.push(repayment);
+                remainingPrincipal -= principal;
+                nextRepaymentId++; //increment repayment id
+            }
+        }
+
+        const savedRepayments = await Repayment.insertMany(repayments);
+
+        loanApplication.status = "disbursed";
+        loanApplication.date_disbursed = new Date();
+        loanApplication.repayments = savedRepayments.map((repayment) => repayment._id);
+
+        await loanApplication.save();
+        console.log("first ", loanApplication);
+
+        //send email notification
+        // await mailer.sendDisbursementEmail(
+        //     customer.email,
+        //     loanApplication.customer.first_name || loanApplication.customer.business_name,
+        //     loanApplication.loan_amount,
+        //     loanApplication.loan_duration,
+        //     loanApplication.loan_product.name,
+        //     loanApplicationId
+        // );
+
+        return {
+            success: true,
+            message: "Loan disbursed successfully",
+            loanApplication,
+        };
+    } catch (error) {
+        console.error("Error disbursing loan:", error);
+        return {
+            success: false,
+            message: `Error: ${error.message}`,
+            code: "INTERNAL_ERROR",
+        };
     }
   }
 };
