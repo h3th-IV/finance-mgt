@@ -2,6 +2,7 @@ const LoanApplication = require("../models/loanApplication");
 const LoanApproval = require("../models/loanApproval");
 const Staff = require("../models/staff");
 const ActivityLogService = require("./activityLogService");
+const mailer = require("../config/mailer");
 
 module.exports = class ApprovalService {
   static async createApprovals(loanApplicationId) {
@@ -51,10 +52,25 @@ module.exports = class ApprovalService {
   }
 
 
+  static async getApprovalById(approvalId) {
+    try {
+        const approval = await LoanApproval.findById(approvalId).populate("loanApplication", "loan_id loan_amount status");
+        if (!approval) {
+          throw new Error("Approval not found");
+        }
+        return approval
+    } catch (error) {
+        console.error("Error fetching approval by ID:", error);
+        throw new Error(`Failed to get approval: ${error.message}`);
+    }
+  }
+
+
   static async fetchApprovalsForLoanApplication(loanApplicationId) {
     try {
       const approvals = await LoanApproval.find({ loanApplication: loanApplicationId })
-        .populate("assignee", "first_name email");
+        .populate("assignee", "first_name last_name email")
+        .populate("requester", "first_name last_name email");
 
       if (!approvals || approvals.length === 0) {
         throw new Error("No approvals found for this loan application.");
@@ -181,13 +197,23 @@ module.exports = class ApprovalService {
       //     return validationResult;
       // }
 
+      const assignee = await Staff.findById(assigneeId);
+      if (!assignee) {
+        return {
+            success: false,
+            message: "Assignee not found.",
+            code: "ASSIGNEE_NOT_FOUND",
+        };
+      }
+      const assigneeName = `${assignee.first_name} ${assignee.last_name}`
       approval.status = "Requested";
       approval.assignee = assigneeId;
       approval.requestNote = requestNote;
+      approval.requester = staffId;
       const updatedApproval = await approval.save();
 
-      const req_staff = await staff.findById(staffId);
-      const name = `${req_staff.first_name} ${req_staff.last_name}`;
+      const req_staff = await Staff.findById(staffId);
+      const requester_name = `${req_staff.first_name} ${req_staff.last_name}`;
       await ActivityLogService.LogActivity(
         "update",
         "Staff",
@@ -195,10 +221,11 @@ module.exports = class ApprovalService {
         "LoanApplication",
         approval.loanApplication,
         {
-          message: `${name} Requested ${approval.approvalAction} Approval for this Loan Application`,
+          message: `${requester_name} Requested ${approval.approvalAction} Approval for this Loan Application`,
         }
       )
 
+      await mailer.sendApprovalRequestEmail(assignee.email, assigneeName, requester_name, approval.approvalAction, approval.loanApplication);
       return {
         success: true,
         message: "Approval requested successfully.",
@@ -221,6 +248,15 @@ module.exports = class ApprovalService {
         return {
           success: false,
           message: "Approval not found.",
+          code: "NOT_FOUND",
+        };
+      }
+
+      const requester = await Staff.findById(approval.requester);
+      if(!requester){
+        return {
+          success: false,
+          message: "The Staff that requested this approval was not found.",
           code: "NOT_FOUND",
         };
       }
@@ -270,9 +306,10 @@ module.exports = class ApprovalService {
           loanApplication: loanApplicationUpdateResult.loanApplication,
         };
       }
-  
-      const req_staff = await Staff.findById(staffId);
-      const name = `${req_staff.first_name} ${req_staff.last_name}`;
+
+      const requesterName = `${requester.first_name} ${requester.last_name}`;
+      const approver = await Staff.findById(staffId);
+      const approverName = `${approver.first_name} ${approver.last_name}`;
       await ActivityLogService.LogActivity(
         "update",
         "Staff",
@@ -280,9 +317,11 @@ module.exports = class ApprovalService {
         "LoanApplication",
         approval.loanApplication,
         {
-          message: `${name} Approved ${approval.approvalAction} Approval for this Loan Application`,
+          message: `${approverName} Approved ${approval.approvalAction} Approval for this Loan Application`,
         }
       );
+
+      await mailer.sendApprovalApprovedEmail(requester.email, requesterName, approverName, updatedApproval.approvalAction, updatedApproval.loanApplication);
   
       // If loan application status update failed, still return success for the approval
       return {
@@ -308,6 +347,15 @@ module.exports = class ApprovalService {
         return {
           success: false,
           message: "Approval not found.",
+          code: "NOT_FOUND",
+        };
+      }
+
+      const requester = await Staff.findById(approval.requester);
+      if(!requester){
+        return {
+          success: false,
+          message: "The Staff that requested this approval was not found.",
           code: "NOT_FOUND",
         };
       }
@@ -366,8 +414,8 @@ module.exports = class ApprovalService {
       }
   
       // Log the activity if the loan application status update failed (e.g., if it's not the last approval)
-      const reqStaff = await Staff.findById(staffId); // Fix staff lookup
-      const name = `${reqStaff.first_name} ${reqStaff.last_name}`;
+      const approver = await Staff.findById(staffId); // Fix staff lookup
+      const approverName = `${approver.first_name} ${approver.last_name}`;const requesterName = `${requester.first_name} ${requester.last_name}`;
       await ActivityLogService.LogActivity(
         "update",
         "Staff",
@@ -375,9 +423,10 @@ module.exports = class ApprovalService {
         "LoanApplication",
         approval.loanApplication,
         {
-          message: `${name} Declined ${approval.approvalAction} Approval for this Loan Application`,
+          message: `${approverName} Declined ${approval.approvalAction} Approval for this Loan Application`,
         }
       );
+      await mailer.sendApprovalDeclinedEmail(requester.email, requesterName, approverName, updatedApproval.approvalAction, updatedApproval.loanApplication, updatedApproval.declineNote);
   
       // Return success for the approval even if loan application status update failed
       return {

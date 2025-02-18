@@ -24,6 +24,21 @@ module.exports = class LoanApprovalController {
     }
   }
 
+  static async getApprovalById(req, res) {
+    try {
+        const { id } = req.params;
+        const approval = await LoanApprovalService.getApprovalById(id);
+        return successResponse(res, 200, "Approval fetched successfully", approval);
+    } catch (error) {
+        console.error("Error fetching approval by ID:", error);
+        if (error.message === "Approval not found") {
+            return errorResponse(res, 404, "Approval not found");
+        }
+
+        return errorResponse(res, 500, "An unexpected error occurred while fetching the approval.");
+    }
+  }
+
     static async fetchAllApprovals(req, res) {
         try {
             const result = await LoanApprovalService.fetchAllApprovals();
