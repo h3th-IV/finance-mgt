@@ -621,3 +621,279 @@ module.exports.sendUpdatePasswordOTP = (email, first_name, OTP) => {
         `
     });
 };
+
+
+module.exports.sendApprovalRequestEmail = async (assigneeEmail, assigneeName, requesterName, approvalAction, loanApplicationId) => {
+    const magicLink = `https://capitalwise-fe.onrender.com/approvals/${loanApplicationId}`; //will update this link
+
+    await sender.sendMail({
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
+        to: assigneeEmail,
+        subject: "Action Required: Approval Request Assigned to You",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f8f8f8;
+                    margin: 0;
+                    padding: 20px;
+                    color: #333;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    border-top: 10px solid #7AC143;
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #7AC143;
+                    font-size: 24px;
+                    margin: 0;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content p {
+                    font-size: 16px;
+                    margin: 10px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #7AC143;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    font-size: 14px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Capitalwise Dynamic Pay</h1>
+                </div>
+                <div class="content">
+                    <p>Dear ${assigneeName},</p>
+                    <p>An approval request has been assigned to you by ${requesterName}.</p>
+                    <p>You are required to review and approve the following action:</p>
+                    <strong>${approvalAction}</strong>
+                    <p>This request pertains to a loan application with ID: <strong>${loanApplicationId}</strong>.</p>
+                    <p>Please click the button below to access the approval request and take the necessary action:</p>
+                    <a href="${magicLink}" class="btn">Review and Approve</a>
+                    <p>If you have any questions or require additional information, please contact the requesting staff member directly.</p>
+                    <p>This request is time-sensitive, and your prompt attention is appreciated.</p>
+                </div>
+                <div class="footer">
+                    &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    });
+};
+
+module.exports.sendApprovalApprovedEmail = async (requesterEmail, requesterName, approverName, approvalAction, loanApplicationId) => {
+    const magicLink = `https://capitalwise-fe.onrender.com/admin/loan-application/${loanApplicationId}`; //will update this
+
+    await sender.sendMail({
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
+        to: requesterEmail,
+        subject: "Your Approval Request Has Been Approved",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f8f8f8;
+                    margin: 0;
+                    padding: 20px;
+                    color: #333;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    border-top: 10px solid #7AC143;
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #7AC143;
+                    font-size: 24px;
+                    margin: 0;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content p {
+                    font-size: 16px;
+                    margin: 10px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #7AC143;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    font-size: 14px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Capitalwise Dynamic Pay</h1>
+                </div>
+                <div class="content">
+                    <p>Dear ${requesterName},</p>
+                    <p>We are pleased to inform you that your approval request for the following action has been successfully approved:</p>
+                    <strong>${approvalAction}</strong>
+                    <p>This approval pertains to the loan application with ID: <strong>${loanApplicationId}</strong>.</p>
+                    <p>The approval was granted by <strong>${approverName}</strong>.</p>
+                    <p>You can view the updated status of the loan application by clicking the button below:</p>
+                    <a href="${magicLink}" class="btn">View Loan Application</a>
+                    <p>If you have any questions or require further information, please contact our support team.</p>
+                </div>
+                <div class="footer">
+                    &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    });
+};
+
+module.exports.sendApprovalDeclinedEmail = async (requesterEmail, requesterName, approverName, approvalAction, loanApplicationId, declineNote) => {
+    const magicLink = `https://capitalwise-fe.onrender.com/loanapp/get-single-loan/${loanApplicationId}`; //update the link
+
+    await sender.sendMail({
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
+        to: requesterEmail,
+        subject: "Your Approval Request Has Been Declined",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f8f8f8;
+                    margin: 0;
+                    padding: 20px;
+                    color: #333;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    border-top: 10px solid #FF6347; /* Tomato red */
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #FF6347;
+                    font-size: 24px;
+                    margin: 0;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content p {
+                    font-size: 16px;
+                    margin: 10px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #FF6347;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    font-size: 14px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Capitalwise Dynamic Pay</h1>
+                </div>
+                <div class="content">
+                    <p>Dear ${requesterName},</p>
+                    <p>We regret to inform you that your approval request for the following action has been declined:</p>
+                    <strong>${approvalAction}</strong>
+                    <p>This approval pertains to the loan application with ID: <strong>${loanApplicationId}</strong>.</p>
+                    <p>The approval was reviewed by <strong>${approverName}</strong>, and the decision was made to decline it.</p>
+                    <p>Reason for declination:</p>
+                    <blockquote style="border-left: 4px solid #FF6347; padding-left: 10px; color: #666;">
+                        ${declineNote}
+                    </blockquote>
+                    <p>You can view the updated status of the loan application by clicking the button below:</p>
+                    <a href="${magicLink}" class="btn">View Loan Application</a>
+                    <p>If you have any questions or require further information, please contact our support team.</p>
+                </div>
+                <div class="footer">
+                    &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    });
+};

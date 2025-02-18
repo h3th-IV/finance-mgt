@@ -23,6 +23,11 @@ const LoanApprovalSchema = new mongoose.Schema({
       'Requires final approval from management for loan decisions or special conditions.'
     ]
   },
+  requester: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Staff",
+    required: false
+  },
   assignee: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Staff",
