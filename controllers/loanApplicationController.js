@@ -141,7 +141,6 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, error.message);
         }
     }
-     
 
     static async updateLoanApplication(req, res) {
         const { id } = req.user;
@@ -436,5 +435,29 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, "Failed to fetch repayments");
         }
     }
-}
 
+    static async disburseLoan(req, res){
+        try {
+            const { id } = req.params;
+    
+            const response = await LoanApplicationService.disburseLoan(id);
+    
+            if (!response.success) {
+                switch (response.code) {
+                    case "NOT_FOUND":
+                        return errorResponse(res, 404, response.message);
+                    case "INVALID_STATUS":
+                        return errorResponse(res, 400, response.message);
+                    case "INTERNAL_ERROR":
+                    default:
+                        return errorResponse(res, 500, "An unexpected server error occurred", response);
+                }
+            }
+    
+            return successResponse(res, 200, response.message, response.loanApplication);
+        } catch (error) {
+            console.error("Error disbursing loan:", error);
+            return errorResponse(res, 500, "An unexpected server error occurred");
+        }
+    };
+}
