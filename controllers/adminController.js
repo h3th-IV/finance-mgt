@@ -703,14 +703,61 @@ module.exports = class AdminController {
     }
 
     //deliqunt graph
-    static async getAllLoanData(req, res) {
-        const { startDate, endDate } = req.query;
-        const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
+    // static async getAllLoanData(req, res) {
+    //     const { startDate, endDate } = req.query;
+    //     const dateFilter = startDate && endDate ? { start: startDate, end: endDate } : null;
     
-        const result = await AdminService.getAllLoanStats(dateFilter);
-        if (!result.success) {
-            return errorResponse(res, 500, result.message);
+    //     const result = await AdminService.getAllLoanStats(dateFilter);
+    //     if (!result.success) {
+    //         return errorResponse(res, 500, result.message);
+    //     }
+    //     return successResponse(res, 200, "Loan metrics fetched successfully", result.data);
+    // }
+
+    static async getAllLoanData(req, res) {
+        try {
+            const { timeRange } = req.query;
+    
+            let dateFilter = null;
+    
+            if (timeRange === "today") {
+                const startOfDay = new Date();
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = new Date();
+                endOfDay.setHours(23, 59, 59, 999);
+                dateFilter = { start: startOfDay, end: endOfDay };
+            } else if (timeRange === "currentWeek") {
+                const today = new Date();
+                const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+                const endOfWeek = new Date(today.setDate(today.getDate() + (7 - today.getDay())));
+                dateFilter = { start: startOfWeek, end: endOfWeek };
+            } else if (timeRange === "currentMonth") {
+                const today = new Date();
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                dateFilter = { start: startOfMonth, end: endOfMonth };
+            } else if (timeRange === "currentYear") {
+                const today = new Date();
+                const startOfYear = new Date(today.getFullYear(), 0, 1);
+                const endOfYear = new Date(today.getFullYear(), 11, 31);
+                dateFilter = { start: startOfYear, end: endOfYear };
+            }
+    
+            //use no filter if timeRange is invalid or not provided
+            if (!dateFilter) {
+                dateFilter = {};
+            }
+    
+            const result = await AdminService.getAllLoanStats(dateFilter);
+    
+            if (!result.success) {
+                return errorResponse(res, 500, result.message);
+            }
+    
+            return successResponse(res, 200, "Loan metrics fetched successfully", result.data);
+        } catch (error) {
+            console.error("Error fetching loan metrics:", error);
+            return errorResponse(res, 500, "Server error");
         }
-        return successResponse(res, 200, "Loan metrics fetched successfully", result.data);
     }
 }   

@@ -237,7 +237,7 @@ module.exports = class LoanApplicationService {
 
       const savedLoanApplication = await loanApplication.save();
       const _loanApplication = await LoanApplication.findById(savedLoanApplication._id)
-        .populate("customer", "name")
+        .populate("customer", "first_name")
         .populate("loan_product", "name");
       await Promise.all([
         sendGuarantorMail(
@@ -287,7 +287,6 @@ module.exports = class LoanApplicationService {
       );
 
       const approvals = await ApprovalService.createApprovals(_loanApplication._id)
-      console.log({approvals});
       
 
       return {
@@ -891,7 +890,6 @@ static async fetchAllRepayments(page = 1, limit = 10) {
             };
         }
         const customer = await User.findById(loanApplication.customer);
-        console.log(customer);
 
         if (loanApplication.status !== "ready_for_disbursement") {
             return {
@@ -983,17 +981,16 @@ static async fetchAllRepayments(page = 1, limit = 10) {
         loanApplication.repayments = savedRepayments.map((repayment) => repayment._id);
 
         await loanApplication.save();
-        console.log("first ", loanApplication);
 
-        //send email notification
-        // await mailer.sendDisbursementEmail(
-        //     customer.email,
-        //     loanApplication.customer.first_name || loanApplication.customer.business_name,
-        //     loanApplication.loan_amount,
-        //     loanApplication.loan_duration,
-        //     loanApplication.loan_product.name,
-        //     loanApplicationId
-        // );
+        // send email notification
+        await mailer.sendDisbursementEmail(
+            customer.email,
+            loanApplication.customer.first_name || loanApplication.customer.business_name,
+            loanApplication.loan_amount,
+            loanApplication.loan_duration,
+            loanApplication.loan_product.name,
+            loanApplicationId
+        );
 
         return {
             success: true,
