@@ -36,12 +36,10 @@ router.get('/loan-repayments/:loanApplicationId', verifyAnyToken, LoanApplicatio
 router.get('/repayments',  verifyAnyToken, LoanApplicationController.getAllRepayments)
 router.patch("/:id/disburse", verifyStaffToken, checkPermission("DISBURSE_LOAN_APP"), LoanApplicationController.disburseLoan);
 
-router.post(
+router.patch(
     "/:identifier/upload-document",
-    verifyToken,
-    parser.fields([
-        { name: "additional_documents", maxCount: 10 }, //allow up to 10 additional documents
-    ]),
+    verifyAnyToken,
+    parser.single("additional_document"),
     LoanApplicationController.uploadAdditionalDocument
 );
 module.exports = router;
