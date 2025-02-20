@@ -741,6 +741,8 @@ module.exports = class AdminController {
                 const startOfYear = new Date(today.getFullYear(), 0, 1);
                 const endOfYear = new Date(today.getFullYear(), 11, 31);
                 dateFilter = { start: startOfYear, end: endOfYear };
+            } else if (timeRange === "allTime") {
+                dateFilter = {};
             }
     
             //use no filter if timeRange is invalid or not provided

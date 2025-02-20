@@ -137,7 +137,7 @@ module.exports = class LoanApplicationService {
   //   }
   // }
 
-  static async uploadAdditionalDocument(loanApplicationId, documentsData, uploadedByType, uploadedBy) {
+  static async uploadAdditionalDocument(loanApplicationId, documentData) {
     try {
         const loanApplication = await LoanApplication.findById(loanApplicationId);
 
@@ -149,35 +149,23 @@ module.exports = class LoanApplicationService {
             };
         }
 
-        //validate that at least one document is provided
-        if (!documentsData || !documentsData.length) {
-            return {
-                success: false,
-                message: "No documents were provided",
-                code: 400,
-            };
-        }
-
-        const newDocuments = documentsData.map((doc) => ({
-            document_name: doc.document_name,
-            document_url: doc.document_url,
-            uploadedByType,
-            uploaded_by: uploadedBy,
-            notes: doc.notes || "",
-        }));
-
-        //add the new documents to the optional_documents array
-        loanApplication.optional_documents.push(...newDocuments);
+        loanApplication.optional_documents.push({
+            document_name: documentData.document_name,
+            document_url: documentData.document_url,
+            notes: documentData.notes || "",
+            uploadedByType: documentData.uploadedByType,
+            uploaded_by: documentData.uploaded_by,
+        });
 
         const updatedLoanApplication = await loanApplication.save();
 
         return {
             success: true,
-            message: "Documents uploaded successfully",
+            message: "Document uploaded successfully",
             data: updatedLoanApplication,
         };
     } catch (error) {
-        console.error("Error uploading additional documents:", error);
+        console.error("Error uploading additional document:", error);
         return {
             success: false,
             message: `Error: ${error.message}`,
