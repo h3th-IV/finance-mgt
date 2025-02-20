@@ -128,7 +128,26 @@ const LoanApplication = new mongoose.Schema(
             type: String,
             enum: ["individual", "business"],
             required: true, // This determines if the loan is for an individual or business
-        }
+        },
+        optional_documents: [
+            {
+                document_name: { type: String },
+                document_url: { type: String },
+                uploadedByType: {
+                    type: String,
+                    enum: ['User', 'Staff'],
+                },
+                uploaded_by: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    refPath: 'createdByType',
+                },
+                uploaded_at: {
+                    type: Date,
+                    default: Date.now,
+                },
+                notes: { type: String }
+            }
+        ]
     },
     { timestamps: true }
 );
