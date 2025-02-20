@@ -71,6 +71,54 @@ module.exports = class LoanApplicationController {
     //     }
     // }
 
+    static async uploadAdditionalDocument(req, res) {
+        console.log("got here");
+        const { id, isStaff } = req.user;
+        const { identifier } = req.params; // Loan application ID
+        const files = req.files?.additional_documents || [];
+        const { document_names, notes } = req.body;
+    
+        try {
+            if (!files.length) {
+                return errorResponse(res, 400, "No files were uploaded.");
+            }
+    
+            if (files.length !== document_names.length) {
+                return errorResponse(
+                    res,
+                    400,
+                    "The number of document names provided does not match the number of uploaded files."
+                );
+            }
+    
+            const createdByType = isStaff ? "Staff" : "User";
+            const createdBy = id;
+    
+            // Ensure each file has a corresponding document name
+            const documentsData = files.map((file, index) => ({
+                document_name: document_names[index] || file.originalname, //use provided name or fallback to original file name
+                document_url: file.path, //save the file path
+                notes: Array.isArray(notes) && notes[index] ? notes[index] : "", //optional notes
+            }));
+    
+            const response = await LoanApplicationService.uploadAdditionalDocument(
+                identifier,
+                documentsData,
+                createdByType,
+                createdBy
+            );
+    
+            if (!response.success) {
+                return errorResponse(res, response.code || 500, response.message);
+            }
+    
+            return successResponse(res, 200, "Documents uploaded successfully!", response.data);
+        } catch (error) {
+            console.error("Error uploading additional documents:", error);
+            return errorResponse(res, 500, "An unexpected server error occurred.");
+        }
+    }
+
     static async createLoanApplication(req, res) {
         const { id, isStaff } = req.user;
         const { customerId } = req.params; // customer id
