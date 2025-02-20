@@ -738,9 +738,7 @@ module.exports = class AdminService {
 
     static async getAllLoanStats(dateFilter) {
         try {
-            const queryFilter = dateFilter
-                ? { createdAt: { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) } }
-                : {};
+            const queryFilter = dateFilter && dateFilter.start && dateFilter.end ? { createdAt: { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) } } : {};
     
             const [
                 activeLoansCount,

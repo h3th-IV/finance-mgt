@@ -72,49 +72,44 @@ module.exports = class LoanApplicationController {
     // }
 
     static async uploadAdditionalDocument(req, res) {
-        console.log("got here");
         const { id, isStaff } = req.user;
         const { identifier } = req.params; // Loan application ID
-        const files = req.files?.additional_documents || [];
-        const { document_names, notes } = req.body;
+        const file = req.file;
+        const { document_name, notes } = req.body;
     
         try {
-            if (!files.length) {
-                return errorResponse(res, 400, "No files were uploaded.");
+            if (!file) {
+                return errorResponse(res, 400, "No file was uploaded.");
             }
     
-            if (files.length !== document_names.length) {
-                return errorResponse(
-                    res,
-                    400,
-                    "The number of document names provided does not match the number of uploaded files."
-                );
+            if (!document_name) {
+                return errorResponse(res, 400, "A document name must be provided.");
             }
     
             const createdByType = isStaff ? "Staff" : "User";
             const createdBy = id;
     
-            // Ensure each file has a corresponding document name
-            const documentsData = files.map((file, index) => ({
-                document_name: document_names[index] || file.originalname, //use provided name or fallback to original file name
+            //prep the document data
+            const documentData = {
+                document_name: document_name || file.originalname, //use provided name or fallback to original file name
                 document_url: file.path, //save the file path
-                notes: Array.isArray(notes) && notes[index] ? notes[index] : "", //optional notes
-            }));
+                notes: notes || "", //optional notes
+                uploadedByType: createdByType,
+                uploaded_by: createdBy,
+            };
     
             const response = await LoanApplicationService.uploadAdditionalDocument(
                 identifier,
-                documentsData,
-                createdByType,
-                createdBy
+                documentData
             );
     
             if (!response.success) {
                 return errorResponse(res, response.code || 500, response.message);
             }
     
-            return successResponse(res, 200, "Documents uploaded successfully!", response.data);
+            return successResponse(res, 200, "Document uploaded successfully!", response.data);
         } catch (error) {
-            console.error("Error uploading additional documents:", error);
+            console.error("Error uploading additional document:", error);
             return errorResponse(res, 500, "An unexpected server error occurred.");
         }
     }
