@@ -137,6 +137,55 @@ module.exports = class LoanApplicationService {
   //   }
   // }
 
+  static async uploadAdditionalDocument(loanApplicationId, documentsData, uploadedByType, uploadedBy) {
+    try {
+        const loanApplication = await LoanApplication.findById(loanApplicationId);
+
+        if (!loanApplication) {
+            return {
+                success: false,
+                message: "Loan application not found",
+                code: 404,
+            };
+        }
+
+        //validate that at least one document is provided
+        if (!documentsData || !documentsData.length) {
+            return {
+                success: false,
+                message: "No documents were provided",
+                code: 400,
+            };
+        }
+
+        const newDocuments = documentsData.map((doc) => ({
+            document_name: doc.document_name,
+            document_url: doc.document_url,
+            uploadedByType,
+            uploaded_by: uploadedBy,
+            notes: doc.notes || "",
+        }));
+
+        //add the new documents to the optional_documents array
+        loanApplication.optional_documents.push(...newDocuments);
+
+        const updatedLoanApplication = await loanApplication.save();
+
+        return {
+            success: true,
+            message: "Documents uploaded successfully",
+            data: updatedLoanApplication,
+        };
+    } catch (error) {
+        console.error("Error uploading additional documents:", error);
+        return {
+            success: false,
+            message: `Error: ${error.message}`,
+            code: 500,
+        };
+    }
+  }
+
   static async createLoanApplication(loanData, files) {
     try {
       const loanProduct = await LoanProduct.findById(loanData.loan_product);
