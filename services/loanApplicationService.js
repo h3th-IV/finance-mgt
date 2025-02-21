@@ -10,6 +10,7 @@ const ActivityLogService = require("../services/activityLogService");
 const ApprovalService = require("./loanApprovalService");
 const staff = require("../models/staff");
 const mailer = require("../config/mailer");
+const kyc = require("../models/kyc");
 
 
 

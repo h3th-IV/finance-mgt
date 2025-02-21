@@ -21,6 +21,9 @@ const StaffSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    login_otp: {
+        type: String,
+    },
     role: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Role",

@@ -161,6 +161,7 @@ module.exports = class UserController {
             if (!isPassword) {
                 return errorResponse(res, 401, "Incorrect password");
             }
+            
             // const loginExp = 24 * 60 * 60 * 1000;
             // if (Date.now() - user.last_login.getTime() > loginExp) {
             //     const otp = generateOTP();
@@ -170,27 +171,54 @@ module.exports = class UserController {
             //     mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
             //     return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.", user);
             // }
-            const token = user.getSignedJwtToken();
+            // const token = user.getSignedJwtToken();
             if (!user.is_verified) {
-                const response = {
-                    user,
-                    jwToken: token,
-                }
+                // const response = {
+                //     user,
+                //     jwToken: token,
+                // }
             if (user.otp && user.otp !== 'VERIFIED'){
                 return errorResponse(res, 422, "Sign up OTP verification is pending verification. Please verify the OTP sent to your phone number.");
             }
-            return successResponse(res, 200, "Please complete your KYC verification to continue.", response);
+            return successResponse(res, 200, "Please complete your KYC verification to continue.");
             }
             // user.last_login = Date.now();
             // await user.save();
-            const response = {
-                jwToken: token,
-                user: user,
-            }
-            return successResponse(res, 200, "Login successful", response);
+            // const response = {
+            //     jwToken: token,
+            //     user: user,
+            // }
+            const otp = generateOTP();
+            user.login_otp = otp;
+            await user.save()
+            await sendSMSOTP(identifier, otp)
+            return successResponse(res, 200, "An otp has been sent to your phone number");
         } catch (error) {
             console.log("err", error);
             return errorResponse(res, 500, "Server Error");
+        }
+    }
+
+    static async loginOTPValidation(req, res){
+        const { userId } = req.params;
+        const { otp } = req.body;
+        try{
+            const user = await User.findById(userId);
+            if(user.login_otp !== otp){
+                console.error("invalid otp")
+                return errorResponse(res, 400, "Invalid otp")
+            }
+            user.login_otp = "LOGGEDIN"
+            await user.save()
+            const token = user.getSignedJwtToken();
+            const response = {
+                user,
+                jwToken: token,
+            }
+            return successResponse(res, 200, "login successful", response)
+        }catch(error){
+            console.error("An error occurred, ", error)
+            return errorResponse(res, 500, "Server Error")
         }
     }
 
@@ -327,6 +355,9 @@ module.exports = class UserController {
                     otp,
                     otpCreatedAt: Date.now(),
                 };
+
+                //update user email
+                user.email = kycData['email.address']
                 otpSent = true;
             }
             if(kycData['bank_verification_number.bvn']){
@@ -416,9 +447,11 @@ module.exports = class UserController {
             updatedKYC.document_verification.status = documentVerified;
             updatedKYC.address.status = addressVerified;
             updatedKYC.employment_info.status = employmentInfoVerified;
+
             await updatedKYC.save();
 
             user.is_verified = emailVerified && bankVerified && documentVerified && addressVerified && employmentInfoVerified;
+
             await user.save();
 
             const updatedUser = await User.findById(userId).populate('kyc_verification');
