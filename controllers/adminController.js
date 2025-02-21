@@ -171,23 +171,24 @@ module.exports = class AdminController {
             if (!staff.role) {
                 return errorResponse(res, 403, "Access denied");
             }
-            const otp = generateOTP()
-            staff.login_otp = otp;
-            await staff.save();
-            await mailer.sendLoginOTPEmail(staff.email, staff.first_name, null, otp);
-            // const token = staff.generateStaffToken();
-            // const response = {
-            //     token,
-            //     staff: {
-            //         id: staff._id,
-            //         name: staff.name,
-            //         email: staff.email,
-            //         role: staff.role,
-            //         permissions: staff.role.permissions,
-            //         accountType: "admin"
-            //     },
-            // }
-            return successResponse(res, 200, "An otp has been sent to your email address");
+            // const otp = generateOTP()
+            // staff.login_otp = otp;
+            // await staff.save();
+            // await mailer.sendLoginOTPEmail(staff.email, staff.first_name, null, otp);
+            const token = staff.generateStaffToken();
+            const response = {
+                token,
+                staff: {
+                    id: staff._id,
+                    name: staff.name,
+                    email: staff.email,
+                    role: staff.role,
+                    permissions: staff.role.permissions,
+                    accountType: "admin"
+                },
+            }
+            // return successResponse(res, 200, "An otp has been sent to your email address");
+            return successResponse(res, 200, "Login successful", response);
         } catch (error) {
             return errorResponse(res, 500, 'Sever error');
         }
@@ -215,7 +216,7 @@ module.exports = class AdminController {
             return errorResponse(res, 500, "Server Error")
         }
     }
-    
+
 
     static async getAllLoanProducts(req, res) {
         try {
