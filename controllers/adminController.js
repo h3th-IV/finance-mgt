@@ -21,6 +21,7 @@ const mongoose = require('mongoose')
 const creditReport = require('../helpers/credit_report.helper');
 const CreditReportService = require('../services/creditReportService');
 const uploadToCloudinary = require('../utils/uploader');
+const sendSMSOTP = require('../helpers/messenger');
 // const { smsOTP } = require('../config/messenger');
 
 
@@ -170,6 +171,10 @@ module.exports = class AdminController {
             if (!staff.role) {
                 return errorResponse(res, 403, "Access denied");
             }
+            // const otp = generateOTP()
+            // staff.login_otp = otp;
+            // await staff.save();
+            // await mailer.sendLoginOTPEmail(staff.email, staff.first_name, null, otp);
             const token = staff.generateStaffToken();
             const response = {
                 token,
@@ -182,11 +187,36 @@ module.exports = class AdminController {
                     accountType: "admin"
                 },
             }
-            return successResponse(res, 200, "Staff signed in successfully", response);
+            // return successResponse(res, 200, "An otp has been sent to your email address");
+            return successResponse(res, 200, "Login successful", response);
         } catch (error) {
             return errorResponse(res, 500, 'Sever error');
         }
     }
+    
+    static async loginOTPValidation(req, res){
+        const { staffId } = req.params;
+        const { otp } = req.body;
+        try{
+            const staff = await Staff.findById(staffId);
+            if(staff.login_otp !== otp){
+                console.error("invalid otp")
+                return errorResponse(res, 400, "Invalid otp")
+            }
+            staff.login_otp = "LOGGEDIN"
+            await staff.save()
+            const token = staff.getSignedJwtToken();
+            const response = {
+                staff,
+                jwToken: token,
+            }
+            return successResponse(res, 200, "login successful", response)
+        }catch(error){
+            console.error("An error occurred, ", error)
+            return errorResponse(res, 500, "Server Error")
+        }
+    }
+
 
     static async getAllLoanProducts(req, res) {
         try {

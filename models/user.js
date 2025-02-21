@@ -46,6 +46,9 @@ const UsersSchema = new mongoose.Schema({
       type: Date,
       default: Date.now,
     },
+    login_otp: {
+      type: String,
+    },
     kyc_verification: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "KYC",
