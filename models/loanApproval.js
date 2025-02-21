@@ -7,12 +7,12 @@ const LoanApprovalSchema = new mongoose.Schema({
   },
   approvalAction: {
     type: String,
-    enum: ['Relationship Manager', 'Accounts Department', 'Internal Control', 'Risk Management', 'Management Approval', 'Customer Signature', 'Loan Disbursement'],
+    enum: ['Relationship Manager', 'Accounts Department', 'Internal Control', 'Risk Management', 'Management Approval'],
     default: "Credit Check"
   },
   approvalTitle: {
     type: String,
-    enum: ['Relationship Manager', 'Accounts Department', 'Internal Control', 'Risk Management', 'Management Approval', 'Customer Signature', 'Loan Disbursement'],
+    enum: ['Relationship Manager', 'Accounts Department', 'Internal Control', 'Risk Management', 'Management Approval'],
     default: "Credit Check"
   },
   approvalDescription: {
@@ -26,11 +26,7 @@ const LoanApprovalSchema = new mongoose.Schema({
 
       "They verify the customer identity through BVN, perform a credit check, and generate a risk report to assess the potential risk involved in the loan.",
 
-      "Management reviews all the checks and reports, and once everything is in order, they approve the loan. Automated Step: The management approval triggers an automated offer letter that is sent to the customer for signing. The offer letter outlines the terms and conditions of the loan",
-
-      "Once the customer signs the offer letter, the loan agreement is finalized", 
-
-      "After the signed offer letter is received, the loan is disbursed to the customer, completing the process."
+      "Management reviews all the checks and reports, and once everything is in order, they approve the loan. Automated Step: The management approval triggers an automated offer letter that is sent to the customer for signing. The offer letter outlines the terms and conditions of the loan"
     ]
   },
   requester: {

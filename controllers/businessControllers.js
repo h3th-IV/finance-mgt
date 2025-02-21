@@ -86,6 +86,10 @@ module.exports = class BusinessControllers {
                     otp,
                     otpCreatedAt: Date.now(),
                 };
+
+                //update the business email
+                business.email = payload['email.address']
+
                 delete payload['email.address']; //remove the redundant flattened key                
                 otpSent = true;
             }

@@ -45,20 +45,6 @@ module.exports = class ApprovalService {
                 description:
                     "Management reviews all the checks and reports, and once everything is in order, they approve the loan. Automated Step: The management approval triggers an automated offer letter that is sent to the customer for signing. The offer letter outlines the terms and conditions of the loan",
             },
-            {
-                level: 6,
-                action: "Customer Signature",
-                title: "Customer Signature",
-                description:
-                    "Once the customer signs the offer letter, the loan agreement is finalized",
-            },
-            {
-                level: 7,
-                action: "Loan Disbursement",
-                title: "Loan Disbursement",
-                description:
-                    "After the signed offer letter is received, the loan is disbursed to the customer, completing the process.",
-            },
         ];
 
         for (const { level, action, title, description } of approvalLevels) {
