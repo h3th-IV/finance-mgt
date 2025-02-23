@@ -539,13 +539,13 @@ module.exports = class ApprovalService {
       };
     }
 
-    if (approval.assignee.toString() !== staffId) {
-      return {
-        success: false,
-        message: "You are not authorized to add a comment to this approval.",
-        code: "UNAUTHORIZED",
-      };
-    }
+    // if (approval.assignee.toString() !== staffId) {
+    //   return {
+    //     success: false,
+    //     message: "You are not authorized to add a comment to this approval.",
+    //     code: "UNAUTHORIZED",
+    //   };
+    // }
 
     // Add the comment to the additionalNote array (message trail)
     const staff = await Staff.findById(staffId);
