@@ -919,7 +919,6 @@ static async fetchAllRepayments(page = 1, limit = 10) {
         const loanApplication = await LoanApplication.findById(loanApplicationId)
             .populate("loan_product", "interest interest_type")
             .populate("customer", "first_name email business_name");
-            console.log("zeroth ", loanApplication); 
         if (!loanApplication) {
             return {
                 success: false,
@@ -928,6 +927,7 @@ static async fetchAllRepayments(page = 1, limit = 10) {
             };
         }
         const customer = await User.findById(loanApplication.customer);
+console.log({x: loanApplication.status});
 
         if (loanApplication.status !== "ready_for_disbursement") {
             return {

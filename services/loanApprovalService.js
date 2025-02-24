@@ -296,14 +296,14 @@ module.exports = class ApprovalService {
         };
       }
   
-      // Check preceding levels
-      const validationResult = await this.validatePrecedingLevels(
-        approval.loanApplication,
-        approval.approvalLevel
-      );
-      if (!validationResult.success) {
-        return validationResult;
-      }
+      // // Check preceding levels
+      // const validationResult = await this.validatePrecedingLevels(
+      //   approval.loanApplication,
+      //   approval.approvalLevel
+      // );
+      // if (!validationResult.success) {
+      //   return validationResult;
+      // }
   
       // Now update the status after all checks
       approval.status = "Approved";
@@ -520,8 +520,7 @@ module.exports = class ApprovalService {
 
   static async addComment(approvalId, comment, staffId) {
   try {
-    console.log({approvalId, comment, staffId});
-    
+
     const approval = await LoanApproval.findById(approvalId);
     if (!approval) {
       return {
@@ -531,13 +530,13 @@ module.exports = class ApprovalService {
       };
     }
 
-    if (approval.status !== "Requested") {
-      return {
-        success: false,
-        message: `Approval cannot have comments added because it is of status ${approval.status.toLowerCase()}.`,
-        code: "INVALID_STATUS",
-      };
-    }
+    // if (approval.status !== "Requested") {
+    //   return {
+    //     success: false,
+    //     message: `Approval cannot have comments added because it is of status ${approval.status.toLowerCase()}.`,
+    //     code: "INVALID_STATUS",
+    //   };
+    // }
 
     // if (approval.assignee.toString() !== staffId) {
     //   return {
