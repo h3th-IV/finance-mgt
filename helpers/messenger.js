@@ -12,7 +12,7 @@ const senderId = 'CAPITALWISE'; //TODO
 
 async function sendSMSOTP(recipients, otp) {
     const url = `${baseURL}${endpoint}`;
-    console.log({url});
+    console.log({otp});
     
     const payload = {
         token,
