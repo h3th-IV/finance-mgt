@@ -189,10 +189,14 @@ module.exports = class UserController {
             //     user: user,
             // }
             const otp = generateOTP();
+            console.log({otp});
+            
             user.login_otp = otp;
+            console.log({user});
+            
             await user.save()
             await sendSMSOTP(identifier, otp)
-            return successResponse(res, 200, "An otp has been sent to your phone number");
+            return successResponse(res, 200, "An otp has been sent to your phone number", user._id);
         } catch (error) {
             console.log("err", error);
             return errorResponse(res, 500, "Server Error");
@@ -201,10 +205,12 @@ module.exports = class UserController {
 
     static async loginOTPValidation(req, res){
         const { userId } = req.params;
-        const { otp } = req.body;
+        const { inputOTP } = req.body;
+        console.log({inputOTP});
+        
         try{
             const user = await User.findById(userId);
-            if(user.login_otp !== otp){
+            if(user.login_otp !== inputOTP){
                 console.error("invalid otp")
                 return errorResponse(res, 400, "Invalid otp")
             }

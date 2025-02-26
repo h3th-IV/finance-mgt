@@ -548,8 +548,6 @@ module.exports = class ApprovalService {
 
     // Add the comment to the additionalNote array (message trail)
     const staff = await Staff.findById(staffId);
-    console.log({staff});
-    
     const name = `${staff.first_name} ${staff.last_name}`;
     
     approval.additionalNote.push({
