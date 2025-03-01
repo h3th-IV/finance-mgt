@@ -76,9 +76,7 @@ const LoanApprovalSchema = new mongoose.Schema({
             required: true
           },
           replier: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Staff",
-            required: true
+            type: Object
           },
           timestamp: {
             type: Date,
