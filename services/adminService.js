@@ -40,13 +40,10 @@ module.exports = class AdminService {
                 duration: product_data.duration,
                 product_group: product_data.product_group,
             }
-            console.log(newloanProduct.createdBy)
 
             const loanProduct = await new LoanProduct(newloanProduct).save();
             const req_staff = await Staff.findById(product_data.createdBy)
             const req_s = await Staff.findById("67adb949b4c4438a2089f203")
-            console.log(req_staff);
-            console.log("checked user: ",req_s);
             const name = `${req_staff.first_name} ${req_staff.last_name}`;
 
             await ActivityLogService.LogActivity(
@@ -235,6 +232,16 @@ module.exports = class AdminService {
         try {
             const staff = await Staff.find().populate('role');
             // await Staff.deleteMany();
+            return staff;
+        } catch (error) {
+            throw new Error('Error fetching staffs');
+        }
+    }
+
+    static async getStaffById(id) {
+        try {
+            const staff = await Staff.findById(id).populate('role');
+            console.log({staff})
             return staff;
         } catch (error) {
             throw new Error('Error fetching staffs');

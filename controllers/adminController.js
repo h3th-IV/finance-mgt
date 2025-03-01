@@ -222,12 +222,8 @@ module.exports = class AdminController {
         try {
             let response = []
             if (req?.query.accountType === "admin") {
-                console.log("yoooo");
                 response = await AdminService.getAllLoanProducts();
- 
             } else {
-                console.log("hello");
-                
                 response = await AdminService.getAllLoanProducts(req?.query?.accountType);
             }
            

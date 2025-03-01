@@ -11,5 +11,9 @@ router.get("/approvals/:assigneeId",  verifyStaffToken,LoanApprovalController.fe
 router.patch("/request/:approvalId", verifyStaffToken, LoanApprovalController.requestApproval);
 router.patch("/decline/:approvalId",  verifyStaffToken, fetchApprovalAction, checkPermission(), LoanApprovalController.declineApproval);
 router.patch("/approve/:approvalId",  verifyStaffToken, fetchApprovalAction, checkPermission(), LoanApprovalController.approveApproval);
+router.post('/:loanApprovalId/comments',verifyStaffToken, LoanApprovalController.addComment);
+
+// Route to reply to a specific comment on a LoanApproval
+router.post('/:loanApprovalId/comments/:commentId/replies', verifyStaffToken, LoanApprovalController.replyToComment);
 router.patch("/comment/:approvalId",  verifyStaffToken, LoanApprovalController.requestComment);
 module.exports = router;
