@@ -222,12 +222,8 @@ module.exports = class AdminController {
         try {
             let response = []
             if (req?.query.accountType === "admin") {
-                console.log("yoooo");
                 response = await AdminService.getAllLoanProducts();
- 
             } else {
-                console.log("hello");
-                
                 response = await AdminService.getAllLoanProducts(req?.query?.accountType);
             }
            
@@ -766,6 +762,20 @@ module.exports = class AdminController {
                 const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
                 const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
                 dateFilter = { start: startOfMonth, end: endOfMonth };
+            } else if (timeRange === "currentQuarter") {
+                const today = new Date();
+                const currentMonth = today.getMonth();
+                const quarterStartMonth = Math.floor(currentMonth / 3) * 3; // Start month of the quarter
+                const startOfQuarter = new Date(today.getFullYear(), quarterStartMonth, 1);
+                const endOfQuarter = new Date(today.getFullYear(), quarterStartMonth + 3, 0); // End of the quarter
+                dateFilter = { start: startOfQuarter, end: endOfQuarter };
+            } else if (timeRange === "midYear") {
+                const today = new Date();
+                const currentMonth = today.getMonth();
+                const halfYearStartMonth = Math.floor(currentMonth / 6) * 6; // Start month of the half-year
+                const startOfHalfYear = new Date(today.getFullYear(), halfYearStartMonth, 1);
+                const endOfHalfYear = new Date(today.getFullYear(), halfYearStartMonth + 6, 0); // End of the half-year
+                dateFilter = { start: startOfHalfYear, end: endOfHalfYear };
             } else if (timeRange === "currentYear") {
                 const today = new Date();
                 const startOfYear = new Date(today.getFullYear(), 0, 1);
@@ -775,7 +785,7 @@ module.exports = class AdminController {
                 dateFilter = {};
             }
     
-            //use no filter if timeRange is invalid or not provided
+            // Use no filter if timeRange is invalid or not provided
             if (!dateFilter) {
                 dateFilter = {};
             }

@@ -139,72 +139,62 @@ module.exports = class UserController {
         }
     }
 
-    static async login(req, res){
-        const { error } = loginValidator.validate(req.body);
-        if (error) {
-            return errorResponse(res, 400, error.details[0].message);
-        }
-        const { identifier, password } = req.body;
+    static async login(req, res) {
         try {
-            const query = identifier.includes('@')
-            ? { email: identifier.toLowerCase() }
-            : { phone_number: identifier };
-            const user = await User.findOne(query).populate([
-                { path: 'kyc_verification' },
-                { path: 'kyc_business' }
-            ]);
-            if (!user) {
-                return errorResponse(res, 401, `User with ${query.email ? "email" : "Phone Number"} not found`);
+            const { error } = loginValidator.validate(req.body);
+            if (error) {
+                return errorResponse(res, 400, error.details[0].message);
             }
-
-            const isPassword = await bcryptjs.compare(password, user.password);
-            if (!isPassword) {
+    
+            const { identifier, password } = req.body;
+            const query = identifier.includes('@')
+                ? { email: identifier.toLowerCase() }
+                : { phone_number: identifier };
+            
+            const user = await User.findOne(query).populate(['kyc_verification', 'kyc_business']);
+            if (!user) {
+                return errorResponse(res, 401, `User with ${query.email ? "email" : "phone number"} not found`);
+            }
+    
+            const isPasswordValid = await bcryptjs.compare(password, user.password);
+            if (!isPasswordValid) {
                 return errorResponse(res, 401, "Incorrect password");
             }
-            
-            // const loginExp = 24 * 60 * 60 * 1000;
-            // if (Date.now() - user.last_login.getTime() > loginExp) {
-            //     const otp = generateOTP();
-            //     user.otp = otp;
-            //     user.otpCreatedAt = Date.now();
-            //     await user.save();
-            //     mailer.sendLoginOTPEmail(email, user.first_name, user.last_login, otp);
-            //     return successResponse(res, 200, "OTP sent to your email. Please verify before logging in.", user);
-            // }
-            // const token = user.getSignedJwtToken();
+    
             if (!user.is_verified) {
-                // const response = {
-                //     user,
-                //     jwToken: token,
-                // }
-            if (user.otp && user.otp !== 'VERIFIED'){
-                return errorResponse(res, 422, "Sign up OTP verification is pending verification. Please verify the OTP sent to your phone number.");
+                if (user.otp && user.otp !== 'VERIFIED') {
+                    return errorResponse(res, 422, "Sign-up OTP verification is pending. Please verify the OTP sent to your phone number.");
+                }
+                
+                const otp = generateOTP();
+                user.login_otp = otp;
+                await user.save();
+                await sendSMSOTP(identifier, otp);
+                
+                return successResponse(res, 200, "Please complete your KYC verification to continue.", user._id);
             }
-            return successResponse(res, 200, "Please complete your KYC verification to continue.");
-            }
-            // user.last_login = Date.now();
-            // await user.save();
-            // const response = {
-            //     jwToken: token,
-            //     user: user,
-            // }
+    
             const otp = generateOTP();
             user.login_otp = otp;
-            await user.save()
-            await sendSMSOTP(identifier, otp)
-            return successResponse(res, 200, "An otp has been sent to your phone number");
+            await user.save();
+            
+            await sendSMSOTP(identifier, otp);
+            return successResponse(res, 200, "An OTP has been sent to your phone number.", user._id);
         } catch (error) {
-            console.log("err", error);
-            return errorResponse(res, 500, "Server Error");
+            console.error("Login Error:", error);
+            return errorResponse(res, 500, "Internal Server Error");
         }
     }
+    
 
     static async loginOTPValidation(req, res){
         const { userId } = req.params;
-        const { otp } = req.body;
+        const { inputOTP } = req.body;
+        console.log({inputOTP});
+        
         try{
             const user = await User.findById(userId);
-            if(user.login_otp !== otp){
+            if(user.login_otp !== inputOTP){
                 console.error("invalid otp")
                 return errorResponse(res, 400, "Invalid otp")
             }

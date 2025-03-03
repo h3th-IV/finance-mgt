@@ -3,12 +3,71 @@ const LoanApproval = require("../models/loanApproval");
 const Staff = require("../models/staff");
 const ActivityLogService = require("./activityLogService");
 const mailer = require("../config/mailer");
+const AdminService = require('../services/adminService');
 
 module.exports = class ApprovalService {
-  static async createApprovals(loanApplicationId) {
+
+  static async addComment(loanApprovalId, comment, commenterId) {
+    try {
+      const loanApproval = await LoanApproval.findById(loanApprovalId);
+  
+      if (!loanApproval) {
+        throw new Error("LoanApproval not found");
+      }
+  
+      const newComment = {
+        commentId: loanApproval.comments.length + 1,
+        comment,
+        commenter: commenterId,
+        timestamp: Date.now(),
+        replies: []
+      };
+  
+      loanApproval.comments.push(newComment);
+      await loanApproval.save();
+  
+      return newComment;
+    } catch (error) {
+      throw error;
+    }
+  };
+  
+
+  static async replyToComment(loanApprovalId, commentId, replyText, replier){
+    try {
+      const loanApproval = await LoanApproval.findById(loanApprovalId);
+      if (!loanApproval) {
+        throw new Error("LoanApproval not found");
+      }
+  
+      const comment = loanApproval.comments.find((item) => item.commentId == commentId);
+
+
+      console.log({comment});
+      
+  
+      if (!comment) {
+        throw new Error("Comment not found");
+      }
+  
+      const newReply = {
+        replyText,
+        replier: replier,
+        timestamp: Date.now()
+      };
+  
+      comment.replies.push(newReply);
+      await loanApproval.save();
+  
+      return newReply;
+    } catch (error) {
+      throw error;
+    }
+  };
+  
+  static async createApprovals(loanApplicationId, createdByType, createdBy, requesterId = null) {
     try {
         const approvals = [];
-
         const approvalLevels = [
             {
                 level: 1,
@@ -16,6 +75,7 @@ module.exports = class ApprovalService {
                 title: "Relationship Manager",
                 description:
                     "They onboard the customer, understanding their business needs and gathering necessary information to tell the customer story",
+                role: "RELATIONSHIP_MANAGER"
             },
             {
                 level: 2,
@@ -23,6 +83,7 @@ module.exports = class ApprovalService {
                 title: "Accounts Department",
                 description:
                     "They validate all the information provided, analyze the customer financial statements, and check whether the customer can afford the loan",
+                role: "ACCOUNTS_DEPARTMENT"
             },
             {
                 level: 3,
@@ -30,6 +91,7 @@ module.exports = class ApprovalService {
                 title: "Internal Control",
                 description:
                     "This team performs compliance checks, including verifying the collateral and reviewing all documentation. They also handle the shared allotment to ensure proper distribution of responsibilities",
+                role: "INTERNAL_CONTROL"
             },
             {
                 level: 4,
@@ -37,6 +99,7 @@ module.exports = class ApprovalService {
                 title: "Risk Management",
                 description:
                     "They verify the customer identity through BVN, perform a credit check, and generate a risk report to assess the potential risk involved in the loan.",
+                role: "RISK_MANAGEMENT"
             },
             {
                 level: 5,
@@ -44,17 +107,38 @@ module.exports = class ApprovalService {
                 title: "Management Approval",
                 description:
                     "Management reviews all the checks and reports, and once everything is in order, they approve the loan. Automated Step: The management approval triggers an automated offer letter that is sent to the customer for signing. The offer letter outlines the terms and conditions of the loan",
+                role: "MANAGEMENT_APPROVAL"
             },
         ];
 
-        for (const { level, action, title, description } of approvalLevels) {
+        for (const { level, action, title, description, role } of approvalLevels) {
+            let assigneeId = null;
+
+            if (createdByType === "Staff" && level === 1) {
+                // Assign the Relationship Manager as the createdBy staff
+                assigneeId = createdBy;
+            } else {
+                // Fetch staff based on role and assign randomly
+                const assigneeData = await AdminService.getStaffWithPerm(role);
+                if (assigneeData.success && assigneeData.staff.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * assigneeData.staff.length);
+                    assigneeId = assigneeData.staff[randomIndex]._id;
+                }
+            }
+
             const approval = new LoanApproval({
                 approvalLevel: level,
                 approvalAction: action,
                 approvalTitle: title,
                 approvalDescription: description,
                 loanApplication: loanApplicationId,
+                requester: requesterId,
+                assignee: assigneeId, // Assigned Relationship Manager if "Staff", else random assignment
                 status: "New",
+                requestNote: "",
+                approvalNote: "",
+                comments: [],
+                approvals: []
             });
 
             const savedApproval = await approval.save();
@@ -66,7 +150,7 @@ module.exports = class ApprovalService {
         console.error("Error creating approvals:", error);
         throw new Error(`Failed to create approvals: ${error.message}`);
     }
-  }
+}
 
 
   static async getApprovalById(approvalId) {
@@ -87,7 +171,6 @@ module.exports = class ApprovalService {
     try {
       const approvals = await LoanApproval.find({ loanApplication: loanApplicationId })
         .populate("assignee", "first_name last_name email")
-        .populate("requester", "first_name last_name email");
 
       if (!approvals || approvals.length === 0) {
         throw new Error("No approvals found for this loan application.");
@@ -101,9 +184,16 @@ module.exports = class ApprovalService {
 
   static async fetchAllApprovals() {
     try {
-      const approvals = await LoanApproval.find()
-        .populate("assignee", "first_name email")
-
+    // Fetch all approvals and populate comments.commenter
+    const approvals = await LoanApproval.find()
+      .populate({
+        path: 'comments.commenter',
+        select: 'first_name email', // Fields you want to populate from 'Staff'
+      })
+      .populate({
+        path: 'comments.replies.replier',
+        select: 'first_name email', // Fields you want to populate from 'Staff'
+      });
       if (!approvals || approvals.length === 0) {
         return {
           success: false,
@@ -111,7 +201,7 @@ module.exports = class ApprovalService {
           code: "NOT_FOUND",
         };
       }
-
+  
       return {
         success: true,
         message: "All approvals fetched successfully",
@@ -126,6 +216,7 @@ module.exports = class ApprovalService {
       };
     }
   }
+  
 
   static async fetchApprovalsByAssignee(assigneeId) {
     try {
@@ -296,14 +387,14 @@ module.exports = class ApprovalService {
         };
       }
   
-      // Check preceding levels
-      const validationResult = await this.validatePrecedingLevels(
-        approval.loanApplication,
-        approval.approvalLevel
-      );
-      if (!validationResult.success) {
-        return validationResult;
-      }
+      // // Check preceding levels
+      // const validationResult = await this.validatePrecedingLevels(
+      //   approval.loanApplication,
+      //   approval.approvalLevel
+      // );
+      // if (!validationResult.success) {
+      //   return validationResult;
+      // }
   
       // Now update the status after all checks
       approval.status = "Approved";
@@ -518,76 +609,73 @@ module.exports = class ApprovalService {
     }
   }
 
-  static async addComment(approvalId, comment, staffId) {
-  try {
-    console.log({approvalId, comment, staffId});
+//   static async addComment(approvalId, comment, staffId) {
+//   try {
+
+//     const approval = await LoanApproval.findById(approvalId);
+//     if (!approval) {
+//       return {
+//         success: false,
+//         message: "Approval not found.",
+//         code: "NOT_FOUND",
+//       };
+//     }
+
+//     // if (approval.status !== "Requested") {
+//     //   return {
+//     //     success: false,
+//     //     message: `Approval cannot have comments added because it is of status ${approval.status.toLowerCase()}.`,
+//     //     code: "INVALID_STATUS",
+//     //   };
+//     // }
+
+//     // if (approval.assignee.toString() !== staffId) {
+//     //   return {
+//     //     success: false,
+//     //     message: "You are not authorized to add a comment to this approval.",
+//     //     code: "UNAUTHORIZED",
+//     //   };
+//     // }
+
+//     // Add the comment to the additionalNote array (message trail)
+//     const staff = await Staff.findById(staffId);
+//     const name = `${staff.first_name} ${staff.last_name}`;
     
-    const approval = await LoanApproval.findById(approvalId);
-    if (!approval) {
-      return {
-        success: false,
-        message: "Approval not found.",
-        code: "NOT_FOUND",
-      };
-    }
-
-    if (approval.status !== "Requested") {
-      return {
-        success: false,
-        message: `Approval cannot have comments added because it is of status ${approval.status.toLowerCase()}.`,
-        code: "INVALID_STATUS",
-      };
-    }
-
-    if (approval.assignee.toString() !== staffId) {
-      return {
-        success: false,
-        message: "You are not authorized to add a comment to this approval.",
-        code: "UNAUTHORIZED",
-      };
-    }
-
-    // Add the comment to the additionalNote array (message trail)
-    const staff = await Staff.findById(staffId);
-    console.log({staff});
-    
-    const name = `${staff.first_name} ${staff.last_name}`;
-    
-    approval.additionalNote.push({
-      message: comment || "No comment provided.",
-      sender: staff,
-      timestamp: new Date(),
-      noteType: 'Staff'
-    });
+//     approval.additionalNote.push({
+//       message: comment || "No comment provided.",
+//       sender: staff,
+//       timestamp: new Date(),
+//       noteType: 'Staff'
+//     });
 
 
-    console.log({approval});
-    const updatedApproval = await approval.save();
+//     console.log({approval});
+//     const updatedApproval = await approval.save();
 
-    await ActivityLogService.LogActivity(
-      "update",
-      "Staff",
-      staffId,
-      "LoanApplication",
-      approval.loanApplication,
-      {
-        message: `${name} added a comment on the approval process for this Loan Application`,
-      }
-    );
+//     await ActivityLogService.LogActivity(
+//       "update",
+//       "Staff",
+//       staffId,
+//       "LoanApplication",
+//       approval.loanApplication,
+//       {
+//         message: `${name} added a comment on the approval process for this Loan Application`,
+//       }
+//     );
 
-    return {
-      success: true,
-      message: "Comment added successfully.",
-      approval: updatedApproval,
-    };
-  } catch (error) {
-    console.error("Error adding comment to approval:", error);
-    return {
-      success: false,
-      message: `Error: ${error.message}`,
-      code: "INTERNAL_ERROR",
-    };
-  }
-}
+//     return {
+//       success: true,
+//       message: "Comment added successfully.",
+//       approval: updatedApproval,
+//     };
+//   } catch (error) {
+//     console.error("Error adding comment to approval:", error);
+//     return {
+//       success: false,
+//       message: `Error: ${error.message}`,
+//       code: "INTERNAL_ERROR",
+//     };
+//   }
+// }
 
 };

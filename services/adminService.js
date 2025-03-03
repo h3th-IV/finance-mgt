@@ -40,13 +40,10 @@ module.exports = class AdminService {
                 duration: product_data.duration,
                 product_group: product_data.product_group,
             }
-            console.log(newloanProduct.createdBy)
 
             const loanProduct = await new LoanProduct(newloanProduct).save();
             const req_staff = await Staff.findById(product_data.createdBy)
             const req_s = await Staff.findById("67adb949b4c4438a2089f203")
-            console.log(req_staff);
-            console.log("checked user: ",req_s);
             const name = `${req_staff.first_name} ${req_staff.last_name}`;
 
             await ActivityLogService.LogActivity(
@@ -241,6 +238,16 @@ module.exports = class AdminService {
         }
     }
 
+    static async getStaffById(id) {
+        try {
+            const staff = await Staff.findById(id).populate('role');
+            console.log({staff})
+            return staff;
+        } catch (error) {
+            throw new Error('Error fetching staffs');
+        }
+    }
+
     static async getStaffWithPerm(permission) {
         try {
             const normalizedPermission = permission.toUpperCase();
@@ -258,7 +265,6 @@ module.exports = class AdminService {
                     code: "NOT_FOUND",
                 };
             }
-    
             return {
                 success: true,
                 message: "Staff with the specified permission fetched successfully.",
@@ -828,6 +834,4 @@ module.exports = class AdminService {
             };
         }
     }
-    
-    
 }

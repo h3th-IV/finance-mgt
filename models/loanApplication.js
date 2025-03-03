@@ -147,7 +147,24 @@ const LoanApplication = new mongoose.Schema(
                 },
                 notes: { type: String }
             }
-        ]
+        ],
+        offer_letter: {
+            letter: {
+                type: String,
+            },
+            uploadedByType: {
+                type: String,
+                enum: ['User', 'Staff'],
+            },
+            uploaded_by: {
+                type: mongoose.Schema.Types.ObjectId,
+                refPath: 'createdByType',
+            },
+            uploaded_at: {
+                type: Date,
+                default: Date.now,
+            },
+        }
     },
     { timestamps: true }
 );

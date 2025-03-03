@@ -11,6 +11,7 @@ const ApprovalService = require("./loanApprovalService");
 const staff = require("../models/staff");
 const mailer = require("../config/mailer");
 const kyc = require("../models/kyc");
+const AdminService = require('../services/adminService');
 
 
 
@@ -138,6 +139,69 @@ module.exports = class LoanApplicationService {
   //   }
   // }
 
+
+  static async uploadOfferLetter(loanApplicationId, offerLetterData) {
+    try {
+        const loanApplication = await LoanApplication.findById(loanApplicationId)
+        .populate("customer")
+        .populate("loan_product");
+
+        if (!loanApplication) {
+            return {
+                success: false,
+                message: "Loan application not found",
+                code: 404,
+            };
+        }
+
+        loanApplication.offer_letter = {
+            letter: offerLetterData.letter,
+            uploadedByType: offerLetterData.uploadedByType,
+            uploaded_by: offerLetterData.uploaded_by,
+            uploaded_at: Date.now(),
+        };
+
+        const updatedLoanApplication = await loanApplication.save();
+
+
+        const disburseStaffsResponse = await AdminService.getStaffWithPerm("LOAN_DISBURSEMENT");
+        const staffs = disburseStaffsResponse.staff;
+
+        //xtract staff emails
+        const staffEmails = staffs.map((staff) => staff.email);
+
+        //send email notifications to staff
+        if (staffEmails.length > 0) {
+          staffEmails.forEach( async (email) => {
+              try {
+                   await mailer.sendOfferLetterNotificationEmail(
+                      email,
+                      loanApplication.loan_id,
+                      loanApplication.customer.first_name || loanApplication.customer.business_name,
+                      loanApplication.loan_product.name
+                  );
+              } catch (error) {
+                  console.error(`Error sending email to ${email}:`, error);
+              }
+          });
+        }
+
+        return {
+            success: true,
+            message: "Offer letter uploaded successfully",
+            data: updatedLoanApplication,
+        };
+    } catch (error) {
+        console.error("Error uploading offer letter:", error);
+        return {
+            success: false,
+            message: `Error: ${error.message}`,
+            code: 500,
+        };
+    }
+  }
+
+
   static async uploadAdditionalDocument(loanApplicationId, documentData) {
     try {
         const loanApplication = await LoanApplication.findById(loanApplicationId);
@@ -177,48 +241,34 @@ module.exports = class LoanApplicationService {
 
   static async createLoanApplication(loanData, files) {
     try {
+      // Validate loan product
       const loanProduct = await LoanProduct.findById(loanData.loan_product);
       if (!loanProduct) {
-        return {
-          success: false,
-          message: "Loan product not found",
-          code: "NOT_FOUND",
-        };
+        return { success: false, message: "Loan product not found", code: "NOT_FOUND" };
       }
-
+  
       // Validate loan amount
-      const compare =
-        loanData.loan_amount < loanProduct.min ||
-        loanData.loan_amount > loanProduct.max;
-      if (compare) {
+      if (loanData.loan_amount < loanProduct.min || loanData.loan_amount > loanProduct.max) {
         return {
           success: false,
           message: `Loan amount for ${loanProduct.name} must be between ${loanProduct.min} and ${loanProduct.max}`,
           code: "INVALID_AMOUNT",
         };
       }
-
+  
       // Validate loan duration
-      const isValidDuration = loanProduct.duration.includes(loanData.loan_duration);
-      if (!isValidDuration) {
+      if (!loanProduct.duration.includes(loanData.loan_duration)) {
         return {
           success: false,
           message: `Invalid loan duration. Allowed durations for ${loanProduct.name} are: ${loanProduct.duration.join(", ")} months.`,
           code: "INVALID_DURATION",
         };
       }
-
+  
       // Generate loan ID
-      const lastLoan = await LoanApplication.findOne({}, { loan_id: 1 })
-        .sort({ createdAt: -1 })
-        .limit(1);
-
-      let newLoanId = "CWLN-1024";
-      if (lastLoan && lastLoan.loan_id) {
-        const lastLoanNumber = parseInt(lastLoan.loan_id.split("-")[1], 10);
-        newLoanId = `CWLN-${lastLoanNumber + 1}`;
-      }
-
+      const lastLoan = await LoanApplication.findOne({}, { loan_id: 1 }).sort({ createdAt: -1 }).limit(1);
+      const newLoanId = lastLoan && lastLoan.loan_id ? `CWLN-${parseInt(lastLoan.loan_id.split("-")[1], 10) + 1}` : "CWLN-1024";
+  
       // Calculate repayment plan
       const repaymentPlan = calculateRepaymentPlan(
         loanData.loan_amount,
@@ -227,213 +277,315 @@ module.exports = class LoanApplicationService {
         loanProduct.interest_type,
         loanData.processing_fee
       );
-
-      let statementOfAccount = null;
-      let statementOfNetWorth = null;
-      let securityCheque = null;
-      let businessFinancial = null;
-      let businessCollateral = null;
-      let otherDocuments = null;
-
-      // Process uploaded files based on loan type
-      if (loanData.loan_type === "individual") {
-        statementOfAccount = files["statement_of_account"]?.[0]?.path || null;
-        statementOfNetWorth = files["statement_of_networth"]?.[0]?.path || null;
-        securityCheque = files["security_cheque"]?.[0]?.path || null;
-      } else if (loanData.loan_type === "business") {
-        statementOfAccount = files["statement_of_account"]?.[0]?.path || null;
-        statementOfNetWorth = files["statement_of_networth"]?.[0]?.path || null;
-        securityCheque = files["security_cheque"]?.[0]?.path || null;
-        businessFinancial = {
-          annual_revenue: loanData.business_financial?.annual_revenue || null,
-        };
+  
+      // Process uploaded files
+      const extractFilePath = (key) => files[key]?.[0]?.path || null;
+      let businessFinancial = null, businessCollateral = null, otherDocuments = null;
+  
+      if (loanData.loan_type === "business") {
+        businessFinancial = { annual_revenue: loanData.business_financial?.annual_revenue || null };
         businessCollateral = {
-          description_of_assets: files["business_collateral.description_of_assets"]?.[0]?.path || null,
-          valuation_reports: files["business_collateral.valuation_reports"]?.[0]?.path || null,
-          photographs: files["business_collateral.photographs"]?.[0]?.path || null,
+          description_of_assets: extractFilePath("business_collateral.description_of_assets"),
+          valuation_reports: extractFilePath("business_collateral.valuation_reports"),
+          photographs: extractFilePath("business_collateral.photographs"),
         };
         otherDocuments = {
-          business_plan: files["other_documents.business_plan"]?.[0]?.path || null,
-          insurance_documents: files["other_documents.insurance_documents"]?.[0]?.path || null,
-          tax_clearance: files["other_documents.tax_clearance"]?.[0]?.path || null,
+          business_plan: extractFilePath("other_documents.business_plan"),
+          insurance_documents: extractFilePath("other_documents.insurance_documents"),
+          tax_clearance: extractFilePath("other_documents.tax_clearance"),
         };
       }
-
+  
+      // Create loan application
       const loanApplication = new LoanApplication({
         ...loanData,
         loan_id: newLoanId,
         interest_rate: loanProduct.interest,
-        statement_of_account: statementOfAccount,
-        statement_of_networth: statementOfNetWorth,
-        security_cheque: securityCheque,
+        statement_of_account: extractFilePath("statement_of_account"),
+        statement_of_networth: extractFilePath("statement_of_networth"),
+        security_cheque: extractFilePath("security_cheque"),
         business_financials: businessFinancial,
         collateral: businessCollateral,
         other_documents: otherDocuments,
         date_disbursed: loanData.date_disbursed || null,
         repayment_plan: repaymentPlan,
       });
-
+  
       const savedLoanApplication = await loanApplication.save();
-      const _loanApplication = await LoanApplication.findById(savedLoanApplication._id)
+      const populatedLoan = await LoanApplication.findById(savedLoanApplication._id)
         .populate("customer", "first_name")
         .populate("loan_product", "name");
-      await Promise.all([
-        sendGuarantorMail(
-          _loanApplication.guarantor1.email,
-          _loanApplication.guarantor1.name,
-          _loanApplication.customer.name,
-          {
-            loanProduct: _loanApplication.loan_product.name,
-            loanAmount: _loanApplication.loan_amount,
-            loanDuration: _loanApplication.loan_duration,
-          }
-        ),
-        sendGuarantorMail(
-          _loanApplication.guarantor2.email,
-          _loanApplication.guarantor2.name,
-          _loanApplication.customer.name,
-          {
-            loanProduct: _loanApplication.loan_product.name,
-            loanAmount: _loanApplication.loan_amount,
-            loanDuration: _loanApplication.loan_duration,
-          }
-        ),
-      ]);
-
-      const apploanProduct = await LoanProduct.findById(_loanApplication.loan_product);
-      let createdBy;
-      if(loanData.createdByType == "Staff"){
-        createdBy = await staff.findById(loanData.createdBy)
-      }else{
-        createdBy = await User.findById(loanData.createdBy)
-      }
-      const name = `${createdBy.first_name} ${createdBy.last_name}`;
-      // Log the activity
+  
+      // Send guarantor emails
+      const sendGuarantorEmails = async (guarantor) => {
+        if (guarantor) {
+          await sendGuarantorMail(
+            guarantor.email,
+            guarantor.name,
+            populatedLoan.customer.name,
+            {
+              loanProduct: populatedLoan.loan_product.name,
+              loanAmount: populatedLoan.loan_amount,
+              loanDuration: populatedLoan.loan_duration,
+            }
+          );
+        }
+      };
+      await Promise.all([sendGuarantorEmails(populatedLoan.guarantor1), sendGuarantorEmails(populatedLoan.guarantor2)]);
+  
+      // Log activity
+      const createdBy = loanData.createdByType === "Staff"
+        ? await staff.findById(loanData.createdBy)
+        : await User.findById(loanData.createdBy);
+      const createdByName = `${createdBy.first_name} ${createdBy.last_name}`;
+      
       await ActivityLogService.LogActivity(
         "create",
         loanData.createdByType,
         loanData.createdBy,
         "LoanApplication",
-        _loanApplication._id,
+        populatedLoan._id,
         {
-          loanProductDetails: apploanProduct,
-          loanAmount: _loanApplication.loan_amount,
-          loanDuration: _loanApplication.loan_duration,
-          loanStatus: _loanApplication.status,
-          message: `This Loan Application was created by ${loanData.createdByType}, ${name}`,
+          loanProductDetails: loanProduct,
+          loanAmount: populatedLoan.loan_amount,
+          loanDuration: populatedLoan.loan_duration,
+          loanStatus: populatedLoan.status,
+          message: `This Loan Application was created by ${loanData.createdByType}, ${createdByName}`,
         }
       );
-
-      const approvals = await ApprovalService.createApprovals(_loanApplication._id)
-      
-
-      return {
-        success: true,
-        loanApplication: _loanApplication,
-        repaymentPlan,
-        approvals
-      };
+  
+      // Create approvals
+      const approvals = await ApprovalService.createApprovals(populatedLoan._id, loanData.createdByType, loanData.createdBy  );
+  
+      return { success: true, loanApplication: populatedLoan, repaymentPlan, approvals };
     } catch (error) {
       console.error("Error creating loan application", error);
-      return {
-        success: false,
-        message: `Error: ${error.message}`,
-        code: "INTERNAL_ERROR",
-      };
+      return { success: false, message: `Error: ${error.message}`, code: "INTERNAL_ERROR" };
     }
   }
+  
 
+  // static async getAllLoanApplication(filters, pagination) {
+  //   const { status, search , createdBy} = filters;
+  //   const { page = 1, limit = 10 } = pagination;
+
+  //   try {
+  //     const queryFilter = {};
+
+  //     if (status) {
+  //       queryFilter.status = status;
+  //     }
+
+  //     if (createdBy) {
+  //       queryFilter.createdBy = createdBy;
+  //     }
+
+
+
+  //     const searchRegex = search ? new RegExp(search, "i") : null;
+
+
+  //     const skip = (page - 1) * limit;
+
+
+  //     const loanApplications = await LoanApplication.find(queryFilter)
+  //       .populate({
+  //         path: "customer",
+  //         match: searchRegex
+  //           ? {
+  //             $or: [
+  //               { first_name: searchRegex },
+  //               { last_name: searchRegex },
+  //               { business_name: searchRegex },
+  //               { phone_number: searchRegex },
+  //               { email: searchRegex },
+  //             ],
+  //           }
+  //           : {}, //nein filtering if search is not provided
+  //       })
+  //       .populate("loan_product")
+  //       .skip(skip)
+  //       .limit(limit)
+  //       .sort({ createdAt: -1 });
+
+  //     //filter out loan applications with null `customer` due to the `math` filter
+  //     const filteredApplications = loanApplications.filter(
+  //       (app) => app.customer
+  //     );
+
+  //     const totalApplications = await LoanApplication.countDocuments(queryFilter);
+  //     // await LoanApplication.deleteMany();
+
+  //     const totalPages = Math.ceil(totalApplications / limit);
+
+  //     const paginationLinks = {
+  //       first: `/loan-apps?page=1&limit=${limit}${status ? `&status=${status}` : ""
+  //         }${search ? `&search=${search}` : ""}`,
+  //       prev:
+  //         page > 1
+  //           ? `/loan-apps?page=${page - 1}&limit=${limit}${status ? `&status=${status}` : ""
+  //           }${search ? `&search=${search}` : ""}`
+  //           : null,
+  //       next:
+  //         page < totalPages
+  //           ? `/loan-apps?page=${page + 1}&limit=${limit}${status ? `&status=${status}` : ""
+  //           }${search ? `&search=${search}` : ""}`
+  //           : null,
+  //       last: `/loan-apps?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ""
+  //         }${search ? `&search=${search}` : ""}`,
+  //     };
+  //     // await LoanApplication.deleteMany();
+  //     return {
+  //       success: true,
+  //       data: {
+  //         loanApplications: filteredApplications,
+  //         links: {
+  //           first: paginationLinks.first,
+  //           prev: paginationLinks.prev,
+  //           next: paginationLinks.next,
+  //           last: paginationLinks.last,
+  //           currentPage: page,
+  //           totalPages: totalPages,
+  //           totalPerPage: limit,
+  //           total: totalApplications,
+  //         },
+  //       },
+  //     };
+  //   } catch (error) {
+  //     console.error("Error fetching loan applications:", error);
+  //     return {
+  //       success: false,
+  //       message: "Could not fetch loan applications",
+  //     };
+  //   }
+  // }
+
+  
   static async getAllLoanApplication(filters, pagination) {
-    const { status, search , createdBy} = filters;
+    const { status, search, createdBy } = filters;
     const { page = 1, limit = 10 } = pagination;
 
     try {
-      const queryFilter = {};
+        const queryFilter = {};
+        if (status) {
+            queryFilter.status = status;
+        }
+        if (createdBy) {
+            queryFilter.createdBy = createdBy;
+        }
 
-      if (status) {
-        queryFilter.status = status;
-      }
+        const searchRegex = search ? new RegExp(search, "i") : null;
 
-      if (createdBy) {
-        queryFilter.createdBy = createdBy;
-      }
+        // Use aggregation to include the customer details in the query
+        const pipeline = [
+            { $match: queryFilter }, // Apply initial filters
+            {
+                $lookup: {
+                    from: "users", // Reference the User collection
+                    localField: "customer",
+                    foreignField: "_id",
+                    as: "customer",
+                },
+            },
+            { $unwind: "$customer" }, // Flatten the customer array into an object
+        ];
 
+        // Add search filter if provided
+        if (searchRegex) {
+            pipeline.push({
+                $match: {
+                    $or: [
+                        { "customer.first_name": searchRegex },
+                        { "customer.last_name": searchRegex },
+                        { "customer.business_name": searchRegex },
+                        { "customer.phone_number": searchRegex },
+                        { "customer.email": searchRegex },
+                    ],
+                },
+            });
+        }
 
+        // Pagination stages
+        const skip = (page - 1) * limit;
+        pipeline.push(
+            { $sort: { createdAt: -1 } }, // Sort by creation date
+            { $skip: skip },
+            { $limit: limit }
+        );
 
-      const searchRegex = search ? new RegExp(search, "i") : null;
+        // Fetch loan applications using the aggregation pipeline
+        const loanApplications = await LoanApplication.aggregate(pipeline);
 
+        // Count total documents matching the full query
+        const countPipeline = [
+            { $match: queryFilter },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "customer",
+                    foreignField: "_id",
+                    as: "customer",
+                },
+            },
+            { $unwind: "$customer" },
+        ];
 
-      const skip = (page - 1) * limit;
+        if (searchRegex) {
+            countPipeline.push({
+                $match: {
+                    $or: [
+                        { "customer.first_name": searchRegex },
+                        { "customer.last_name": searchRegex },
+                        { "customer.business_name": searchRegex },
+                        { "customer.phone_number": searchRegex },
+                        { "customer.email": searchRegex },
+                    ],
+                },
+            });
+        }
 
+        const totalApplications = await LoanApplication.aggregate([
+            ...countPipeline,
+            { $count: "total" },
+        ]).then((result) => (result.length > 0 ? result[0].total : 0));
 
-      const loanApplications = await LoanApplication.find(queryFilter)
-        .populate({
-          path: "customer",
-          match: searchRegex
-            ? {
-              $or: [
-                { first_name: searchRegex },
-                { last_name: searchRegex },
-                { phone_number: searchRegex },
-                { email: searchRegex },
-              ],
-            }
-            : {}, //nein filtering if search is not provided
-        })
-        .populate("loan_product")
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 });
+        // Calculate total pages
+        const totalPages = Math.ceil(totalApplications / limit);
 
-      //filter out loan applications with null `customer` due to the `math` filter
-      const filteredApplications = loanApplications.filter(
-        (app) => app.customer
-      );
+        // Generate pagination links
+        const paginationLinks = {
+            first: `/loan-apps?page=1&limit=${limit}${status ? `&status=${status}` : ""}${search ? `&search=${search}` : ""}`,
+            prev: page > 1
+                ? `/loan-apps?page=${page - 1}&limit=${limit}${status ? `&status=${status}` : ""}${search ? `&search=${search}` : ""}`
+                : null,
+            next: page < totalPages
+                ? `/loan-apps?page=${page + 1}&limit=${limit}${status ? `&status=${status}` : ""}${search ? `&search=${search}` : ""}`
+                : null,
+            last: `/loan-apps?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ""}${search ? `&search=${search}` : ""}`,
+        };
 
-      const totalApplications = await LoanApplication.countDocuments(queryFilter);
-      // await LoanApplication.deleteMany();
-
-      const totalPages = Math.ceil(totalApplications / limit);
-
-      const paginationLinks = {
-        first: `/loan-apps?page=1&limit=${limit}${status ? `&status=${status}` : ""
-          }${search ? `&search=${search}` : ""}`,
-        prev:
-          page > 1
-            ? `/loan-apps?page=${page - 1}&limit=${limit}${status ? `&status=${status}` : ""
-            }${search ? `&search=${search}` : ""}`
-            : null,
-        next:
-          page < totalPages
-            ? `/loan-apps?page=${page + 1}&limit=${limit}${status ? `&status=${status}` : ""
-            }${search ? `&search=${search}` : ""}`
-            : null,
-        last: `/loan-apps?page=${totalPages}&limit=${limit}${status ? `&status=${status}` : ""
-          }${search ? `&search=${search}` : ""}`,
-      };
-      // await LoanApplication.deleteMany();
-      return {
-        success: true,
-        data: {
-          loanApplications: filteredApplications,
-          links: {
-            first: paginationLinks.first,
-            prev: paginationLinks.prev,
-            next: paginationLinks.next,
-            last: paginationLinks.last,
-            currentPage: page,
-            totalPages: totalPages,
-            totalPerPage: limit,
-            total: totalApplications,
-          },
-        },
-      };
+        return {
+            success: true,
+            data: {
+                loanApplications,
+                links: {
+                    first: paginationLinks.first,
+                    prev: paginationLinks.prev,
+                    next: paginationLinks.next,
+                    last: paginationLinks.last,
+                    currentPage: page,
+                    totalPages: totalPages,
+                    totalPerPage: limit,
+                    total: totalApplications,
+                },
+            },
+        };
     } catch (error) {
-      console.error("Error fetching loan applications:", error);
-      return {
-        success: false,
-        message: "Could not fetch loan applications",
-      };
+        console.error("Error fetching loan applications:", error);
+        return {
+            success: false,
+            message: "Could not fetch loan applications",
+        };
     }
   }
 
@@ -919,7 +1071,6 @@ static async fetchAllRepayments(page = 1, limit = 10) {
         const loanApplication = await LoanApplication.findById(loanApplicationId)
             .populate("loan_product", "interest interest_type")
             .populate("customer", "first_name email business_name");
-            console.log("zeroth ", loanApplication); 
         if (!loanApplication) {
             return {
                 success: false,
@@ -928,6 +1079,7 @@ static async fetchAllRepayments(page = 1, limit = 10) {
             };
         }
         const customer = await User.findById(loanApplication.customer);
+console.log({x: loanApplication.status});
 
         if (loanApplication.status !== "ready_for_disbursement") {
             return {

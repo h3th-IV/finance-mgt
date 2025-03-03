@@ -5,6 +5,9 @@ const { validateRequiredFiles } = require('../helpers/validateFiles.helper');
 const { loanCalculatorValidator } = require('../validators/loanCalc.validator');
 const { calculateRepaymentPlan } = require('../helpers/calcRepayment.helper');
 const AdminService = require('../services/adminService')
+const mailer = require("../config/mailer");
+const loanApplication = require("../models/loanApplication");
+
 
 module.exports = class LoanApplicationController {
     // static async createLoanApplication(req, res) {
@@ -70,6 +73,63 @@ module.exports = class LoanApplicationController {
     //         return errorResponse(res, 500, error.message);
     //     }
     // }
+
+
+    static async sendOfferLetter(req, res){
+        const { id, isStaff } = req.user;
+        const { loanId } = req.params;//loan application id
+        const { data } = req.body;
+        try{
+            const loanApp = await loanApplication.findById(loanId).populate('customer')
+            const offer_letter = await generateOfferLetter(data)
+            await mailer.sendOfferLetter(
+                loanApp.customer.email,
+                loanApp.customer.first_name || loanApp.customer.business_name,
+                loanApp.loan_id,
+                offer_letter.buffer
+            )
+        } catch(error){
+            console.error("Error sending offer letter:", error);
+            return errorResponse(res, 500, "An unexpected server error occurred.");
+        }
+    }
+
+    static async uploadOfferLetter(req, res) {
+        const { id, isStaff } = req.user;
+        const { identifier } = req.params; // Loan application ID
+        const file = req.file;
+    
+        try {
+            if (!file) {
+                return errorResponse(res, 400, "No file was uploaded.");
+            }
+    
+            const createdByType = isStaff ? "Staff" : "User";
+            const createdBy = id;
+    
+            // Prep the offer letter data
+            const offerLetterData = {
+                letter: file.path, // Save the file path
+                uploadedByType: createdByType,
+                uploaded_by: createdBy,
+            };
+    
+            const response = await LoanApplicationService.uploadOfferLetter(
+                identifier,
+                offerLetterData
+            );
+    
+            if (!response.success) {
+                return errorResponse(res, response.code || 500, response.message);
+            }
+    
+            return successResponse(res, 200, "Offer letter uploaded successfully!", response.data);
+        } catch (error) {
+            console.error("Error uploading offer letter:", error);
+            return errorResponse(res, 500, "An unexpected server error occurred.");
+        }
+    }
+
 
     static async uploadAdditionalDocument(req, res) {
         const { id, isStaff } = req.user;

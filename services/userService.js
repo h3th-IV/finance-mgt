@@ -117,6 +117,7 @@ module.exports = class UserService {
                     $or: [
                         { first_name: searchRegex },
                         { last_name: searchRegex },
+                        { business_name: searchRegex },
                         { phone_number: searchRegex },
                         { email: searchRegex },
                     ],
@@ -151,6 +152,7 @@ module.exports = class UserService {
                     $or: [
                         { first_name: searchRegex },
                         { last_name: searchRegex },
+                        { business_name: searchRegex },
                         { phone_number: searchRegex },
                         { email: searchRegex },
                     ],

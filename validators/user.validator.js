@@ -6,7 +6,7 @@ const emailSchema = Joi.string().email().required().messages({
   'any.required': 'Email is required.',
 });
 
-const passwordSchema = Joi.string().min(8).required().messages({
+const passwordSchema = Joi.string().min(5).required().messages({
   'string.min': 'Password must be at least 8 characters long.',
   'string.empty': 'Password is required.',
   'any.required': 'Password is required.',

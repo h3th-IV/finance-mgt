@@ -1,3 +1,4 @@
+const AdminService = require("../services/adminService");
 const LoanApprovalService = require("../services/loanApprovalService");
 const { successResponse, errorResponse } = require('../utils/responses');
 
@@ -203,4 +204,31 @@ module.exports = class LoanApprovalController {
         return errorResponse(res, 500, "Server error");
       }
     }
+
+    static async addComment  (req, res) {
+      const { loanApprovalId } = req.params;
+      const { comment } = req.body;
+      const commenterId = await AdminService.getStaffById(req.user.id);  
+      try {
+        const newComment = await LoanApprovalService.addComment(loanApprovalId, comment, commenterId);
+        return res.status(201).json({ success: true, newComment });
+      } catch (error) {
+        return res.status(400).json({ success: false, error: error.message });
+      }
+    };
+    
+    // Controller to handle replying to a comment on a LoanApproval
+    static async replyToComment  (req, res) {
+      const { loanApprovalId, commentId } = req.params;
+      const { replyText } = req.body;
+      const replierId = req.user.id;  
+      const replier = await AdminService.getStaffById(req.user.id);  
+    
+      try {
+        const newReply = await LoanApprovalService.replyToComment(loanApprovalId, commentId, replyText, replier);
+        return res.status(201).json({ success: true, newReply });
+      } catch (error) {
+        return res.status(400).json({ success: false, error: error.message });
+      }
+    };
 };
