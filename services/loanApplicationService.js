@@ -144,7 +144,7 @@ module.exports = class LoanApplicationService {
     try {
         const loanApplication = await LoanApplication.findById(loanApplicationId)
         .populate("customer")
-        .populate("loan_product");;
+        .populate("loan_product");
 
         if (!loanApplication) {
             return {
@@ -163,6 +163,7 @@ module.exports = class LoanApplicationService {
 
         const updatedLoanApplication = await loanApplication.save();
 
+
         const disburseStaffsResponse = await AdminService.getStaffWithPerm("LOAN_DISBURSEMENT");
         const staffs = disburseStaffsResponse.staff;
 
@@ -171,9 +172,9 @@ module.exports = class LoanApplicationService {
 
         //send email notifications to staff
         if (staffEmails.length > 0) {
-          staffEmails.forEach( (email) => {
+          staffEmails.forEach( async (email) => {
               try {
-                   mailer.sendSingleOfferLetterNotificationEmail(
+                   await mailer.sendOfferLetterNotificationEmail(
                       email,
                       loanApplication.loan_id,
                       loanApplication.customer.first_name || loanApplication.customer.business_name,

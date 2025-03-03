@@ -995,10 +995,10 @@ module.exports.sendDisbursementEmail = async (customerEmail, customerName, loanA
 };
 
 
-module.exports.sendSingleOfferLetterNotificationEmail = (staffEmail, loanApplicationId, customerName, loanProductName) => {
+module.exports.sendOfferLetterNotificationEmail = async (staffEmail, loanApplicationId, customerName, loanProductName) => {
     const magicLink = `https://capitalwise-fe.onrender.com/loanapp/get-single-loan/${loanApplicationId}`;
 
-    sender.sendMail({
+    await sender.sendMail({
         from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
         to: staffEmail,
         subject: "Loan Offer Letter Submitted for Disbursement",
