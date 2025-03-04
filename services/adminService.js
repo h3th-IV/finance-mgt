@@ -265,7 +265,6 @@ module.exports = class AdminService {
                     code: "NOT_FOUND",
                 };
             }
-    
             return {
                 success: true,
                 message: "Staff with the specified permission fetched successfully.",
@@ -835,6 +834,4 @@ module.exports = class AdminService {
             };
         }
     }
-    
-    
 }

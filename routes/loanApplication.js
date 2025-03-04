@@ -42,4 +42,12 @@ router.patch(
     parser.single("additional_document"),
     LoanApplicationController.uploadAdditionalDocument
 );
+
+router.patch(
+    "/:identifier/upload-offer-letter",
+    verifyAnyToken,
+    parser.single("offer_letter"),
+    LoanApplicationController.uploadOfferLetter
+);
+
 module.exports = router;

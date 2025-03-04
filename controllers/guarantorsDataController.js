@@ -69,6 +69,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
         }
     }
 
+
     static async updateGuarantor(req, res) {
         try {
             const { id } = req.params;
@@ -112,6 +113,22 @@ const {GuarantorsData} = require("../models/guarantorsData");
         } catch (error) {
             console.error("Error deleting guarantor:", error);
             return errorResponse(res, 500, error.message);
+        }
+    }
+
+    static async getGuarantorsForLoanApplication(req, res) {
+        try {
+            const { id } = req.params; // Loan Application ID
+            const response = await GuarantorsDataService.getGuarantorsByLoanApplicationId(id);
+    
+            if (!response.success) {
+                return errorResponse(res, response.code || 404, response.message);
+            }
+    
+            return successResponse(res, 200, "Guarantors retrieved successfully", response.guarantors);
+        } catch (error) {
+            console.error("Error retrieving guarantors:", error);
+            return errorResponse(res, 500, "An unexpected server error occurred.");
         }
     }
 }

@@ -450,9 +450,11 @@ module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name, staffId) 
     });
 };
 
-module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
+module.exports.sendGuarantorMail = (email, name, customerName, loanDetails, loanApplicationId) => {
+    const guarantorFormLink = `https://capitalwise-fe.onrender.com/guarantor-form/${loanApplicationId}`;
+
     sender.sendMail({
-        from: "Capitalwise Dynamic Pay",
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
         to: email,
         subject: "Guarantor Request for Loan Application",
         html: `
@@ -503,6 +505,16 @@ module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
                         font-size: 16px;
                         text-align: left;
                     }
+                    .btn {
+                        display: inline-block;
+                        padding: 12px 25px;
+                        margin-top: 20px;
+                        font-size: 16px;
+                        color: #ffffff;
+                        background-color: #7AC143;
+                        text-decoration: none;
+                        border-radius: 5px;
+                    }
                     .footer {
                         text-align: center;
                         margin-top: 30px;
@@ -524,7 +536,11 @@ module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
                             <p><strong>Loan Amount:</strong> ${loanDetails.loanAmount}</p>
                             <p><strong>Loan Duration:</strong> ${loanDetails.loanDuration} months</p>
                         </div>
-                        <p>If you agree to be the guarantor, please respond to this email or contact us for further steps.</p>
+                        <p>If you agree to be the guarantor, please click the button below to fill out your details:</p>
+                        <a href="${guarantorFormLink}" class="btn">Fill Guarantor Details</a>
+                        <p>Alternatively, you can copy and paste the following link into your browser:</p>
+                        <p><a href="${guarantorFormLink}">${guarantorFormLink}</a></p>
+                        <p>If you have any questions or need further assistance, please contact our support team at support@capitalwisedynamicpay.com.</p>
                     </div>
                     <div class="footer">
                         &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
@@ -991,5 +1007,195 @@ module.exports.sendDisbursementEmail = async (customerEmail, customerName, loanA
         </body>
         </html>
         `,
+    });
+};
+
+
+module.exports.sendOfferLetterNotificationEmail = async (staffEmail, loanApplicationId, customerName, loanProductName) => {
+    const magicLink = `https://capitalwise-fe.onrender.com/loanapp/get-single-loan/${loanApplicationId}`;
+
+    await sender.sendMail({
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
+        to: staffEmail,
+        subject: "Loan Offer Letter Submitted for Disbursement",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f8f8f8;
+                    margin: 0;
+                    padding: 20px;
+                    color: #333;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    border-top: 10px solid #32CD32; /* Lime green */
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #32CD32;
+                    font-size: 24px;
+                    margin: 0;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content p {
+                    font-size: 16px;
+                    margin: 10px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #32CD32;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    font-size: 14px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Capitalwise Dynamic Pay</h1>
+                </div>
+                <div class="content">
+                    <p>Dear Staff,</p>
+                    <p>An offer letter has been submitted and reviewed for the following loan application:</p>
+                    <ul style="list-style-type: none; padding: 0; text-align: left;">
+                        <li><strong>Customer Name:</strong> ${customerName}</li>
+                        <li><strong>Loan Product:</strong> ${loanProductName}</li>
+                        <li><strong>Loan ID:</strong> ${loanApplicationId}</li>
+                    </ul>
+                    <p>The loan is now ready for disbursement. Please review the loan application and proceed with disbursement upon satisfaction.</p>
+                    <p>You can view the loan details by clicking the button below:</p>
+                    <a href="${magicLink}" class="btn">Review Loan Application</a>
+                    <p>If you have any questions or need further assistance, please contact our support team at support@capitalwisedynamicpay.com.</p>
+                </div>
+                <div class="footer">
+                    &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    });
+};
+
+module.exports.sendOfferLetter = async (email, name, loan_id, pdfBuffer) => {
+    const buffer = Buffer.from(new Uint8Array(pdfBuffer));
+
+    await transport.sendMail({
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
+        to: email,
+        subject: "Your Loan Offer Letter is Ready",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f8f8f8;
+                    margin: 0;
+                    padding: 20px;
+                    color: #333;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    border-top: 10px solid #32CD32; /* Lime green */
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #32CD32;
+                    font-size: 24px;
+                    margin: 0;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content p {
+                    font-size: 16px;
+                    margin: 10px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #32CD32;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    font-size: 14px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Capitalwise Dynamic Pay</h1>
+                </div>
+                <div class="content">
+                    <p>Dear ${name},</p>
+                    <p>We are pleased to inform you that your loan application with ID <strong>${loan_id}</strong> has been reviewed and an offer letter has been prepared for your review.</p>
+                    <p>Please find the attached offer letter document for your reference. If you agree with the terms outlined in the offer letter, please proceed to sign and accept it through your account dashboard.</p>
+                    <p>If you have any questions or need further clarification, please do not hesitate to contact our support team at support@capitalwisedynamicpay.com.</p>
+                    <a href="https://capitalwise-fe.onrender.com/loanapp/dashboard" class="btn">View Your Dashboard</a>
+                </div>
+                <div class="footer">
+                    &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+        attachments: [
+            {
+                filename: `Offer-Letter-${loan_id}.pdf`,
+                content: buffer,
+                contentType: 'application/pdf'
+            }
+        ]
+    }).catch((err) => {
+        console.error("Error sending offer letter email:", err);
     });
 };
