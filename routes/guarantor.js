@@ -6,10 +6,10 @@ const { verifyToken } = require('../middleware/tokenGenerator');
 const { verifyAnyToken } = require('../middleware/permission');
 
 
-router.post('/create/:loanApplicationId', verifyAnyToken, parser.fields([
+router.post('/create/:loanApplicationId', parser.fields([
     { name: "file", maxCount: 1 }]), GuarantorsDataController.createGuarantor);
-router.get('/guarantor/:id', verifyAnyToken, GuarantorsDataController.getGuarantor);
-router.put('/guarantor/:id', verifyAnyToken, GuarantorsDataController.updateGuarantor);
-router.delete('/guarantor/:id', verifyAnyToken, GuarantorsDataController.deleteGuarantor);
-
+router.get('/guarantor/:id', GuarantorsDataController.getGuarantor);
+router.put('/guarantor/:id', GuarantorsDataController.updateGuarantor);
+router.delete('/guarantor/:id', GuarantorsDataController.deleteGuarantor);
+router.get('/guarantors/:id', GuarantorsDataController.getGuarantorsForLoanApplication);
 module.exports = router;
