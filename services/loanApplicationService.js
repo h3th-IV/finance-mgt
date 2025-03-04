@@ -327,7 +327,8 @@ module.exports = class LoanApplicationService {
               loanProduct: populatedLoan.loan_product.name,
               loanAmount: populatedLoan.loan_amount,
               loanDuration: populatedLoan.loan_duration,
-            }
+            },
+            savedLoanApplication._id
           );
         }
       };

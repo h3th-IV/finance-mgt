@@ -450,9 +450,11 @@ module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name, staffId) 
     });
 };
 
-module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
+module.exports.sendGuarantorMail = (email, name, customerName, loanDetails, loanApplicationId) => {
+    const guarantorFormLink = `https://capitalwise-fe.onrender.com/guarantor-form/${loanApplicationId}`;
+
     sender.sendMail({
-        from: "Capitalwise Dynamic Pay",
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
         to: email,
         subject: "Guarantor Request for Loan Application",
         html: `
@@ -503,6 +505,16 @@ module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
                         font-size: 16px;
                         text-align: left;
                     }
+                    .btn {
+                        display: inline-block;
+                        padding: 12px 25px;
+                        margin-top: 20px;
+                        font-size: 16px;
+                        color: #ffffff;
+                        background-color: #7AC143;
+                        text-decoration: none;
+                        border-radius: 5px;
+                    }
                     .footer {
                         text-align: center;
                         margin-top: 30px;
@@ -524,7 +536,11 @@ module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
                             <p><strong>Loan Amount:</strong> ${loanDetails.loanAmount}</p>
                             <p><strong>Loan Duration:</strong> ${loanDetails.loanDuration} months</p>
                         </div>
-                        <p>If you agree to be the guarantor, please respond to this email or contact us for further steps.</p>
+                        <p>If you agree to be the guarantor, please click the button below to fill out your details:</p>
+                        <a href="${guarantorFormLink}" class="btn">Fill Guarantor Details</a>
+                        <p>Alternatively, you can copy and paste the following link into your browser:</p>
+                        <p><a href="${guarantorFormLink}">${guarantorFormLink}</a></p>
+                        <p>If you have any questions or need further assistance, please contact our support team at support@capitalwisedynamicpay.com.</p>
                     </div>
                     <div class="footer">
                         &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
