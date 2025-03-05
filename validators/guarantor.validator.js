@@ -2,10 +2,9 @@ const Joi = require('joi');
 
 const guarantorValidator = Joi.object({
     firstName: Joi.string()
-        .required()
+        .optional()
         .messages({
             'string.base': '"First Name" must be a string.',
-            'any.required': '"First Name" is required.',
         }),
     middleName: Joi.string()
         .optional()
@@ -13,43 +12,36 @@ const guarantorValidator = Joi.object({
             'string.base': '"Middle Name" must be a string.',
         }),
     lastName: Joi.string()
-        .required()
+        .optional()
         .messages({
             'string.base': '"Last Name" must be a string.',
-            'any.required': '"Last Name" is required.',
         }),
-
-    email: Joi.string().email().required().messages({
-        'string.email': 'Invalid email format.',
-        'string.empty': 'Email is required.',
-        'any.required': 'Email is required.',
-    }),
-
+    email: Joi.string().email()
+        .optional()
+        .messages({
+            'string.email': 'Invalid email format.',
+        }),
     mobile: Joi.string()
         .pattern(/^\d+$/)
-        .required()
+        .optional()
         .messages({
             'string.pattern.base': '"Mobile" must only contain numbers.',
-            'any.required': '"Mobile" is required.',
         }),
     dateOfBirth: Joi.date()
-        .required()
+        .optional()
         .messages({
             'date.base': '"Date of Birth" must be a valid date.',
-            'any.required': '"Date of Birth" is required.',
         }),
     gender: Joi.string()
         .valid('Male', 'Female', 'Other')
-        .required()
+        .optional()
         .messages({
             'any.only': '"Gender" must be one of Male, Female, or Other.',
-            'any.required': '"Gender" is required.',
         }),
     idNumber: Joi.string()
-        .required()
+        .optional()
         .messages({
             'string.base': '"ID Number" must be a valid string.',
-            'any.required': '"ID Number" is required.',
         }),
 });
 
