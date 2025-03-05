@@ -7,6 +7,8 @@ const { calculateRepaymentPlan } = require('../helpers/calcRepayment.helper');
 const AdminService = require('../services/adminService')
 const mailer = require("../config/mailer");
 const loanApplication = require("../models/loanApplication");
+const mongoose = require("mongoose");
+
 
 
 module.exports = class LoanApplicationController {
@@ -289,20 +291,19 @@ module.exports = class LoanApplicationController {
     static async getAllLoanApplication(req, res) {
         try {
           let filters = null
-
             if(req.user.role.permissions.includes("VIEW_CREATED_LOAN_APP") && !req.user.role.permissions.includes("VIEW_LOAN_APP") ){
+                const userId = new mongoose.Types.ObjectId(req.user.id);
                 filters = {
                     status: req.query.status,
                     search: req.query.search,
-                    createdBy: req.user.id
+                    createdBy: userId,
                 };
             } else {
                 filters = {
                     status: req.query.status,
-                    search: req.query.search, // Add search parameter
+                    search: req.query.search,
                 };
-            }
-            
+            }            
          
 
             const pagination = {

@@ -474,6 +474,7 @@ module.exports = class LoanApplicationService {
         if (createdBy) {
             queryFilter.createdBy = createdBy;
         }
+        console.log("queryFilter", queryFilter);
 
         const searchRegex = search ? new RegExp(search, "i") : null;
 
