@@ -8,6 +8,7 @@ const AdminService = require('../services/adminService')
 const mailer = require("../config/mailer");
 const loanApplication = require("../models/loanApplication");
 const mongoose = require("mongoose");
+const GuarantorsDataService = require("../services/guarantorsDataService");
 
 
 
@@ -437,16 +438,22 @@ module.exports = class LoanApplicationController {
                 const statusCode = result.code === "NOT_FOUND" ? 404 : 500;
                 return errorResponse(res, statusCode, result.message);
             }
+
+            const guarantorResponse = await GuarantorsDataService.getGuarantorsByLoanApplicationId(identifier);
+            
             const guarantors = [
                 result.guarantor1?.guarantor || null,
                 result.guarantor2?.guarantor || null,
             ].filter(Boolean);
 
+           // guarantorResponse.guarantorResponse = guarantorResponse.guarantors
+
             return successResponse(res, 200, "Loan application retrieved successfully", {
                 loanApplication: result.loanApplication,
                 guarantors,
                 activityLog: result.appActivity,
-                approval: result.approvals
+                approval: result.approvals,
+                guarantorResponse: guarantorResponse.guarantors
             }); 
         } catch (error) {
             console.error("Error in getLoanApplication controller:", error);
