@@ -8,6 +8,8 @@ const AdminService = require('../services/adminService')
 const mailer = require("../config/mailer");
 const loanApplication = require("../models/loanApplication");
 const mongoose = require("mongoose");
+const { generateOfferLetter } = require("./offerLetterService");
+
 
 
 
@@ -247,7 +249,9 @@ module.exports = class LoanApplicationController {
         }
     }
 
+
     static async updateLoanApplication(req, res) {
+        console.log("got here in controler")
         const { id } = req.user;
         const { loanApplicationId } = req.params;
         const updateData = req.body;
@@ -257,13 +261,14 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 400, error.details[0].message);
         }
 
-        if (!updateData.loan_duration && !updateData.status) {
+        if (!updateData.loan_duration && !updateData.loan_amount) {
             return errorResponse(
                 res,
                 400,
-                "Please provide at least one field to update: 'Loan Duration' or 'Status'."
+                "Please provide at least one field to update: 'Loan Duration' or 'Amount'."
             );
         }
+
         try {
             const result = await LoanApplicationService.updateLoanApplication(loanApplicationId, updateData, id);
 

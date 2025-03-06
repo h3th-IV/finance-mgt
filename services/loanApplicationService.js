@@ -364,7 +364,122 @@ module.exports = class LoanApplicationService {
       return { success: false, message: `Error: ${error.message}`, code: "INTERNAL_ERROR" };
     }
   }
-  
+
+  static async updateLoanApplication(loanApplicationId, updateData, userId) {
+    console.log("got here in service")
+    try {
+        //fetch existing loan application
+        const loanApplication = await LoanApplication.findById(loanApplicationId)
+            .populate('loan_product', ['min', 'max', 'duration', 'interest', 'interest_type']);
+
+        if (!loanApplication) {
+            return { success: false, code: "NOT_FOUND", message: "Loan application not found" };
+        }
+
+        const loanProduct = loanApplication.loan_product;
+
+        //determine new values or use exist data if not provided
+        const newLoanAmount = updateData.loan_amount !== undefined 
+            ? updateData.loan_amount 
+            : loanApplication.loan_amount;
+
+        const newLoanDuration = updateData.loan_duration !== undefined 
+            ? updateData.loan_duration 
+            : loanApplication.loan_duration;
+
+        const newLoanType = updateData.loan_type || loanApplication.loan_type;
+        // const newStatus = updateData.status || loanApplication.status;
+
+        if (updateData.loan_amount !== undefined) {
+            if (newLoanAmount < loanProduct.min || newLoanAmount > loanProduct.max) {
+                return {
+                    success: false,
+                    code: "INVALID_AMOUNT",
+                    message: `Loan amount must be between ${loanProduct.min} and ${loanProduct.max}`
+                };
+            }
+        }
+
+        if (updateData.loan_duration !== undefined) {
+            if (!loanProduct.duration.includes(newLoanDuration)) {
+                return {
+                    success: false,
+                    code: "INVALID_DURATION",
+                    message: `Invalid duration. Allowed durations: ${loanProduct.duration.join(", ")} months`
+                };
+            }
+        }
+
+        //update fields
+        if (updateData.loan_type) loanApplication.loan_type = newLoanType;
+        // if (updateData.status) loanApplication.status = newStatus;
+
+        //update loan amount and processing fee
+        if (updateData.loan_amount !== undefined) {
+            loanApplication.loan_amount = newLoanAmount;
+            loanApplication.processing_fee = newLoanAmount * 0.01; // 1% of loan amount
+        }
+
+        //update loan duration
+        if (updateData.loan_duration !== undefined) {
+            loanApplication.loan_duration = newLoanDuration;
+        }
+
+        //recalculate repayment plan if loan terms changed
+        if (updateData.loan_amount || updateData.loan_duration) {
+            const repaymentPlan = calculateRepaymentPlan(
+                loanApplication.loan_amount,
+                loanApplication.loan_duration,
+                loanProduct.interest,
+                loanProduct.interest_type,
+                loanApplication.processing_fee
+            );
+
+            loanApplication.repayment_plan = repaymentPlan;
+        }
+
+        //save changes
+        const savedLoan = await loanApplication.save();
+
+        //populate related data for response
+        const populatedLoan = await LoanApplication.findById(loanApplicationId)
+            .populate('customer', 'first_name')
+            .populate('loan_product', 'name');
+
+        //activity log
+        const user = await (loanApplication.createdByType === "Staff" 
+            ? staff.findById(userId) 
+            : User.findById(userId));
+
+        await ActivityLogService.LogActivity(
+            "update",
+            loanApplication.createdByType,
+            loanApplication.createdBy,
+            "LoanApplication",
+            loanApplicationId,
+            {
+                updatedFields: Object.keys(updateData),
+                newValues: {
+                    loanAmount: newLoanAmount,
+                    loanDuration: newLoanDuration,
+                    status: loanApplication.status,
+                    loanType: newLoanType
+                },
+                message: `Loan application updated by ${user.first_name} ${user.last_name}`
+            }
+        );
+
+        return {
+            success: true,
+            loanApplication: populatedLoan,
+            repaymentPlan: savedLoan.repayment_plan
+        };
+        
+    } catch (error) {
+        console.error("Error updating loan application", error);
+        return { success: false, code: "SERVER_ERROR", message: "Internal server error" };
+    }
+  }
 
   // static async getAllLoanApplication(filters, pagination) {
   //   const { status, search , createdBy} = filters;

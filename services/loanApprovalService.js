@@ -4,6 +4,8 @@ const Staff = require("../models/staff");
 const ActivityLogService = require("./activityLogService");
 const mailer = require("../config/mailer");
 const AdminService = require('../services/adminService');
+const loanApplication = require("../models/loanApplication");
+const { generateOfferLetter } = require("./offerLetterService");
 
 module.exports = class ApprovalService {
 
@@ -28,6 +30,29 @@ module.exports = class ApprovalService {
       loanApproval.comments.push(newComment);
       await loanApproval.save();
       await mailer.sendCommentAddedEmail(loanApproval.assignee.email, loanApproval.assignee.first_name, commenterId.first_name, comment, loanApproval.loanApplication);
+      
+      //find Relationship Manager's approval entry
+      const relationshipApproval = await LoanApproval.findOne({
+        loanApplication: loanApproval.loanApplication,
+        approvalAction: 'Relationship Manager'
+    });
+
+    if (relationshipApproval?.assignee) {
+        //get Relationship Manager details
+        const relationshipAssignee = await Staff.findById(relationshipApproval.assignee)
+            .select('first_name email');
+
+        if (relationshipAssignee) {
+            //send email to Relationship Manager
+            await mailer.sendCommentAddedEmail(
+                relationshipAssignee.email,
+                relationshipAssignee.first_name,
+                commenterId.first_name,
+                comment,
+                loanApproval.loanApplication
+            );
+        }
+      }
       return newComment;
     } catch (error) {
       throw error;
@@ -114,6 +139,7 @@ module.exports = class ApprovalService {
         },
       ];
 
+      const loan_Application = await loanApplication.findById(loanApplicationId)
       for (const { level, action, title, description, role } of approvalLevels) {
         let assigneeId = null;
 
@@ -146,6 +172,24 @@ module.exports = class ApprovalService {
 
         const savedApproval = await approval.save();
         approvals.push(savedApproval);
+
+        try {
+          //fetch assignee details
+          const assignee = await Staff.findById(assigneeId).select("first_name last_name email");
+          console.log("assignee: ", assignee)
+          if (!assignee) continue;
+  
+          await mailer.sendRoleAssignmentEmail(
+            assignee.email,
+            assignee.first_name,
+            (await Staff.findById(requesterId))?.first_name || "System",
+            title,
+            loanApplicationId,
+            loan_Application.loan_id
+          );
+        } catch (emailError) {
+          console.error(`Failed to send email for approval ${savedApproval._id}:`, emailError);
+        }
       }
 
       return approvals;
@@ -352,7 +396,7 @@ module.exports = class ApprovalService {
     }
   }
 
-  static async approveApproval(approvalId, approvalNote, staffId) {
+  static async approveApproval(approvalId, approvalNote, staffId, data) {
     try {
       const approval = await LoanApproval.findById(approvalId);
       if (!approval) {
@@ -409,6 +453,15 @@ module.exports = class ApprovalService {
 
       // Update the loan application status (ignore error for non-last approvals)
       const loanApplicationUpdateResult = await this.updateLoanApplicationStatus(approval.loanApplication);
+
+      // const loanApp = await loanApplication.findById(approval.loanApplication).populate('customer')
+      // const offer_letter = await generateOfferLetter(data)
+      // await mailer.sendOfferLetter(
+      //       loanApp.customer.email,
+      //       loanApp.customer.first_name || loanApp.customer.business_name,
+      //       loanApp.loan_id,
+      //       offer_letter.buffer
+      //     )
 
       // Return loan app update result only if it's a success
       if (loanApplicationUpdateResult.success) {
