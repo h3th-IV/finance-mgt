@@ -279,7 +279,9 @@ module.exports = class LoanApplicationService {
       );
   
       // Process uploaded files
-      const extractFilePath = (key) => files[key]?.[0]?.path || null;
+      const extractFilePath = (key) => files[key]?.url || null;
+
+      
       let businessFinancial = null, businessCollateral = null, otherDocuments = null;
   
       if (loanData.loan_type === "business") {

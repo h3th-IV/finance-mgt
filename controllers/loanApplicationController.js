@@ -186,7 +186,7 @@ module.exports = class LoanApplicationController {
         const { loan_product, loan_amount, loan_duration, loan_type, business_financial, business_collateral } = req.body;
         const loanProductData =await AdminService.getProductsById(loan_product);
         const files = req.files;
-    
+        const cloudinaryResults = req.cloudinaryResults;
         try {
             const { error, value } = loanApplicationValidator.validate(req.body);
             if (error) {
@@ -228,7 +228,7 @@ module.exports = class LoanApplicationController {
                 business_collateral, 
             };
 
-            const response = await LoanApplicationService.createLoanApplication(loanData, files);
+            const response = await LoanApplicationService.createLoanApplication(loanData, cloudinaryResults);
             if (!response.success) {
                 switch (response.code) {
                     case "NOT_FOUND":

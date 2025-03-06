@@ -5,7 +5,7 @@ const LoanApplicationController =require('../controllers/loanApplicationControll
 const UserController = require("../controllers/userController");    
 const { verifyToken } = require("../middleware/tokenGenerator");
 const { verifyStaffToken, checkPermission } = require("../middleware/permission");
-const parser = require("../config/uploader");
+const {parser, uploadImageMiddleware} = require("../config/uploader");
 
 router.get("/all", verifyStaffToken, UserController.getAllUsers);
 router.post("/createRole", verifyStaffToken, checkPermission("CREATE_ROLE"), AdminController.createRolePermission);
@@ -28,7 +28,7 @@ router.post("/create-loanapp/:customerId", verifyStaffToken, checkPermission("CR
     { name: "statement_of_account", maxCount: 1 },
     { name: "statement_of_networth", maxCount: 1 },
     { name: "security_cheque", maxCount: 1 },
-]), LoanApplicationController.createLoanApplication)
+]), uploadImageMiddleware,  LoanApplicationController.createLoanApplication)
 router.get('/banks', verifyStaffToken, AdminController.getAllBankDetails);
 router.get('/loan-product/:productId', AdminController.getLoanProduct);
 router.delete('/del-user/:userId', verifyStaffToken, UserController.deleteUser);
@@ -36,7 +36,7 @@ router.post("/create-user", verifyStaffToken, parser.fields([
     { name: 'proof_of_address', maxCount: 1 },
     { name: 'doc_verification', maxCount: 1 },
     { name: 'cac_certificate', maxCount: 1 },
-  ]), AdminController.createCustomer
+  ]), uploadImageMiddleware, AdminController.createCustomer
 );
 router.get("/get-user/:userId", verifyStaffToken, AdminController.getUser);
 router.get('/banks/:userId', verifyStaffToken, UserController.getUserBankDetails);

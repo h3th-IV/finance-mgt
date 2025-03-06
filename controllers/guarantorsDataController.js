@@ -8,7 +8,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
             const { loanApplicationId } = req.params;
             const { error, value } = guarantorValidator.validate(req.body);
             const files = req.files;
-            console.log({ files });
+            console.log({ req });
     
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
@@ -40,7 +40,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
                 );
             }
     
-            const response = await GuarantorsDataService.createGuarantor(data, files);
+            const response = await GuarantorsDataService.createGuarantor(data, req.cloudinaryResults);
     
             if (!response.success) {
                 return errorResponse(res, 500, response.message);

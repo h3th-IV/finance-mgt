@@ -6,7 +6,7 @@ class GuarantorsDataService {
         try {
             const guarantorData = {
                 ...data,
-                file: files["file"]?.[0]?.path || null
+                file: files["file"]?.url || null
             };
 
             const guarantor = new GuarantorsData(guarantorData);
