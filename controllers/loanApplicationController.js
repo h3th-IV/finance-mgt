@@ -8,7 +8,7 @@ const AdminService = require('../services/adminService')
 const mailer = require("../config/mailer");
 const loanApplication = require("../models/loanApplication");
 const mongoose = require("mongoose");
-const { generateOfferLetter } = require("./offerLetterService");
+const { generateOfferLetter } = require("../services/offerLetterService");
 
 
 
