@@ -1305,7 +1305,7 @@ module.exports.sendRoleAssignmentEmail = async (
     await sender.sendMail({
       from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
       to: assigneeEmail,
-      subject: `Assignment Notice: You've been assigned to review Loan Application ${loanApplicationId}`,
+      subject: `Assignment Notice: You've been assigned to review Loan Application ${loan_id}`,
       html: `
             <!DOCTYPE html>
             <html lang="en">
