@@ -151,10 +151,6 @@ module.exports = class LoanApprovalController {
           }
       
           const result = await LoanApprovalService.approveApproval(approvalId, approvalNote, staffId, data);
-
-          console.log({result});
-          
-      
           if (!result.success) {
             switch (result.code) {
               case "NOT_FOUND":

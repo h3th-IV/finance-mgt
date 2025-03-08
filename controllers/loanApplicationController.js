@@ -86,6 +86,8 @@ module.exports = class LoanApplicationController {
         const { data } = req.body;
         try{
             const loanApp = await loanApplication.findById(loanId).populate('customer')
+            console.log({loanApp});
+            
             const offer_letter = await generateOfferLetter(data)
             await mailer.sendOfferLetter(
                 loanApp.customer.email,

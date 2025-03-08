@@ -587,7 +587,7 @@ module.exports = class LoanApplicationService {
         const queryFilter = {};
         if (status) {
             queryFilter.status = status;
-        }
+        } 
         if (createdBy) {
             queryFilter.createdBy = createdBy;
         }
@@ -619,6 +619,7 @@ module.exports = class LoanApplicationService {
                         { "customer.business_name": searchRegex },
                         { "customer.phone_number": searchRegex },
                         { "customer.email": searchRegex },
+                        { "loan_id": searchRegex }, // Search for loan_id in loanApplications
                     ],
                 },
             });
@@ -658,6 +659,7 @@ module.exports = class LoanApplicationService {
                         { "customer.business_name": searchRegex },
                         { "customer.phone_number": searchRegex },
                         { "customer.email": searchRegex },
+                        { "loan_id": searchRegex }, // Count search for loan_id in loanApplications
                     ],
                 },
             });
@@ -706,7 +708,8 @@ module.exports = class LoanApplicationService {
             message: "Could not fetch loan applications",
         };
     }
-  }
+}
+
 
   static async getUserLoanApplications(userId, filters, pagination) {
     const { status } = filters;
@@ -1198,8 +1201,6 @@ static async fetchAllRepayments(page = 1, limit = 10) {
             };
         }
         const customer = await User.findById(loanApplication.customer);
-console.log({x: loanApplication.status});
-
         if (loanApplication.status !== "ready_for_disbursement") {
             return {
                 success: false,

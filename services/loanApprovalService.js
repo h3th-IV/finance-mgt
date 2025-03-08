@@ -268,7 +268,7 @@ module.exports = class ApprovalService {
   static async fetchApprovalsByAssignee(assigneeId) {
     try {
       const approvals = await LoanApproval.find({ assignee: assigneeId })
-        .populate("assignee", "name email")
+        .populate("assignee", "name email").populate('loanApplication')
 
       if (!approvals || approvals.length === 0) {
         return {
@@ -398,7 +398,8 @@ module.exports = class ApprovalService {
 
   static async approveApproval(approvalId, approvalNote, staffId, data) {
     try {
-      const approval = await LoanApproval.findById(approvalId);
+      // Step 1: Get the approval and handle missing approval
+      const approval = await LoanApproval.findById(approvalId).populate('requester');
       if (!approval) {
         return {
           success: false,
@@ -406,28 +407,8 @@ module.exports = class ApprovalService {
           code: "NOT_FOUND",
         };
       }
-
-      const requester = await Staff.findById(approval.requester);
-      console.log({ approval });
-
-      // if(!requester){
-      //   return {
-      //     success: false,
-      //     message: "The Staff that requested this approval was not found.",
-      //     code: "NOT_FOUND",
-      //   };
-      // }
-
-      // Check status before attempting to approve
-      // if (approval.status !== "Requested") {
-      //   return {
-      //     success: false,
-      //     message: `Approval cannot be approved because it is of status ${approval.status.toLowerCase()}.`,
-      //     code: "INVALID_STATUS",
-      //   };
-      //}
-
-      // Check if the staff member is authorized to approve
+  
+      // Step 2: Check if the staff member is authorized to approve
       if (approval.assignee.toString() !== staffId) {
         return {
           success: false,
@@ -436,35 +417,50 @@ module.exports = class ApprovalService {
         };
       }
 
-      // // Check preceding levels
-      // const validationResult = await this.validatePrecedingLevels(
-      //   approval.loanApplication,
-      //   approval.approvalLevel
-      // );
-      // if (!validationResult.success) {
-      //   return validationResult;
-      // }
-
-      // Now update the status after all checks
       approval.status = "Approved";
       approval.approvalNote = approvalNote || "";
-
       const updatedApproval = await approval.save();
-
-      // Update the loan application status (ignore error for non-last approvals)
+  
       const loanApplicationUpdateResult = await this.updateLoanApplicationStatus(approval.loanApplication);
+  
+      const loanApp = await loanApplication
+        .findById(approval.loanApplication)
+        .populate({
+          path: 'customer',
+          populate: {
+            path: ['kyc_verification','kyc_business']
+          },
+        });
+console.log({loanApp});
 
-      // const loanApp = await loanApplication.findById(approval.loanApplication).populate('customer')
       // const offer_letter = await generateOfferLetter(data)
-      // await mailer.sendOfferLetter(
-      //       loanApp.customer.email,
-      //       loanApp.customer.first_name || loanApp.customer.business_name,
-      //       loanApp.loan_id,
-      //       offer_letter.buffer
-      //     )
+      // console.log({offer_letter, data});
+  
+      // Step 6: Send email with offer letter
+      const customerEmail = loanApp?.customer?.kyc_verification?.email?.address || loanApp?.customer?.kyc_business?.email?.address;
+      console.log({customerEmail});
+      
+      const customerName = loanApp?.customer?.first_name || loanApp?.customer?.business_name;
+      await mailer.sendOfferLetter(customerEmail, customerName, loanApp.loan_id, "");
 
-      // Return loan app update result only if it's a success
       if (loanApplicationUpdateResult.success) {
+   
+        
+        const approver = await Staff.findById(staffId);
+        const approverName = `${approver?.first_name} ${approver?.last_name}`;
+        
+        await ActivityLogService.LogActivity(
+          "update",
+          "Staff",
+          staffId,
+          "LoanApplication",
+          approval.loanApplication,
+          {
+            message: `${approverName} Approved ${approval.approvalAction} Approval for this Loan Application`,
+          }
+        );
+
+  
         return {
           success: true,
           message: "Approval approved successfully, Loan Application is ready for disbursement",
@@ -472,24 +468,8 @@ module.exports = class ApprovalService {
           loanApplication: loanApplicationUpdateResult.loanApplication,
         };
       }
-
-      const requesterName = `${requester.first_name} ${requester.last_name}`;
-      const approver = await Staff.findById(staffId);
-      const approverName = `${approver.first_name} ${approver.last_name}`;
-      await ActivityLogService.LogActivity(
-        "update",
-        "Staff",
-        staffId,
-        "LoanApplication",
-        approval.loanApplication,
-        {
-          message: `${approverName} Approved ${approval.approvalAction} Approval for this Loan Application`,
-        }
-      );
-
-      await mailer.sendApprovalApprovedEmail(requester.email, requesterName, approverName, updatedApproval.approvalAction, updatedApproval.loanApplication);
-
-      // If loan application status update failed, still return success for the approval
+  
+      // If loan application update fails, still return success for approval
       return {
         success: true,
         message: "Approval approved successfully. Loan application status not updated (last approval not completed).",
@@ -504,7 +484,7 @@ module.exports = class ApprovalService {
       };
     }
   }
-
+  
 
   static async declineApproval(approvalId, declineNote, staffId) {
     try {

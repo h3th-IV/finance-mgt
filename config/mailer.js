@@ -1195,9 +1195,10 @@ module.exports.sendOfferLetterNotificationEmail = async (staffEmail, loanApplica
 };
 
 module.exports.sendOfferLetter = async (email, name, loan_id, pdfBuffer) => {
-    const buffer = Buffer.from(new Uint8Array(pdfBuffer));
-
-    await transport.sendMail({
+    console.log({email, name, loan_id});
+    
+   
+    await sender.sendMail({
         from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
         to: email,
         subject: "Your Loan Offer Letter is Ready",
@@ -1278,13 +1279,13 @@ module.exports.sendOfferLetter = async (email, name, loan_id, pdfBuffer) => {
         </body>
         </html>
         `,
-        attachments: [
-            {
-                filename: `Offer-Letter-${loan_id}.pdf`,
-                content: buffer,
-                contentType: 'application/pdf'
-            }
-        ]
+        // attachments: [
+        //     {
+        //         filename: `Offer-Letter-${loan_id}.pdf`,
+        //         content: buffer,
+        //         contentType: 'application/pdf'
+        //     }
+        // ]
     }).catch((err) => {
         console.error("Error sending offer letter email:", err);
     });

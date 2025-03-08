@@ -45,7 +45,6 @@ const uploadToCloudinary = (pdfBuffer, loan_id) => {
 
 
 exports.generateOfferLetter = async(offer_data) =>{
-    //pdf generation logic hia
     const pdfName = offer_data.quote_no + '-' + offer_data.to; 
     try {
         const result = await uploadToCloudinary(buffer, pdfName);
