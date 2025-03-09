@@ -60,6 +60,8 @@ router.get("/total-fully-paid-loans", verifyStaffToken, AdminController.getTotal
 router.get("/total-repaid-amount", verifyStaffToken, AdminController.getTotalRepaidAmount);
 router.get("/loan-product-distribution", verifyStaffToken, AdminController.getLoanProductDistribution);
 router.get("/all-loan-data", verifyStaffToken, AdminController.getAllLoanData);
+router.get("/all-user-data", verifyStaffToken, AdminController.getAllUserStatistics);
+router.get('/monthly-loan-stats', verifyStaffToken, AdminController.getMonthlyLoanStatsForYear);
 router.get("/getStaff/:staffId", verifyStaffToken, AdminController.getStaffByID)
 router.get("/all-user-data", verifyStaffToken, AdminController.getAllUserStatistics);
 router.get('/monthly-loan-stats', verifyStaffToken, AdminController.getMonthlyLoanStatsForYear);
