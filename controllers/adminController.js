@@ -11,7 +11,7 @@ const { generateOTP } = require('../helpers/otp');
 const mailer = require("../config/mailer");
 const { updatePasswordValidator } = require('../validators/staffUpdate.validator');
 const BVNDataService = require('../services/bvnDataService');
-const { listenerCount } = require('../models/loanApplication');
+const LoanApplication  = require('../models/loanApplication')
 const verifyBVN = require('../helpers/verifyBVN');
 const { customerDataValidators, kycDataValidators } = require('../validators/adminCustomerValidator');
 const KYC = require("../models/kyc");
@@ -802,4 +802,141 @@ module.exports = class AdminController {
             return errorResponse(res, 500, "Server error");
         }
     }
+
+    static async getAllUserStatistics(req, res) {
+        try {
+            const { timeRange } = req.query;
+    
+            let dateFilter = null;
+    
+            if (timeRange === "today") {
+                const startOfDay = new Date();
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = new Date();
+                endOfDay.setHours(23, 59, 59, 999);
+                dateFilter = { start: startOfDay, end: endOfDay };
+            } else if (timeRange === "currentWeek") {
+                const today = new Date();
+                const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+                const endOfWeek = new Date(today.setDate(today.getDate() + (7 - today.getDay())));
+                dateFilter = { start: startOfWeek, end: endOfWeek };
+            } else if (timeRange === "currentMonth") {
+                const today = new Date();
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                dateFilter = { start: startOfMonth, end: endOfMonth };
+            } else if (timeRange === "currentQuarter") {
+                const today = new Date();
+                const currentMonth = today.getMonth();
+                const quarterStartMonth = Math.floor(currentMonth / 3) * 3; // Start month of the quarter
+                const startOfQuarter = new Date(today.getFullYear(), quarterStartMonth, 1);
+                const endOfQuarter = new Date(today.getFullYear(), quarterStartMonth + 3, 0); // End of the quarter
+                dateFilter = { start: startOfQuarter, end: endOfQuarter };
+            } else if (timeRange === "midYear") {
+                const today = new Date();
+                const currentMonth = today.getMonth();
+                const halfYearStartMonth = Math.floor(currentMonth / 6) * 6; // Start month of the half-year
+                const startOfHalfYear = new Date(today.getFullYear(), halfYearStartMonth, 1);
+                const endOfHalfYear = new Date(today.getFullYear(), halfYearStartMonth + 6, 0); // End of the half-year
+                dateFilter = { start: startOfHalfYear, end: endOfHalfYear };
+            } else if (timeRange === "currentYear") {
+                const today = new Date();
+                const startOfYear = new Date(today.getFullYear(), 0, 1);
+                const endOfYear = new Date(today.getFullYear(), 11, 31);
+                dateFilter = { start: startOfYear, end: endOfYear };
+            } else if (timeRange === "allTime") {
+                dateFilter = {};
+            }
+    
+            // Use no filter if timeRange is invalid or not provided
+            if (!dateFilter) {
+                dateFilter = {};
+            }
+    
+            const result = await AdminService.getUserStats(dateFilter);
+    
+            if (!result.success) {
+                return errorResponse(res, 500, result.message);
+            }
+    
+            return successResponse(res, 200, "User metrics fetched successfully", result.data);
+        } catch (error) {
+            console.error("Error fetching user metrics:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
+
+    static async getMonthlyLoanStatsForYear(req, res) {
+        try {
+            const { year } = req.query;  // Get the year from the query params
+    
+            if (!year) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Year query parameter is required.",
+                });
+            }
+    
+            // Validate if the year is a valid number
+            const parsedYear = parseInt(year, 10);
+            if (isNaN(parsedYear) || parsedYear < 1900 || parsedYear > new Date().getFullYear()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid year provided.",
+                });
+            }
+    
+            // MongoDB aggregation to get monthly loan amount and loan count for the given year
+            const monthlyStats = await LoanApplication.aggregate([
+                {
+                    $match: {
+                        createdAt: {
+                            $gte: new Date(`${parsedYear}-01-01T00:00:00Z`),
+                            $lt: new Date(`${parsedYear + 1}-01-01T00:00:00Z`),
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: { $month: "$createdAt" },  // Group by month (1 to 12)
+                        totalLoanAmount: { $sum: "$loan_amount" },  // Sum of loan amounts per month
+                        loanCount: { $sum: 1 }  // Count of loans per month
+                    }
+                },
+                {
+                    $sort: { "_id": 1 }  // Sort by month (1 to 12)
+                }
+            ]);
+    
+            // Map month numbers (1 to 12) to month names (Jan to Dec)
+            const monthNames = [
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+            ];
+    
+            // Format the result into an array for each month with proper month names
+            const formattedStats = Array.from({ length: 12 }, (_, index) => {
+                const monthStats = monthlyStats.find(stat => stat._id === index + 1) || { totalLoanAmount: 0, loanCount: 0 };
+                return {
+                    month: monthNames[index],  // Use month name (e.g., Jan, Feb)
+                    loanAmount: monthStats.totalLoanAmount,
+                    loanCount: monthStats.loanCount,
+                };
+            });
+    
+            // Return the formatted stats
+            return res.status(200).json({
+                success: true,
+                message: "Monthly loan stats fetched successfully",
+                data: formattedStats,
+            });
+        } catch (error) {
+            console.error("Error fetching monthly loan stats:", error);
+            return res.status(500).json({
+                success: false,
+                message: "An unexpected error occurred while fetching monthly loan stats.",
+            });
+        }
+    }
+    
 }   

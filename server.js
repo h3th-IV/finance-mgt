@@ -82,7 +82,7 @@ app.post('/api/v1/loan-calculator', LoanApplicationController.loanCalculator);
 app.use("/api/v1/business", business);
 app.use("/api/v1/approval", approval);
 // app.post('/api/v1/sms', AdminController.sendSMS);
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.PORT || 8000;
 sever.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });
