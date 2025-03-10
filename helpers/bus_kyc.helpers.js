@@ -15,17 +15,19 @@ const fetchBusinessAndKYC = async (businessId) => {
 
 
 const combineBusinessKYCData = (kycData, files = {}, kycRecord = {}) => {
+    const extractFilePath = (key) => files[key]?.url || null;
     return {
         ...kycData,
-        'business_section.proof_of_address': files?.['business_section.proof_of_address']?.[0]?.path
+        'business_section.proof_of_address': extractFilePath('business_section.proof_of_address')
             || kycRecord?.business_section?.proof_of_address
             || undefined,
-        'cac.certificate': files?.['cac_certificate']?.[0].path || kycRecord?.cac?.certificate || undefined
+        'cac.certificate': extractFilePath('cac_certificate') || kycRecord?.cac?.certificate || undefined
     };
 };
 
 
 const calculateBusinessStatuses = (kycData, files, kycRecord) => {
+    const extractFilePath = (key) => files[key]?.url || null;
     const ownersVerified = kycRecord?.owners_partner_info.every(
         (owner) =>
             owner.name &&
@@ -47,7 +49,7 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
 
     const addressVerified = Boolean(
         (kycData['business_section.address'] || kycRecord?.business_section?.address) &&
-        (files['business_section.proof_of_address'] || kycRecord?.business_section?.proof_of_address)
+        (kycData['business_section.proof_of_address'] || kycRecord?.business_section?.proof_of_address || extractFilePath('business_section.proof_of_address'))
     );
 
     const employeeSizeVerified = Boolean(
@@ -61,7 +63,7 @@ const calculateBusinessStatuses = (kycData, files, kycRecord) => {
 
     const cacVerified = Boolean(
         (kycData['cac.number'] || kycRecord?.cac?.number) &&
-        (kycData['cac.certificate'] || kycRecord?.cac?.certificate)
+        (kycData['cac.certificate'] || kycRecord?.cac?.certificate || extractFilePath('cac_certificate'))
     );
 
     const isFullyVerified =

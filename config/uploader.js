@@ -83,7 +83,8 @@ const uploadImageMiddleware = async (req, res, next) => {
 
     // Check if files exist in the request
     if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).json({ error: 'No files uploaded' });
+      console.log("no files were uploaded")
+      // return res.status(400).json({ error: 'No files uploaded' });
     }
 
     // Initialize an object to hold the Cloudinary results
@@ -102,7 +103,6 @@ const uploadImageMiddleware = async (req, res, next) => {
     }
 
     console.log({cloudinaryResults});
-
     // Attach the Cloudinary results object to the request for further use in the route
     req.cloudinaryResults = cloudinaryResults;
 
