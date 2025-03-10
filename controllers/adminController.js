@@ -126,6 +126,19 @@ module.exports = class AdminController {
         }
     }
 
+    static async getStaffByID(req, res){
+        const { staffId } = req.params;
+        try{
+            if(!staffId){
+                return errorResponse(res, 400, "Missing staffId")
+            }
+            const response = await AdminService.getStaffById(staffId)
+            return successResponse(res, 200, "Staff fetched successfully", response)
+        }catch(error){
+            console.log("error fetching staff: ", error);
+            return errorResponse(res, 500, "Server error")
+        }
+    }
     static async updatePassword(req, res) {
         try {
             const dataToValidate = {

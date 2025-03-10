@@ -15,19 +15,27 @@ const fetchUserAndKYC = async (userId) => {
 
 
 const combineKYCData = (kycData, files, kycRecord) => {
+    const extractFilePath = (key) => files[key]?.url || null;
     return {
         ...kycData,
-        'document_verification.doc': files['document_verification.doc']
-            ? files['document_verification.doc'][0].path
-            : kycRecord?.document_verification?.doc,
-        'address.proof_of_address': files['address.proof_of_address']
-            ? files['address.proof_of_address'][0].path
-            : kycRecord?.address?.proof_of_address,
+        'document_verification.doc': extractFilePath('document_verification.doc') || kycRecord?.document_verification?.doc,
+        'address.proof_of_address': extractFilePath('address.proof_of_address') || kycRecord?.address?.proof_of_address,
     };
+
+    // return {
+    //     ...kycData,
+    //     'document_verification.doc': files['document_verification.doc']
+    //         ? files['document_verification.doc'][0].path
+    //         : kycRecord?.document_verification?.doc,
+    //     'address.proof_of_address': files['address.proof_of_address']
+    //         ? files['address.proof_of_address'][0].path
+    //         : kycRecord?.address?.proof_of_address,
+    // };
 };
 
 
 const calculateStatuses = (kycData, files, kycRecord) => {
+    const extractFilePath = (key) => files[key]?.url || null;
     const emailVerified = Boolean(
         kycRecord?.email?.address && kycRecord?.email?.status === true
     );
@@ -41,12 +49,12 @@ const calculateStatuses = (kycData, files, kycRecord) => {
     const documentVerified = Boolean(
         (kycData['document_verification.doc_type'] || kycRecord?.document_verification?.doc_type) &&
         (kycData['document_verification.doc_no'] || kycRecord?.document_verification?.doc_no) &&
-        (files['document_verification.doc'] || kycRecord?.document_verification?.doc)
+        (extractFilePath('document_verification.doc') || kycRecord?.document_verification?.doc)
     );
 
     const addressVerified = Boolean(
         (kycData['address.address'] || kycRecord?.address?.address) &&
-        (files['address.proof_of_address'] || kycRecord?.address?.proof_of_address)
+        (extractFilePath('address.proof_of_address') || kycRecord?.address?.proof_of_address)
     );
 
     const isSelfEmployed = kycData['employment_info.employment_status'] === 'self_employed' ||

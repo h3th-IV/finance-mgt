@@ -12,6 +12,8 @@ const UserService = require("../services/userService");
 
 module.exports = class BusinessControllers {
     static async businessUpdateKYC(req, res) {
+        const files = req.cloudinaryResults
+        const extractFilePath = (key) => files[key]?.url || null;
         const { businessId } = req.params;
 
         let jsonData = {};
@@ -35,10 +37,10 @@ module.exports = class BusinessControllers {
             'email.address': req.body.email || undefined,
             ...sanitizedJsonData,
             'business_section.address': req.body.address || undefined,
-            'business_section.proof_of_address': req.files?.['business_section.proof_of_address']?.[0]?.path || undefined,
+            'business_section.proof_of_address': extractFilePath('business_section.proof_of_address') || undefined,
             'employee_size.size': req.body.employee_size || undefined,
             'cac.number': req.body.cac_number || undefined,
-            'cac.certificate': req.files?.['cac_certificate']?.[0]?.path || undefined,
+            'cac.certificate': extractFilePath('cac.certificate') || undefined,
         };
         const { error, value } = businessKYCValidator.validate(payload, { abortEarly: false});
         if(error){
@@ -126,7 +128,7 @@ module.exports = class BusinessControllers {
             //         return errorResponse(res, 400, "The provided CAC number has already been used.");
             //     }
             // }
-            const updateData = combineBusinessKYCData(payload, req.files, kycRecord);
+            const updateData = combineBusinessKYCData(payload, files, kycRecord);
 
     
             let updatedBusinessKYC;
@@ -163,7 +165,7 @@ module.exports = class BusinessControllers {
                 // });
                 await updatedBusinessKYC.save();
             }
-            const { isFullyVerified } = calculateBusinessStatuses(payload, req.files, updatedBusinessKYC);
+            const { isFullyVerified } = calculateBusinessStatuses(payload, files, updatedBusinessKYC);
             business.is_verified = isFullyVerified;
             await business.save();
     
