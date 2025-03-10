@@ -139,6 +139,7 @@ module.exports = class AdminController {
             return errorResponse(res, 500, "Server error")
         }
     }
+    
     static async updatePassword(req, res) {
         try {
             const dataToValidate = {

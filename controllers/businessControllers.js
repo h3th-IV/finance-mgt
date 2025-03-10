@@ -12,6 +12,7 @@ const UserService = require("../services/userService");
 
 module.exports = class BusinessControllers {
     static async businessUpdateKYC(req, res) {
+        console.log("got here");
         const files = req.cloudinaryResults
         const extractFilePath = (key) => files[key]?.url || null;
         const { businessId } = req.params;
