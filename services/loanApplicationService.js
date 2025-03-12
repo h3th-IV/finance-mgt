@@ -368,9 +368,8 @@ module.exports = class LoanApplicationService {
   }
 
   static async updateLoanApplication(loanApplicationId, updateData, userId) {
-    console.log("got here in service")
     try {
-        //fetch existing loan application
+        // Fetch existing loan application
         const loanApplication = await LoanApplication.findById(loanApplicationId)
             .populate('loan_product', ['min', 'max', 'duration', 'interest', 'interest_type']);
 
@@ -379,25 +378,32 @@ module.exports = class LoanApplicationService {
         }
 
         const loanProduct = loanApplication.loan_product;
+        const updateReason = updateData.reason || "No reason provided";
 
-        //determine new values or use exist data if not provided
+        // Store old values before updating
+        const oldValues = {
+            loanAmount: loanApplication.loan_amount,
+            loanDuration: loanApplication.loan_duration,
+            loanType: loanApplication.loan_type
+        };
+
+        // Determine new values or use existing data if not provided
         const newLoanAmount = updateData.loan_amount !== undefined 
             ? updateData.loan_amount 
-            : loanApplication.loan_amount;
+            : oldValues.loanAmount;
 
         const newLoanDuration = updateData.loan_duration !== undefined 
             ? updateData.loan_duration 
-            : loanApplication.loan_duration;
+            : oldValues.loanDuration;
 
-        const newLoanType = updateData.loan_type || loanApplication.loan_type;
-        // const newStatus = updateData.status || loanApplication.status;
+        const newLoanType = updateData.loan_type || oldValues.loanType;
 
         if (updateData.loan_amount !== undefined) {
             if (newLoanAmount < loanProduct.min || newLoanAmount > loanProduct.max) {
                 return {
                     success: false,
                     code: "INVALID_AMOUNT",
-                    message: `Loan amount must be between ${loanProduct.min} and ${loanProduct.max}`
+                    message: `Loan amount must be between NGN ${loanProduct.min.toLocaleString()} and NGN ${loanProduct.max.toLocaleString()}`
                 };
             }
         }
@@ -412,23 +418,26 @@ module.exports = class LoanApplicationService {
             }
         }
 
-        //update fields
-        if (updateData.loan_type) loanApplication.loan_type = newLoanType;
-        // if (updateData.status) loanApplication.status = newStatus;
-
-        //update loan amount and processing fee
-        if (updateData.loan_amount !== undefined) {
+        // Track changed values
+        const changedValues = {};
+        if (updateData.loan_amount !== undefined && newLoanAmount !== oldValues.loanAmount) {
             loanApplication.loan_amount = newLoanAmount;
             loanApplication.processing_fee = newLoanAmount * 0.01; // 1% of loan amount
+            changedValues.loanAmount = { old: `NGN ${oldValues.loanAmount.toLocaleString()}`, new: `NGN ${newLoanAmount.toLocaleString()}` };
         }
 
-        //update loan duration
-        if (updateData.loan_duration !== undefined) {
+        if (updateData.loan_duration !== undefined && newLoanDuration !== oldValues.loanDuration) {
             loanApplication.loan_duration = newLoanDuration;
+            changedValues.loanDuration = { old: `${oldValues.loanDuration} months`, new: `${newLoanDuration} months` };
         }
 
-        //recalculate repayment plan if loan terms changed
-        if (updateData.loan_amount || updateData.loan_duration) {
+        if (updateData.loan_type && newLoanType !== oldValues.loanType) {
+            loanApplication.loan_type = newLoanType;
+            changedValues.loanType = { old: oldValues.loanType, new: newLoanType };
+        }
+
+        // Recalculate repayment plan if loan terms changed
+        if (Object.keys(changedValues).length > 0) {
             const repaymentPlan = calculateRepaymentPlan(
                 loanApplication.loan_amount,
                 loanApplication.loan_duration,
@@ -436,22 +445,30 @@ module.exports = class LoanApplicationService {
                 loanProduct.interest_type,
                 loanApplication.processing_fee
             );
-
             loanApplication.repayment_plan = repaymentPlan;
         }
 
-        //save changes
+        // Save changes
         const savedLoan = await loanApplication.save();
 
-        //populate related data for response
+        // Populate related data for response
         const populatedLoan = await LoanApplication.findById(loanApplicationId)
             .populate('customer', 'first_name')
             .populate('loan_product', 'name');
 
-        //activity log
+        // Activity log
         const user = await (loanApplication.createdByType === "Staff" 
             ? staff.findById(userId) 
             : User.findById(userId));
+
+        // Create log message with proper formatting
+        let changeLog = Object.entries(changedValues)
+            .map(([key, { old, new: newValue }]) => `- ${key.replace(/([A-Z])/g, ' $1').trim()}: ${old} → ${newValue}`)
+            .join("\n");
+
+        const logMessage = `Loan application updated by ${user.first_name} ${user.last_name}.\n\n`
+            + `Reason: ${updateReason}\n\n`
+            + (changeLog ? `Changes: \n${changeLog}` : "No changes detected.");
 
         await ActivityLogService.LogActivity(
             "update",
@@ -460,14 +477,15 @@ module.exports = class LoanApplicationService {
             "LoanApplication",
             loanApplicationId,
             {
-                updatedFields: Object.keys(updateData),
+                updatedFields: Object.keys(changedValues),
+                oldValues,
                 newValues: {
-                    loanAmount: newLoanAmount,
-                    loanDuration: newLoanDuration,
-                    status: loanApplication.status,
-                    loanType: newLoanType
+                    loanAmount: `NGN ${newLoanAmount.toLocaleString()}`,
+                    loanDuration: `${newLoanDuration} months`,
+                    loanType: newLoanType,
+                    reason: updateReason
                 },
-                message: `Loan application updated by ${user.first_name} ${user.last_name}`
+                message: logMessage
             }
         );
 
@@ -481,7 +499,9 @@ module.exports = class LoanApplicationService {
         console.error("Error updating loan application", error);
         return { success: false, code: "SERVER_ERROR", message: "Internal server error" };
     }
-  }
+}
+
+
 
   // static async getAllLoanApplication(filters, pagination) {
   //   const { status, search , createdBy} = filters;

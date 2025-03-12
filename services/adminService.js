@@ -240,8 +240,8 @@ module.exports = class AdminService {
 
     static async getStaffById(id) {
         try {
+            
             const staff = await Staff.findById(id).populate('role');
-            console.log({staff})
             return staff;
         } catch (error) {
             throw new Error('Error fetching staffs');

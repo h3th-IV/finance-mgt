@@ -254,7 +254,6 @@ module.exports = class LoanApplicationController {
 
 
     static async updateLoanApplication(req, res) {
-        console.log("got here in controler")
         const { id } = req.user;
         const { loanApplicationId } = req.params;
         const updateData = req.body;

@@ -15,6 +15,7 @@ const cron = require("node-cron");
 const userModel = require("./models/user");
 const business = require("./routes/business");
 const approval = require("./routes/approval");
+const report = require("./routes/report");
 
 app.use(
   session({
@@ -81,8 +82,9 @@ app.use("/api/v1/loanapp", loanApp);
 app.post('/api/v1/loan-calculator', LoanApplicationController.loanCalculator);
 app.use("/api/v1/business", business);
 app.use("/api/v1/approval", approval);
+app.use("/api/v1/report", report);
 // app.post('/api/v1/sms', AdminController.sendSMS);
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 9000;
 sever.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });

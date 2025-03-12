@@ -103,9 +103,8 @@ const updateLoanApplicationValidator = Joi.object({
         'number.base': '"Loan amount" must be a number.',
         'number.positive': '"Loan amount" must be greater than zero.',
     }),
-    loan_type: Joi.string().valid('individual', 'business').optional().messages({
-        'string.empty': '"Loan type" cannot be empty.',
-        'any.only': '"Loan type" must be either "individual" or "business".',
+    reason: Joi.string().optional().messages({
+        'string.empty': '"reason" cannot be empty.',
     }),
 });
 
