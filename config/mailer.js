@@ -450,9 +450,11 @@ module.exports.sendStaffOTPEmail = (email, first_name, OTP, role_name, staffId) 
     });
 };
 
-module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
+module.exports.sendGuarantorMail = (email, name, customerName, loanDetails, loanApplicationId) => {
+    const guarantorFormLink = `https://capitalwise-fe.onrender.com/guarantor-form/${loanApplicationId}`;
+
     sender.sendMail({
-        from: "Capitalwise Dynamic Pay",
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
         to: email,
         subject: "Guarantor Request for Loan Application",
         html: `
@@ -503,6 +505,16 @@ module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
                         font-size: 16px;
                         text-align: left;
                     }
+                    .btn {
+                        display: inline-block;
+                        padding: 12px 25px;
+                        margin-top: 20px;
+                        font-size: 16px;
+                        color: #ffffff;
+                        background-color: #7AC143;
+                        text-decoration: none;
+                        border-radius: 5px;
+                    }
                     .footer {
                         text-align: center;
                         margin-top: 30px;
@@ -524,7 +536,11 @@ module.exports.sendGuarantorMail = (email, name, customerName, loanDetails) => {
                             <p><strong>Loan Amount:</strong> ${loanDetails.loanAmount}</p>
                             <p><strong>Loan Duration:</strong> ${loanDetails.loanDuration} months</p>
                         </div>
-                        <p>If you agree to be the guarantor, please respond to this email or contact us for further steps.</p>
+                        <p>If you agree to be the guarantor, please click the button below to fill out your details:</p>
+                        <a href="${guarantorFormLink}" class="btn">Fill Guarantor Details</a>
+                        <p>Alternatively, you can copy and paste the following link into your browser:</p>
+                        <p><a href="${guarantorFormLink}">${guarantorFormLink}</a></p>
+                        <p>If you have any questions or need further assistance, please contact our support team at support@capitalwisedynamicpay.com.</p>
                     </div>
                     <div class="footer">
                         &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
@@ -994,6 +1010,96 @@ module.exports.sendDisbursementEmail = async (customerEmail, customerName, loanA
     });
 };
 
+module.exports.sendCommentAddedEmail = async (requesterEmail, requesterName, commenterName,  comment,loanApplicationId,) => {
+    const magicLink = `https://capitalwise-fe.onrender.com/admin/loan-application/${loanApplicationId}`; // Updated for loanApplicationId
+
+    await sender.sendMail({
+        from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
+        to: requesterEmail,
+        subject: "A New Comment Has Been Added to Your Loan Application",
+        html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f8f8f8;
+                    margin: 0;
+                    padding: 20px;
+                    color: #333;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    border-top: 10px solid #7AC143;
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #7AC143;
+                    font-size: 24px;
+                    margin: 0;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content p {
+                    font-size: 16px;
+                    margin: 10px 0;
+                }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #7AC143;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 30px;
+                    font-size: 14px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Capitalwise Dynamic Pay</h1>
+                </div>
+                <div class="content">
+                    <p>Dear ${requesterName},</p>
+                    <p>We wanted to notify you that a new comment has been added to your loan application:</p>
+                    <p><strong>Comment: </strong>${comment}</p>
+                    <p>This comment was added by <strong>${commenterName}</strong>.</p>
+                    <p>You can view the updated status of the loan application by clicking the button below:</p>
+                    <a href="${magicLink}" class="btn">View Loan Application</a>
+                    <p>If you have any questions or need further assistance, feel free to contact our support team.</p>
+                </div>
+                <div class="footer">
+                    &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    });
+};
+
+
 
 module.exports.sendOfferLetterNotificationEmail = async (staffEmail, loanApplicationId, customerName, loanProductName) => {
     const magicLink = `https://capitalwise-fe.onrender.com/loanapp/get-single-loan/${loanApplicationId}`;
@@ -1088,10 +1194,11 @@ module.exports.sendOfferLetterNotificationEmail = async (staffEmail, loanApplica
     });
 };
 
-module.exports.sendOfferLetter = async (email, name, loan_id, pdfBuffer) => {
-    const buffer = Buffer.from(new Uint8Array(pdfBuffer));
-
-    await transport.sendMail({
+module.exports.sendOfferLetter = async (email, name, loan_id, buffer) => {
+    console.log({email, name, loan_id});
+    
+   
+    await sender.sendMail({
         from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
         to: email,
         subject: "Your Loan Offer Letter is Ready",
@@ -1183,3 +1290,126 @@ module.exports.sendOfferLetter = async (email, name, loan_id, pdfBuffer) => {
         console.error("Error sending offer letter email:", err);
     });
 };
+
+
+module.exports.sendRoleAssignmentEmail = async (
+    assigneeEmail,
+    assigneeName,
+    requesterName,
+    assignedRole,
+    loanApplicationId,
+    loan_id
+  ) => {
+    const magicLink = `https://capitalwise-fe.onrender.com/loanapp/get-single-loan/${loanApplicationId}`;
+  
+    await sender.sendMail({
+      from: "Capitalwise Dynamic Pay <no-reply@capitalwisedynamicpay.com>",
+      to: assigneeEmail,
+      subject: `Assignment Notice: You've been assigned to review Loan Application ${loan_id}`,
+      html: `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background-color: #f8f8f8;
+                        margin: 0;
+                        padding: 20px;
+                        color: #333;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        padding: 20px;
+                        border-top: 10px solid #7AC143;
+                    }
+                    .header {
+                        text-align: center;
+                        padding-bottom: 20px;
+                    }
+                    .header h1 {
+                        color: #7AC143;
+                        font-size: 24px;
+                        margin: 0;
+                    }
+                    .content {
+                        text-align: left;
+                        padding: 0 20px;
+                    }
+                    .content p {
+                        font-size: 16px;
+                        margin: 10px 0;
+                    }
+                    .responsibilities {
+                        background: #f8f9fa;
+                        padding: 15px;
+                        border-radius: 5px;
+                        border: 1px solid #e2e8f0;
+                        margin: 20px 0;
+                    }
+                    .btn {
+                        display: inline-block;
+                        padding: 12px 25px;
+                        font-size: 16px;
+                        color: #ffffff;
+                        background-color: #7AC143;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        margin-top: 20px;
+                    }
+                    .footer {
+                        text-align: center;
+                        margin-top: 30px;
+                        font-size: 14px;
+                        color: #666;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Capitalwise Dynamic Pay</h1>
+                    </div>
+                    <div class="content">
+                        <p>Dear ${assigneeName},</p>
+                        <p>You've been assigned the role of <strong>"${assignedRole}"</strong> for the following loan application:</p>
+                        
+                        <div class="responsibilities">
+                            <strong>Loan Application ID:</strong> ${loan_id}<br>
+                            <strong>Your Role:</strong> ${assignedRole}<br>
+                            <strong>Responsibilities:</strong><br>
+                            ${
+                                assignedRole === "Relationship Manager"
+                                ? "Onboard the customer and gather business requirements"
+                                : assignedRole === "Accounts Department"
+                                ? "Validate financial information and affordability checks"
+                                : assignedRole === "Internal Control"
+                                ? "Perform compliance checks and documentation review"
+                                : assignedRole === "Risk Management"
+                                ? "Conduct credit checks and risk assessment"
+                                : "Final approval and offer letter generation"
+                            }
+                        </div>
+            
+                        <p>Please review the application details and take the necessary actions:</p>
+                        <a href="${magicLink}" class="btn">Access Approval Dashboard</a>
+                        
+                        <p>If you have any questions, please contact ${requesterName} or reply to this email.</p>
+                        <p>This request is time-sensitive, and your prompt attention is appreciated.</p>
+                    </div>
+                    <div class="footer">
+                        &copy; ${new Date().getFullYear()} Capitalwise Dynamic Pay Ltd
+                    </div>
+                </div>
+            </body>
+            </html>
+        `,
+    });
+  };

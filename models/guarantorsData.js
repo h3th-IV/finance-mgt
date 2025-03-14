@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Step 1: Define the BVN Data Schema
+
 const GuarantorsData = new mongoose.Schema({
 
     loanApplicationId: {
@@ -19,7 +19,7 @@ const GuarantorsData = new mongoose.Schema({
         type: String,
         required: true
     },
-    email: { 
+    email: {
         type: String,
         required: true
     },

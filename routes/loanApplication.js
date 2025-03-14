@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const LoanApplicationController = require("../controllers/loanApplicationController");
-const parser = require("../config/uploader");
+const {parser, uploadImageMiddleware} = require("../config/uploader");
 const { verifyToken } = require('../middleware/tokenGenerator');
 const { verifyAnyToken } = require('../middleware/permission');
 const { verifyStaffToken, checkPermission } = require("../middleware/permission");
@@ -16,15 +16,13 @@ router.post(
         { name: "statement_of_account", maxCount: 1 },
         { name: "statement_of_networth", maxCount: 1 },
         { name: "security_cheque", maxCount: 1 },
-        
-        // Business-specific fields for collateral
         { name: "business_collateral.description_of_assets", maxCount: 1 },
         { name: "business_collateral.valuation_reports", maxCount: 1 },
         { name: "business_collateral.photographs", maxCount: 10 }, 
         { name: "other_documents.business_plan", maxCount: 1 },
         { name: "other_documents.tax_clearance", maxCount: 1 },
         { name: "other_documents.insurance_documents", maxCount: 1 }, 
-    ]),
+    ]),uploadImageMiddleware,
     LoanApplicationController.createLoanApplication
 );
 

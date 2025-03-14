@@ -279,7 +279,9 @@ module.exports = class LoanApplicationService {
       );
   
       // Process uploaded files
-      const extractFilePath = (key) => files[key]?.[0]?.path || null;
+      const extractFilePath = (key) => files[key]?.url || null;
+
+      
       let businessFinancial = null, businessCollateral = null, otherDocuments = null;
   
       if (loanData.loan_type === "business") {
@@ -327,7 +329,8 @@ module.exports = class LoanApplicationService {
               loanProduct: populatedLoan.loan_product.name,
               loanAmount: populatedLoan.loan_amount,
               loanDuration: populatedLoan.loan_duration,
-            }
+            },
+            savedLoanApplication._id
           );
         }
       };
@@ -363,7 +366,142 @@ module.exports = class LoanApplicationService {
       return { success: false, message: `Error: ${error.message}`, code: "INTERNAL_ERROR" };
     }
   }
-  
+
+  static async updateLoanApplication(loanApplicationId, updateData, userId) {
+    try {
+        // Fetch existing loan application
+        const loanApplication = await LoanApplication.findById(loanApplicationId)
+            .populate('loan_product', ['min', 'max', 'duration', 'interest', 'interest_type']);
+
+        if (!loanApplication) {
+            return { success: false, code: "NOT_FOUND", message: "Loan application not found" };
+        }
+
+        const loanProduct = loanApplication.loan_product;
+        const updateReason = updateData.reason || "No reason provided";
+
+        // Store old values before updating
+        const oldValues = {
+            loanAmount: loanApplication.loan_amount,
+            loanDuration: loanApplication.loan_duration,
+            loanType: loanApplication.loan_type
+        };
+
+        // Determine new values or use existing data if not provided
+        const newLoanAmount = updateData.loan_amount !== undefined 
+            ? updateData.loan_amount 
+            : oldValues.loanAmount;
+
+        const newLoanDuration = updateData.loan_duration !== undefined 
+            ? updateData.loan_duration 
+            : oldValues.loanDuration;
+
+        const newLoanType = updateData.loan_type || oldValues.loanType;
+
+        if (updateData.loan_amount !== undefined) {
+            if (newLoanAmount < loanProduct.min || newLoanAmount > loanProduct.max) {
+                return {
+                    success: false,
+                    code: "INVALID_AMOUNT",
+                    message: `Loan amount must be between NGN ${loanProduct.min.toLocaleString()} and NGN ${loanProduct.max.toLocaleString()}`
+                };
+            }
+        }
+
+        if (updateData.loan_duration !== undefined) {
+            if (!loanProduct.duration.includes(newLoanDuration)) {
+                return {
+                    success: false,
+                    code: "INVALID_DURATION",
+                    message: `Invalid duration. Allowed durations: ${loanProduct.duration.join(", ")} months`
+                };
+            }
+        }
+
+        // Track changed values
+        const changedValues = {};
+        if (updateData.loan_amount !== undefined && newLoanAmount !== oldValues.loanAmount) {
+            loanApplication.loan_amount = newLoanAmount;
+            loanApplication.processing_fee = newLoanAmount * 0.01; // 1% of loan amount
+            changedValues.loanAmount = { old: `NGN ${oldValues.loanAmount.toLocaleString()}`, new: `NGN ${newLoanAmount.toLocaleString()}` };
+        }
+
+        if (updateData.loan_duration !== undefined && newLoanDuration !== oldValues.loanDuration) {
+            loanApplication.loan_duration = newLoanDuration;
+            changedValues.loanDuration = { old: `${oldValues.loanDuration} months`, new: `${newLoanDuration} months` };
+        }
+
+        if (updateData.loan_type && newLoanType !== oldValues.loanType) {
+            loanApplication.loan_type = newLoanType;
+            changedValues.loanType = { old: oldValues.loanType, new: newLoanType };
+        }
+
+        // Recalculate repayment plan if loan terms changed
+        if (Object.keys(changedValues).length > 0) {
+            const repaymentPlan = calculateRepaymentPlan(
+                loanApplication.loan_amount,
+                loanApplication.loan_duration,
+                loanProduct.interest,
+                loanProduct.interest_type,
+                loanApplication.processing_fee
+            );
+            loanApplication.repayment_plan = repaymentPlan;
+        }
+
+        // Save changes
+        const savedLoan = await loanApplication.save();
+
+        // Populate related data for response
+        const populatedLoan = await LoanApplication.findById(loanApplicationId)
+            .populate('customer', 'first_name')
+            .populate('loan_product', 'name');
+
+        // Activity log
+        const user = await (loanApplication.createdByType === "Staff" 
+            ? staff.findById(userId) 
+            : User.findById(userId));
+
+        // Create log message with proper formatting
+        let changeLog = Object.entries(changedValues)
+            .map(([key, { old, new: newValue }]) => `- ${key.replace(/([A-Z])/g, ' $1').trim()}: ${old} → ${newValue}`)
+            .join("\n");
+
+        const logMessage = `Loan application updated by ${user.first_name} ${user.last_name}.\n\n`
+            + `Reason: ${updateReason}\n\n`
+            + (changeLog ? `Changes: \n${changeLog}` : "No changes detected.");
+
+        await ActivityLogService.LogActivity(
+            "update",
+            loanApplication.createdByType,
+            loanApplication.createdBy,
+            "LoanApplication",
+            loanApplicationId,
+            {
+                updatedFields: Object.keys(changedValues),
+                oldValues,
+                newValues: {
+                    loanAmount: `NGN ${newLoanAmount.toLocaleString()}`,
+                    loanDuration: `${newLoanDuration} months`,
+                    loanType: newLoanType,
+                    reason: updateReason
+                },
+                message: logMessage
+            }
+        );
+
+        return {
+            success: true,
+            loanApplication: populatedLoan,
+            repaymentPlan: savedLoan.repayment_plan
+        };
+        
+    } catch (error) {
+        console.error("Error updating loan application", error);
+        return { success: false, code: "SERVER_ERROR", message: "Internal server error" };
+    }
+}
+
+
 
   // static async getAllLoanApplication(filters, pagination) {
   //   const { status, search , createdBy} = filters;
@@ -469,10 +607,11 @@ module.exports = class LoanApplicationService {
         const queryFilter = {};
         if (status) {
             queryFilter.status = status;
-        }
+        } 
         if (createdBy) {
             queryFilter.createdBy = createdBy;
         }
+        console.log("queryFilter", queryFilter);
 
         const searchRegex = search ? new RegExp(search, "i") : null;
 
@@ -500,6 +639,7 @@ module.exports = class LoanApplicationService {
                         { "customer.business_name": searchRegex },
                         { "customer.phone_number": searchRegex },
                         { "customer.email": searchRegex },
+                        { "loan_id": searchRegex }, // Search for loan_id in loanApplications
                     ],
                 },
             });
@@ -539,6 +679,7 @@ module.exports = class LoanApplicationService {
                         { "customer.business_name": searchRegex },
                         { "customer.phone_number": searchRegex },
                         { "customer.email": searchRegex },
+                        { "loan_id": searchRegex }, // Count search for loan_id in loanApplications
                     ],
                 },
             });
@@ -587,7 +728,8 @@ module.exports = class LoanApplicationService {
             message: "Could not fetch loan applications",
         };
     }
-  }
+}
+
 
   static async getUserLoanApplications(userId, filters, pagination) {
     const { status } = filters;
@@ -781,7 +923,7 @@ module.exports = class LoanApplicationService {
         .populate({
             path: "customer",
             populate: {
-                path: "kyc_verification"
+                path: ['kyc_verification','kyc_business']
             }
         })
         .populate("loan_product")
@@ -1079,8 +1221,6 @@ static async fetchAllRepayments(page = 1, limit = 10) {
             };
         }
         const customer = await User.findById(loanApplication.customer);
-console.log({x: loanApplication.status});
-
         if (loanApplication.status !== "ready_for_disbursement") {
             return {
                 success: false,

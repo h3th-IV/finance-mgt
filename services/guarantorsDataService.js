@@ -1,11 +1,12 @@
 const GuarantorsData = require('../models/guarantorsData');
+const mongoose = require('mongoose')
 
 class GuarantorsDataService {
     static async createGuarantor(data, files) {
         try {
             const guarantorData = {
                 ...data,
-                file: files["file"]?.[0]?.path || null
+                file: files["file"]?.url || null
             };
 
             const guarantor = new GuarantorsData(guarantorData);
@@ -70,6 +71,42 @@ class GuarantorsDataService {
         } catch (error) {
             console.error("Error soft-deleting guarantor:", error);
             return { success: false, message: error.message };
+        }
+    }
+
+    static async getGuarantorsByLoanApplicationId(loanApplicationId) {
+        try {
+            // Validate that the loanApplicationId is a valid ObjectId
+            if (!mongoose.Types.ObjectId.isValid(loanApplicationId)) {
+                return {
+                    success: false,
+                    message: "Invalid loan application ID",
+                    code: 400,
+                };
+            }
+    
+            // Fetch all guarantors associated with the given loan application ID
+            const guarantors = await GuarantorsData.find({ loanApplicationId })
+    
+            if (!guarantors || guarantors.length === 0) {
+                return {
+                    success: false,
+                    message: "No guarantors found for the specified loan application",
+                    code: 404,
+                };
+            }
+    
+            return {
+                success: true,
+                guarantors,
+            };
+        } catch (error) {
+            console.error("Error retrieving guarantors by loan application ID:", error);
+            return {
+                success: false,
+                message: error.message,
+                code: 500,
+            };
         }
     }
 }

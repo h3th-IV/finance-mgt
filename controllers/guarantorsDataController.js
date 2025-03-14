@@ -8,7 +8,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
             const { loanApplicationId } = req.params;
             const { error, value } = guarantorValidator.validate(req.body);
             const files = req.files;
-            console.log({ files });
+            console.log({ req });
     
             if (error) {
                 return errorResponse(res, 400, error.details[0].message);
@@ -40,7 +40,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
                 );
             }
     
-            const response = await GuarantorsDataService.createGuarantor(data, files);
+            const response = await GuarantorsDataService.createGuarantor(data, req.cloudinaryResults);
     
             if (!response.success) {
                 return errorResponse(res, 500, response.message);
@@ -68,6 +68,7 @@ const {GuarantorsData} = require("../models/guarantorsData");
             return errorResponse(res, 500, error.message);
         }
     }
+
 
     static async updateGuarantor(req, res) {
         try {
@@ -112,6 +113,22 @@ const {GuarantorsData} = require("../models/guarantorsData");
         } catch (error) {
             console.error("Error deleting guarantor:", error);
             return errorResponse(res, 500, error.message);
+        }
+    }
+
+    static async getGuarantorsForLoanApplication(req, res) {
+        try {
+            const { id } = req.params; // Loan Application ID
+            const response = await GuarantorsDataService.getGuarantorsByLoanApplicationId(id);
+    
+            if (!response.success) {
+                return errorResponse(res, response.code || 404, response.message);
+            }
+    
+            return successResponse(res, 200, "Guarantors retrieved successfully", response.guarantors);
+        } catch (error) {
+            console.error("Error retrieving guarantors:", error);
+            return errorResponse(res, 500, "An unexpected server error occurred.");
         }
     }
 }

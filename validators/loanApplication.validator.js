@@ -99,13 +99,12 @@ const updateLoanApplicationValidator = Joi.object({
         'number.base': '"Loan duration" must be a number.',
         'number.integer': '"Loan duration" must be an integer.',
     }),
-    status: Joi.string().valid('approved', 'processing', 'declined').optional().messages({
-        'string.empty': '"Status" cannot be empty.',
-        'any.only': '"Status" must be one of ["approved", "processing", "declined"].',
+    loan_amount: Joi.number().positive().optional().messages({
+        'number.base': '"Loan amount" must be a number.',
+        'number.positive': '"Loan amount" must be greater than zero.',
     }),
-    loan_type: Joi.string().valid('individual', 'business').optional().messages({
-        'string.empty': '"Loan type" cannot be empty.',
-        'any.only': '"Loan type" must be either "individual" or "business".',
+    reason: Joi.string().optional().messages({
+        'string.empty': '"reason" cannot be empty.',
     }),
 });
 

@@ -143,18 +143,14 @@ module.exports = class LoanApprovalController {
         const staffId = req.user.id;
 
         console.log({staffId});
-        
+        const data = { };
       
         try {
           if (!approvalId) {
             return errorResponse(res, 400, "Missing approvalId in request parameters");
           }
       
-          const result = await LoanApprovalService.approveApproval(approvalId, approvalNote, staffId);
-
-          console.log({result});
-          
-      
+          const result = await LoanApprovalService.approveApproval(approvalId, approvalNote, staffId, data);
           if (!result.success) {
             switch (result.code) {
               case "NOT_FOUND":

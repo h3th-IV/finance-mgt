@@ -294,6 +294,7 @@ module.exports = class UserController {
 
     static async updateKYC(req, res) {
         const { userId } = req.params;
+        console.log("files: ", req.cloudinaryResults);
 
         const { error } = kycValidator.validate(req.body, { abortEarly: false });
         if (error) {
@@ -416,7 +417,7 @@ module.exports = class UserController {
                 }
             }
             user.email = kycData['email.address'];
-            const updateData = combineKYCData(kycData, req.files, kycRecord);
+            const updateData = combineKYCData(kycData, req.cloudinaryResults, kycRecord);
 
             let updatedKYC;
             if (kycRecord) {
@@ -430,7 +431,7 @@ module.exports = class UserController {
                 user.kyc_verification = updatedKYC._id;
             }
 
-            const { emailVerified, bankVerified, documentVerified, addressVerified, employmentInfoVerified } = calculateStatuses(kycData, req.files, updatedKYC);
+            const { emailVerified, bankVerified, documentVerified, addressVerified, employmentInfoVerified } = calculateStatuses(kycData, req.cloudinaryResults, updatedKYC);
 
             updatedKYC.email.status = emailVerified;
             updatedKYC.bank_verification_number.status = bankVerified;

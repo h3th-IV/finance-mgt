@@ -240,8 +240,8 @@ module.exports = class AdminService {
 
     static async getStaffById(id) {
         try {
+            
             const staff = await Staff.findById(id).populate('role');
-            console.log({staff})
             return staff;
         } catch (error) {
             throw new Error('Error fetching staffs');
@@ -745,7 +745,7 @@ module.exports = class AdminService {
     static async getAllLoanStats(dateFilter) {
         try {
             const queryFilter = dateFilter && dateFilter.start && dateFilter.end ? { createdAt: { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) } } : {};
-    
+        
             const [
                 activeLoansCount,
                 delinquentLoansCount,
@@ -757,7 +757,10 @@ module.exports = class AdminService {
                 totalRepaidAmount,
                 totalLoanCount, // Total count of loans for percentage calculation
                 loanProductDistribution,
-                delinquencyRateOverTime
+                delinquencyRateOverTime,
+                loanAmountPerMonth, // New addition for loan amounts per month
+                loanAmountPerWeek, // New addition for loan amounts per week
+                loanAmountAllYears // New addition for loan amounts across all years
             ] = await Promise.all([
                 LoanApplication.countDocuments({ ...queryFilter, status: "processing" }),
                 LoanApplication.countDocuments({ ...queryFilter, status: "overdue" }),
@@ -800,16 +803,49 @@ module.exports = class AdminService {
                     },
                     { $sort: { "_id.year": 1, "_id.month": 1 } },
                     { $project: { _id: 0, year: "$_id.year", month: "$_id.month", count: 1 } }
+                ]),
+    
+                // Loan Amount per Month (January to December)
+                LoanApplication.aggregate([
+                    { $match: queryFilter },
+                    { $group: {
+                        _id: { $month: "$createdAt" }, 
+                        totalLoanAmount: { $sum: "$loan_amount" }
+                    }},
+                    { $sort: { "_id": 1 } }, // Sort by month (1 - January, 12 - December)
+                    { $project: { month: "$_id", totalLoanAmount: 1, _id: 0 } }
+                ]),
+    
+                // Loan Amount per Week (Monday to Sunday)
+                LoanApplication.aggregate([
+                    { $match: queryFilter },
+                    { $group: {
+                        _id: { $week: "$createdAt" }, 
+                        totalLoanAmount: { $sum: "$loan_amount" }
+                    }},
+                    { $sort: { "_id": 1 } }, // Sort by week
+                    { $project: { week: "$_id", totalLoanAmount: 1, _id: 0 } }
+                ]),
+    
+                // Loan Amount for All Years
+                LoanApplication.aggregate([
+                    { $match: queryFilter },
+                    { $group: {
+                        _id: { $year: "$createdAt" }, 
+                        totalLoanAmount: { $sum: "$loan_amount" }
+                    }},
+                    { $sort: { "_id": 1 } }, // Sort by year
+                    { $project: { year: "$_id", totalLoanAmount: 1, _id: 0 } }
                 ])
             ]);
-    
+        
             // Calculate percentages for loanProductDistribution
             const loanProductDistributionWithPercentages = loanProductDistribution.map(product => ({
                 loan_product: product.loan_product,
                 count: product.count,
                 percentage: totalLoanCount > 0 ? ((product.count / totalLoanCount) * 100).toFixed() : 0
             }));
-    
+        
             return {
                 success: true,
                 data: {
@@ -822,7 +858,10 @@ module.exports = class AdminService {
                     totalFullyPaidLoans,
                     totalRepaidAmount: totalRepaidAmount[0]?.total || 0,
                     loanProductDistribution: loanProductDistributionWithPercentages,
-                    delinquencyRateOverTime
+                    delinquencyRateOverTime,
+                    loanAmountPerMonth, // Loan amount for each month (January to December)
+                    loanAmountPerWeek, // Loan amount for each week (Monday to Sunday)
+                    loanAmountAllYears // Loan amount for all years
                 }
             };
         } catch (error) {
@@ -834,4 +873,70 @@ module.exports = class AdminService {
             };
         }
     }
+    
+
+    static async getUserStats(dateFilter) {
+        try {
+            // Filter by date range if provided
+            const queryFilter = dateFilter && dateFilter.start && dateFilter.end 
+                ? { createdAt: { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) } } 
+                : {};
+    
+            const [
+                totalUsersCount,
+                totalIndividualUsersCount,
+                totalBusinessUsersCount,
+                totalVerifiedUsersCount,
+                totalUnverifiedUsersCount,
+                totalOTPGeneratedCount,
+                totalUsersWithKYC,
+                totalUsersWithProfilePicture,
+                userAccountTypeDistribution
+            ] = await Promise.all([
+                User.countDocuments(queryFilter), // Total number of users
+                User.countDocuments({ ...queryFilter, accountType: "individual" }), // Total number of individual users
+                User.countDocuments({ ...queryFilter, accountType: "business" }), // Total number of business users
+                User.countDocuments({ ...queryFilter, is_verified: true }), // Total verified users
+                User.countDocuments({ ...queryFilter, is_verified: false }), // Total unverified users
+                User.countDocuments({ ...queryFilter, otp: { $exists: true } }), // Total users who generated OTP
+                User.countDocuments({ ...queryFilter, kyc_verification: { $exists: true } }), // Total users with KYC
+                User.countDocuments({ ...queryFilter, profilePicture: { $exists: true } }), // Total users with profile picture
+                User.aggregate([
+                    { $match: queryFilter },
+                    { $group: { _id: "$accountType", count: { $sum: 1 } } },
+                    { $project: { _id: 0, accountType: "$_id", count: 1 } }
+                ]) // Count of users by account type (individual vs business)
+            ]);
+    
+            // Calculate percentages for accountTypeDistribution
+            const accountTypeDistributionWithPercentages = userAccountTypeDistribution.map(type => ({
+                accountType: type.accountType,
+                count: type.count,
+                percentage: totalUsersCount > 0 ? ((type.count / totalUsersCount) * 100).toFixed(2) : 0
+            }));
+    
+            return {
+                success: true,
+                data: {
+                    totalUsersCount,
+                    totalIndividualUsersCount,
+                    totalBusinessUsersCount,
+                    totalVerifiedUsersCount,
+                    totalUnverifiedUsersCount,
+                    totalOTPGeneratedCount,
+                    totalUsersWithKYC,
+                    totalUsersWithProfilePicture,
+                    accountTypeDistribution: accountTypeDistributionWithPercentages
+                }
+            };
+        } catch (error) {
+            console.error("Error fetching user stats:", error);
+            return {
+                success: false,
+                message: "An unexpected error occurred while fetching user stats.",
+                code: "SERVER_ERROR"
+            };
+        }
+    }
+    
 }

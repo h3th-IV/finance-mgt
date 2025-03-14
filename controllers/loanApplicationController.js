@@ -7,6 +7,11 @@ const { calculateRepaymentPlan } = require('../helpers/calcRepayment.helper');
 const AdminService = require('../services/adminService')
 const mailer = require("../config/mailer");
 const loanApplication = require("../models/loanApplication");
+const mongoose = require("mongoose");
+const GuarantorsDataService = require("../services/guarantorsDataService");
+const { generateOfferLetter } = require("../services/offerLetterService");
+
+
 
 
 module.exports = class LoanApplicationController {
@@ -81,6 +86,8 @@ module.exports = class LoanApplicationController {
         const { data } = req.body;
         try{
             const loanApp = await loanApplication.findById(loanId).populate('customer')
+            console.log({loanApp});
+            
             const offer_letter = await generateOfferLetter(data)
             await mailer.sendOfferLetter(
                 loanApp.customer.email,
@@ -181,7 +188,7 @@ module.exports = class LoanApplicationController {
         const { loan_product, loan_amount, loan_duration, loan_type, business_financial, business_collateral } = req.body;
         const loanProductData =await AdminService.getProductsById(loan_product);
         const files = req.files;
-    
+        const cloudinaryResults = req.cloudinaryResults;
         try {
             const { error, value } = loanApplicationValidator.validate(req.body);
             if (error) {
@@ -223,7 +230,7 @@ module.exports = class LoanApplicationController {
                 business_collateral, 
             };
 
-            const response = await LoanApplicationService.createLoanApplication(loanData, files);
+            const response = await LoanApplicationService.createLoanApplication(loanData, cloudinaryResults);
             if (!response.success) {
                 switch (response.code) {
                     case "NOT_FOUND":
@@ -245,6 +252,7 @@ module.exports = class LoanApplicationController {
         }
     }
 
+
     static async updateLoanApplication(req, res) {
         const { id } = req.user;
         const { loanApplicationId } = req.params;
@@ -255,13 +263,14 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 400, error.details[0].message);
         }
 
-        if (!updateData.loan_duration && !updateData.status) {
+        if (!updateData.loan_duration && !updateData.loan_amount) {
             return errorResponse(
                 res,
                 400,
-                "Please provide at least one field to update: 'Loan Duration' or 'Status'."
+                "Please provide at least one field to update: 'Loan Duration' or 'Amount'."
             );
         }
+
         try {
             const result = await LoanApplicationService.updateLoanApplication(loanApplicationId, updateData, id);
 
@@ -289,20 +298,19 @@ module.exports = class LoanApplicationController {
     static async getAllLoanApplication(req, res) {
         try {
           let filters = null
-
             if(req.user.role.permissions.includes("VIEW_CREATED_LOAN_APP") && !req.user.role.permissions.includes("VIEW_LOAN_APP") ){
+                const userId = new mongoose.Types.ObjectId(req.user.id);
                 filters = {
                     status: req.query.status,
                     search: req.query.search,
-                    createdBy: req.user.id
+                    createdBy: userId,
                 };
             } else {
                 filters = {
                     status: req.query.status,
-                    search: req.query.search, // Add search parameter
+                    search: req.query.search,
                 };
-            }
-            
+            }            
          
 
             const pagination = {
@@ -436,16 +444,22 @@ module.exports = class LoanApplicationController {
                 const statusCode = result.code === "NOT_FOUND" ? 404 : 500;
                 return errorResponse(res, statusCode, result.message);
             }
+
+            const guarantorResponse = await GuarantorsDataService.getGuarantorsByLoanApplicationId(identifier);
+            
             const guarantors = [
                 result.guarantor1?.guarantor || null,
                 result.guarantor2?.guarantor || null,
             ].filter(Boolean);
 
+           // guarantorResponse.guarantorResponse = guarantorResponse.guarantors
+
             return successResponse(res, 200, "Loan application retrieved successfully", {
                 loanApplication: result.loanApplication,
                 guarantors,
                 activityLog: result.appActivity,
-                approval: result.approvals
+                approval: result.approvals,
+                guarantorResponse: guarantorResponse.guarantors
             }); 
         } catch (error) {
             console.error("Error in getLoanApplication controller:", error);
