@@ -12,6 +12,7 @@ const staff = require("../models/staff");
 const mailer = require("../config/mailer");
 const kyc = require("../models/kyc");
 const AdminService = require('../services/adminService');
+const UserService = require("./userService");
 
 
 
@@ -368,6 +369,8 @@ module.exports = class LoanApplicationService {
   }
 
   static async updateLoanApplication(loanApplicationId, updateData, userId) {
+    console.log({loanApplicationId, updateData, userId});
+    
     try {
         // Fetch existing loan application
         const loanApplication = await LoanApplication.findById(loanApplicationId)
@@ -378,7 +381,7 @@ module.exports = class LoanApplicationService {
         }
 
         const loanProduct = loanApplication.loan_product;
-        const updateReason = updateData.reason || "No reason provided";
+        const updateReason = updateData?.reason || "No reason provided";
 
         // Store old values before updating
         const oldValues = {
@@ -457,16 +460,18 @@ module.exports = class LoanApplicationService {
             .populate('loan_product', 'name');
 
         // Activity log
-        const user = await (loanApplication.createdByType === "Staff" 
-            ? staff.findById(userId) 
-            : User.findById(userId));
+        const user =  await AdminService.getStaffById(userId)
 
+
+
+            
+            
         // Create log message with proper formatting
         let changeLog = Object.entries(changedValues)
             .map(([key, { old, new: newValue }]) => `- ${key.replace(/([A-Z])/g, ' $1').trim()}: ${old} → ${newValue}`)
             .join("\n");
 
-        const logMessage = `Loan application updated by ${user.first_name} ${user.last_name}.\n\n`
+        const logMessage = `Loan application updated by ${user?.first_name} ${user?.last_name}.\n\n`
             + `Reason: ${updateReason}\n\n`
             + (changeLog ? `Changes: \n${changeLog}` : "No changes detected.");
 
