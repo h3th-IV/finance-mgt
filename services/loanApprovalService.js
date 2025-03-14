@@ -6,6 +6,7 @@ const mailer = require("../config/mailer");
 const AdminService = require('../services/adminService');
 const loanApplication = require("../models/loanApplication");
 const { generateOfferLetter } = require("./offerLetterService");
+const loanProduct = require("../models/loanProduct");
 
 module.exports = class ApprovalService {
 
@@ -430,18 +431,65 @@ module.exports = class ApprovalService {
           populate: {
             path: ['kyc_verification','kyc_business']
           },
-        });
-console.log({loanApp});
+        })
+        .populate('loan_product')
+        .populate("repayments");
 
-      // const offer_letter = await generateOfferLetter(data)
-      // console.log({offer_letter, data});
+      console.log({loanApp});
+      const loan_amount = loanApp.loan_amount
+      const customer = loanApp.customer;
+      const name = customer.business_name || customer.first_name + " " + customer.last_name;
+      const address = customer.kyc_verification.address.address || customer.kyc_business.business_section.address
+
+      const loan_product = await loanProduct.findById(loanApp.loan_product);
+      const interest_rate = loan_product.interest;
+      const facility_type = loan_product.name || loanApp.loan_product.name;
+      const duration = loanApp.loan_duration;
+      const purpose = loanApp.loan_purpose;
+      const processing_fee = loanApp.processing_fee;
+      const guarantor_1 = loanApp.guarantor1.name;
+      const guarantor_2 = loanApp.guarantor2.name;
+
+      //reapyment transformer
+      const transformRepaymentsToRepaymentPlan = (repayments) => {
+        return repayments.map(repayment => {
+            return {
+                amount: repayment.amount, // Map the 'amount' field
+                date: new Date(repayment.due_date).toISOString().split('T')[0] //convert 'due_date' to YYYY-MM-DD
+            };
+        });
+      };
+      console.log("repayments: ", loanApp.repayments);
+      const repayment_plan = transformRepaymentsToRepaymentPlan(loanApp.repayments);
+      const loan_id = loanApp.loan_id;
+      const offer_data = {
+        name,
+        address,
+        loan_amount,
+        facility_type,
+        duration,
+        purpose,
+        interest_rate,
+        processing_fee,
+        security_guarantors:{
+          guarantor_1,
+          guarantor_2,
+        },
+        security_others: ["Vehicle Documents", "C of O"],
+        repayment_plan,
+        loan_id
+      }
+
+      console.log("offer_data: ", offer_data)
+
+      const offer_letter = await generateOfferLetter(offer_data);
   
       // Step 6: Send email with offer letter
       const customerEmail = loanApp?.customer?.kyc_verification?.email?.address || loanApp?.customer?.kyc_business?.email?.address;
       console.log({customerEmail});
       
       const customerName = loanApp?.customer?.first_name || loanApp?.customer?.business_name;
-      await mailer.sendOfferLetter(customerEmail, customerName, loanApp.loan_id, "");
+      await mailer.sendOfferLetter(customerEmail, customerName, loanApp.loan_id, offer_letter.buffer);
 
       if (loanApplicationUpdateResult.success) {
    

@@ -923,7 +923,7 @@ module.exports = class LoanApplicationService {
         .populate({
             path: "customer",
             populate: {
-                path: "kyc_verification"
+                path: ['kyc_verification','kyc_business']
             }
         })
         .populate("loan_product")

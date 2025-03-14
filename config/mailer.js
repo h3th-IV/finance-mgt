@@ -1194,7 +1194,7 @@ module.exports.sendOfferLetterNotificationEmail = async (staffEmail, loanApplica
     });
 };
 
-module.exports.sendOfferLetter = async (email, name, loan_id, pdfBuffer) => {
+module.exports.sendOfferLetter = async (email, name, loan_id, buffer) => {
     console.log({email, name, loan_id});
     
    
@@ -1279,13 +1279,13 @@ module.exports.sendOfferLetter = async (email, name, loan_id, pdfBuffer) => {
         </body>
         </html>
         `,
-        // attachments: [
-        //     {
-        //         filename: `Offer-Letter-${loan_id}.pdf`,
-        //         content: buffer,
-        //         contentType: 'application/pdf'
-        //     }
-        // ]
+        attachments: [
+            {
+                filename: `Offer-Letter-${loan_id}.pdf`,
+                content: buffer,
+                contentType: 'application/pdf'
+            }
+        ]
     }).catch((err) => {
         console.error("Error sending offer letter email:", err);
     });
