@@ -38,6 +38,7 @@ const sever = http.createServer(app);
 const db = require("./config/db");
 const LoanApplicationController = require("./controllers/loanApplicationController");
 const AdminController = require("./controllers/adminController");
+const { generateOfferLetter } = require("./services/offerLetterService");
 db.connectDB();
 // db.clearDatabase();
 
@@ -88,3 +89,32 @@ const PORT = process.env.PORT || 9000;
 sever.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on ${PORT}`.blue);
 });
+
+
+const offer_data = {
+  name: "Thread Miller",
+  address: "1, Clother Close, Nashville.",
+  loan_amount: 100000,
+  facility_type: "SMB Loan",
+  duration: 2,
+  purpose: "Business Enlargement",
+  interest_rate: 4.5,
+  processing_fee: 100,
+  security_guarantors:{
+    guarantor_1: "Wheel Miller",
+    guarantor_2: "Wool Miller"
+  },
+  security_others: ["Vehicle Documents", "C of O"],
+  repayment_plan: [
+    { amount: 50416.67, date: "2025-04-07" },
+    { amount: 50416.67, date: "2025-05-07" },
+    { amount: 50416.67, date: "2025-05-07" },
+    { amount: 50416.67, date: "2025-05-07" },
+    { amount: 50416.67, date: "2025-05-07" },
+    { amount: 50416.67, date: "2025-05-07" },
+    { amount: 50416.67, date: "2025-05-07" }
+  ],
+  loan_id: "CWLN-1024"
+}
+// const offer_letter = generateOfferLetter(offer_data);
+// console.log("letter_url: ", offer_letter);
