@@ -454,19 +454,12 @@ module.exports = class LoanApplicationService {
         // Save changes
         const savedLoan = await loanApplication.save();
 
-        // Populate related data for response
         const populatedLoan = await LoanApplication.findById(loanApplicationId)
             .populate('customer', 'first_name')
             .populate('loan_product', 'name');
 
-        // Activity log
-        const user =  await AdminService.getStaffById(userId)
-
-
-
+        const user =  await AdminService.getStaffById(userId); 
             
-            
-        // Create log message with proper formatting
         let changeLog = Object.entries(changedValues)
             .map(([key, { old, new: newValue }]) => `- ${key.replace(/([A-Z])/g, ' $1').trim()}: ${old} → ${newValue}`)
             .join("\n");
