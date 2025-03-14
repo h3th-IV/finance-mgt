@@ -491,6 +491,12 @@ module.exports = class ApprovalService {
       const customerName = loanApp?.customer?.first_name || loanApp?.customer?.business_name;
       await mailer.sendOfferLetter(customerEmail, customerName, loanApp.loan_id, offer_letter.buffer);
 
+      await loanApplication.findByIdAndUpdate(
+        loanApp._id,
+        { sent_offer_letter: offer_letter.url },
+      );
+
+
       if (loanApplicationUpdateResult.success) {
    
         

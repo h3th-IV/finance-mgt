@@ -164,6 +164,9 @@ const LoanApplication = new mongoose.Schema(
                 type: Date,
                 default: Date.now,
             },
+        },
+        sent_offer_letter:{
+            type: String,
         }
     },
     { timestamps: true }
