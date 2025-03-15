@@ -37,7 +37,10 @@ router.patch("/:id/disburse", verifyStaffToken, checkPermission("DISBURSE_LOAN_A
 router.patch(
     "/:identifier/upload-document",
     verifyAnyToken,
-    parser.single("additional_document"),
+    parser.fields([
+        { name: "additional_document", maxCount: 1 } // multer middleware to handle the file upload
+    ]),
+    uploadImageMiddleware,
     LoanApplicationController.uploadAdditionalDocument
 );
 

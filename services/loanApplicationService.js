@@ -1219,7 +1219,7 @@ static async fetchAllRepayments(page = 1, limit = 10) {
             };
         }
         const customer = await User.findById(loanApplication.customer);
-        if (loanApplication.status !== "ready_for_disbursement") {
+        if (loanApplication.status != "ready_for_disbursement") {
             return {
                 success: false,
                 message: "Loan application is not ready for disbursement",

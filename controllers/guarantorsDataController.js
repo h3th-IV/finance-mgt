@@ -29,9 +29,6 @@ const {GuarantorsData} = require("../models/guarantorsData");
             }
             // Check for duplicate entries
             const existingGuarantor = await  GuarantorsDataService.getGuarantorByLoanIdAndEmail(loanApplicationId, email);
-            console.log({existingGuarantor});
-            
-    
             if (existingGuarantor.success === true) {
                 return errorResponse(
                     res,

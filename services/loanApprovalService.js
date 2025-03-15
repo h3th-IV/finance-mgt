@@ -7,6 +7,7 @@ const AdminService = require('../services/adminService');
 const loanApplication = require("../models/loanApplication");
 const { generateOfferLetter } = require("./offerLetterService");
 const loanProduct = require("../models/loanProduct");
+const UserService = require("./userService");
 
 module.exports = class ApprovalService {
 
@@ -435,12 +436,10 @@ module.exports = class ApprovalService {
         .populate('loan_product')
         .populate("repayments");
 
-      console.log({loanApp});
       const loan_amount = loanApp.loan_amount
       const customer = loanApp.customer;
-      const name = customer.business_name || customer.first_name + " " + customer.last_name;
-      const address = customer.kyc_verification.address.address || customer.kyc_business.business_section.address
-
+      const name = customer?.business_name || customer?.first_name + " " + customer.last_name;
+      const address = customer?.kyc_verification?.address?.address || customer?.kyc_business?.business_section?.address
       const loan_product = await loanProduct.findById(loanApp.loan_product);
       const interest_rate = loan_product.interest;
       const facility_type = loan_product.name || loanApp.loan_product.name;
@@ -459,7 +458,7 @@ module.exports = class ApprovalService {
             };
         });
       };
-      console.log("repayments: ", loanApp.repayments);
+
       const repayment_plan = transformRepaymentsToRepaymentPlan(loanApp.repayments);
       const loan_id = loanApp.loan_id;
       const offer_data = {
@@ -480,10 +479,8 @@ module.exports = class ApprovalService {
         loan_id
       }
 
-      console.log("offer_data: ", offer_data)
 
       const offer_letter = await generateOfferLetter(offer_data);
-  
       // Step 6: Send email with offer letter
       const customerEmail = loanApp?.customer?.kyc_verification?.email?.address || loanApp?.customer?.kyc_business?.email?.address;
       console.log({customerEmail});
