@@ -16,6 +16,7 @@ const userModel = require("./models/user");
 const business = require("./routes/business");
 const approval = require("./routes/approval");
 const report = require("./routes/report");
+const projections = require("./routes/projections");
 
 app.use(
   session({
@@ -84,6 +85,7 @@ app.post('/api/v1/loan-calculator', LoanApplicationController.loanCalculator);
 app.use("/api/v1/business", business);
 app.use("/api/v1/approval", approval);
 app.use("/api/v1/report", report);
+app.use('/api/v1/projections', projections);
 // app.post('/api/v1/sms', AdminController.sendSMS);
 const PORT = process.env.PORT || 9000;
 sever.listen(PORT, () => {
