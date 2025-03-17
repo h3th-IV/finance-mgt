@@ -21,7 +21,7 @@ router.patch("/kyc/:userId", verifyToken, parser.fields([
   ]), uploadImageMiddleware, UserController.updateKYC);
 router.post("/bvn-otp/:userId", verifyToken, UserController.bvnOTPValidation);
 router.patch("/regen-bvn-otp/:userId", verifyToken, UserController.bvnOTPRegen);
-router.get("/loans/:userId", verifyToken, LoanApplicationController.getUserLoanApplications);
+router.get("/loans/:userId",  LoanApplicationController.getUserLoanApplications);
 router.post('/add-bank/:userId', verifyToken, UserController.addUserBankDetails);
 router.get('/bank/:bankId', verifyToken, UserController.getBankDetailsById);
 router.get('/banks/:userId', verifyToken, UserController.getUserBankDetails)

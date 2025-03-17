@@ -517,6 +517,22 @@ module.exports = class LoanApplicationController {
         }
     }
 
+
+    static async getUserLoansCard(req, res) {
+        const userId = req.params.userId;
+
+        try {
+            const response = await LoanApplicationService.getUserLoansCard(userId);
+            if (response.success) {
+                return successResponse(res, 200, "Loan metrics retrieved successfully", response.data);
+            }
+            return errorResponse(res, 400, response.message);
+        } catch (error) {
+            console.error("Error fetching loan metrics:", error);
+            return errorResponse(res, 500, "Server error while fetching loan metrics");
+        }
+    }
+
     static async getRepaymentsForLoanApplication(req, res) {
         try {
             const { loanApplicationId } = req.params;
