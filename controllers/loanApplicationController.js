@@ -141,14 +141,10 @@ module.exports = class LoanApplicationController {
     static async uploadAdditionalDocument(req, res) {
         const { id, isStaff } = req.user;
         const { identifier } = req.params; // Loan application ID
-        const file = req.file;
         const { document_name, notes } = req.body;
     
         try {
-            if (!file) {
-                return errorResponse(res, 400, "No file was uploaded.");
-            }
-    
+
             if (!document_name) {
                 return errorResponse(res, 400, "A document name must be provided.");
             }
@@ -159,7 +155,7 @@ module.exports = class LoanApplicationController {
             //prep the document data
             const documentData = {
                 document_name: document_name || file.originalname, //use provided name or fallback to original file name
-                document_url: file.path, //save the file path
+                document_url: req?.cloudinaryResults?.additional_document?.url, //save the file path
                 notes: notes || "", //optional notes
                 uploadedByType: createdByType,
                 uploaded_by: createdBy,
@@ -518,6 +514,22 @@ module.exports = class LoanApplicationController {
         } catch (error) {
             console.error("Error in getAllRepaymentsForUser:", error);
             return errorResponse(res, 500, "Failed to fetch repayments");
+        }
+    }
+
+
+    static async getUserLoansCard(req, res) {
+        const userId = req.params.userId;
+
+        try {
+            const response = await LoanApplicationService.getUserLoansCard(userId);
+            if (response.success) {
+                return successResponse(res, 200, "Loan metrics retrieved successfully", response.data);
+            }
+            return errorResponse(res, 400, response.message);
+        } catch (error) {
+            console.error("Error fetching loan metrics:", error);
+            return errorResponse(res, 500, "Server error while fetching loan metrics");
         }
     }
 

@@ -7,6 +7,11 @@ const AdminService = require('../services/adminService');
 const loanApplication = require("../models/loanApplication");
 const { generateOfferLetter } = require("./offerLetterService");
 const loanProduct = require("../models/loanProduct");
+const UserService = require("./userService");
+const { calculateRepaymentPlan } = require("../helpers/calcRepayment.helper");
+const Repayment = require("../models/repayment");
+
+
 
 module.exports = class ApprovalService {
 
@@ -433,14 +438,13 @@ module.exports = class ApprovalService {
           },
         })
         .populate('loan_product')
-        .populate("repayments");
+        // .populate("repayments"); 
 
-      console.log({loanApp});
+
       const loan_amount = loanApp.loan_amount
       const customer = loanApp.customer;
-      const name = customer.business_name || customer.first_name + " " + customer.last_name;
-      const address = customer.kyc_verification.address.address || customer.kyc_business.business_section.address
-
+      const name = customer?.business_name || customer?.first_name + " " + customer.last_name;
+      const address = customer?.kyc_verification?.address?.address || customer?.kyc_business?.business_section?.address
       const loan_product = await loanProduct.findById(loanApp.loan_product);
       const interest_rate = loan_product.interest;
       const facility_type = loan_product.name || loanApp.loan_product.name;
@@ -455,12 +459,77 @@ module.exports = class ApprovalService {
         return repayments.map(repayment => {
             return {
                 amount: repayment.amount, // Map the 'amount' field
-                date: new Date(repayment.due_date).toISOString().split('T')[0] //convert 'due_date' to YYYY-MM-DD
+                date: `TBD`//new Date(repayment.due_date).toISOString().split('T')[0] //convert 'due_date' to YYYY-MM-DD
             };
         });
       };
-      console.log("repayments: ", loanApp.repayments);
-      const repayment_plan = transformRepaymentsToRepaymentPlan(loanApp.repayments);
+
+      console.log("loan product: ", loan_product);
+
+    const repaymentPlan = calculateRepaymentPlan(
+        loanApp.loan_amount,
+        loanApp.loan_duration,
+        loanApp.interest_rate,
+        loanApp.loan_product.interest_type,
+        loanApp.processing_fee
+    );
+
+        const repayments = [];
+        let remainingPrincipal = loanApp.loan_amount;
+
+        if (loan_product.interest_type === "flat_rate") {
+            //for flat rate, populate repayments with calculated values
+            const monthlyPayment = repaymentPlan.monthlyPayment;
+            const totalInterest = repaymentPlan.totalInterest;
+
+            for (let i = 0; i < loanApp.loan_duration; i++) {
+                const dueDate = new Date();
+                dueDate.setMonth(dueDate.getMonth() + i + 1); //add months for each repayment
+
+                const repayment = new Repayment({
+                    repayment_id: `TBD`,
+                    principal: (loanApp.loan_amount / loanApp.loan_duration),
+                    remaining_principal: remainingPrincipal - (loanApp.loan_amount / loanApp.loan_duration),
+                    interest: totalInterest / loanApp.loan_duration,
+                    amount: monthlyPayment,
+                    due_date: dueDate,
+                    status: "unpaid",
+                });
+
+                repayments.push(repayment);
+                remainingPrincipal -= (loanApp.loan_amount / loanApp.loan_duration);
+            }
+        } else if (loan_product.interest_type === "reducing_balance") {
+            //for reducing balance, simulate detailed repayment schedule
+            const monthlyPrincipal = loanApp.loan_amount / loanApp.loan_duration;
+
+            for (let i = 0; i < loanApp.loan_duration; i++) {
+                const dueDate = new Date();
+                dueDate.setMonth(dueDate.getMonth() + i + 1); //add months for each repayment
+
+                const interest = (remainingPrincipal * (loanApp.interest_rate / 100)) / 12;
+                const principal = monthlyPrincipal;
+                const amount = principal + interest;
+
+                const repayment = new Repayment({
+                    repayment_id: `TBD`,
+                    principal: principal,
+                    remaining_principal: remainingPrincipal - principal,
+                    interest: interest,
+                    amount: amount,
+                    due_date: dueDate,
+                    status: "unpaid",
+                });
+
+                repayments.push(repayment);
+                remainingPrincipal -= principal;
+            }
+        }
+
+        const savedRepayments = await Repayment.insertMany(repayments);
+
+
+      const repayment_plan = transformRepaymentsToRepaymentPlan(repayments);
       const loan_id = loanApp.loan_id;
       const offer_data = {
         name,
@@ -480,10 +549,8 @@ module.exports = class ApprovalService {
         loan_id
       }
 
-      console.log("offer_data: ", offer_data)
 
       const offer_letter = await generateOfferLetter(offer_data);
-  
       // Step 6: Send email with offer letter
       const customerEmail = loanApp?.customer?.kyc_verification?.email?.address || loanApp?.customer?.kyc_business?.email?.address;
       console.log({customerEmail});

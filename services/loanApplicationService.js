@@ -12,6 +12,7 @@ const staff = require("../models/staff");
 const mailer = require("../config/mailer");
 const kyc = require("../models/kyc");
 const AdminService = require('../services/adminService');
+const UserService = require("./userService");
 
 
 
@@ -368,6 +369,8 @@ module.exports = class LoanApplicationService {
   }
 
   static async updateLoanApplication(loanApplicationId, updateData, userId) {
+    console.log({loanApplicationId, updateData, userId});
+    
     try {
         // Fetch existing loan application
         const loanApplication = await LoanApplication.findById(loanApplicationId)
@@ -378,7 +381,7 @@ module.exports = class LoanApplicationService {
         }
 
         const loanProduct = loanApplication.loan_product;
-        const updateReason = updateData.reason || "No reason provided";
+        const updateReason = updateData?.reason || "No reason provided";
 
         // Store old values before updating
         const oldValues = {
@@ -451,22 +454,17 @@ module.exports = class LoanApplicationService {
         // Save changes
         const savedLoan = await loanApplication.save();
 
-        // Populate related data for response
         const populatedLoan = await LoanApplication.findById(loanApplicationId)
             .populate('customer', 'first_name')
             .populate('loan_product', 'name');
 
-        // Activity log
-        const user = await (loanApplication.createdByType === "Staff" 
-            ? staff.findById(userId) 
-            : User.findById(userId));
-
-        // Create log message with proper formatting
+        const user =  await AdminService.getStaffById(userId); 
+            
         let changeLog = Object.entries(changedValues)
             .map(([key, { old, new: newValue }]) => `- ${key.replace(/([A-Z])/g, ' $1').trim()}: ${old} → ${newValue}`)
             .join("\n");
 
-        const logMessage = `Loan application updated by ${user.first_name} ${user.last_name}.\n\n`
+        const logMessage = `Loan application updated by ${user?.first_name} ${user?.last_name}.\n\n`
             + `Reason: ${updateReason}\n\n`
             + (changeLog ? `Changes: \n${changeLog}` : "No changes detected.");
 
@@ -1039,6 +1037,55 @@ module.exports = class LoanApplicationService {
     }
   }
 
+
+  static async getUserLoansCard(userId) {
+    try {
+        //etch all loans for the user with repayments populated
+        const loans = await LoanApplication.find({ customer: userId })
+            .populate('repayments')
+            .exec();
+
+        let totalDisbursed = { count: 0, amount: 0 };
+        let totalDeclined = { count: 0, amount: 0 };
+        let totalOutstanding = 0;
+        let totalRepaid = 0;
+
+        loans.forEach(loan => {
+            if (loan.status === 'disbursed') {
+                totalDisbursed.count += 1;
+                totalDisbursed.amount += loan.loan_amount;
+
+                //calc repayments
+                loan.repayments.forEach(repayment => {
+                    if (repayment.status === 'unpaid') {
+                        totalOutstanding += repayment.amount;
+                    } else if (repayment.status === 'paid') {
+                        totalRepaid += repayment.amount;
+                    }
+                });
+            } else if (loan.status === 'declined') {
+                totalDeclined.count += 1;
+                totalDeclined.amount += loan.loan_amount;
+            }
+        });
+
+        return {
+            success: true,
+            message: "User loans fetched successfully",
+            data: {
+                totalLoanBalance: totalDisbursed,
+                totalDeclinedLoans: totalDeclined,
+                totalOutstandingAmount: totalOutstanding,
+                totalRepaidAmount: totalRepaid
+            }
+        };
+    } catch (error) {
+        console.error("Error fetching user loans:", error);
+        return { success: false, message: "Failed to fetch user loans" };
+    }
+  }
+
+
   static async userLoanSummary(userId) {
     try {
         const loanApplications = await LoanApplication.find({ customer: userId }).populate("repayments");
@@ -1221,7 +1268,7 @@ static async fetchAllRepayments(page = 1, limit = 10) {
             };
         }
         const customer = await User.findById(loanApplication.customer);
-        if (loanApplication.status !== "ready_for_disbursement") {
+        if (loanApplication.status != "ready_for_disbursement") {
             return {
                 success: false,
                 message: "Loan application is not ready for disbursement",
