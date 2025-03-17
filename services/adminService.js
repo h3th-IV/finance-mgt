@@ -177,8 +177,6 @@ module.exports = class AdminService {
 
     static async getAllLoanProducts(accountType) {
         try {
-            console.log({ accountType });
-
             let response = [];
             if (accountType) {
                 response = await loanProduct.find({ product_group: accountType });

@@ -1,12 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const LoanProjectionController = require('../controllers/loanProjectionController');
+const LoanProjectionController = require("../controllers/loanProjectionController");
 
-
-router.post('/', LoanProjectionController.createLoanProjection);
-router.get('/', LoanProjectionController.getAllLoanProjections);
-router.get('/:year', LoanProjectionController.getLoanProjectionByYear);
-router.put('/:year', LoanProjectionController.updateLoanProjectionByYear);
-router.delete('/:year', LoanProjectionController.deleteLoanProjectionByYear);
+router.post("/", LoanProjectionController.createLoanProjection);
+router.get("/", LoanProjectionController.getAllLoanProjections);
+//router.get("/:loan_package/:year", LoanProjectionController.get);
+router.delete("/:loan_package/:year", LoanProjectionController.getLoanProjectionByYearAndPackage);
 
 module.exports = router;

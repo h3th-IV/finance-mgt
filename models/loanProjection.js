@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Staff = require("./staff");
+const LoanPackage = require("./loanPackage");
 
 const LoanProjection = new mongoose.Schema(
   {
@@ -7,61 +8,34 @@ const LoanProjection = new mongoose.Schema(
       type: Number, // Year for the projections
       required: true,
     },
-    january: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
+    loan_package: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "LoanProduct", // Reference to Loan Package
+      required: true,
     },
-    february: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
+    projections: {
+      january: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      february: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      march: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      april: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      may: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      june: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      july: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      august: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      september: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      october: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      november: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
+      december: { loan_amount: { type: Number, default: 0 }, loan_count: { type: Number, default: 0 } },
     },
-    march: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    april: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    may: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    june: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    july: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    august: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    september: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    october: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    november: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    december: {
-      loan_amount: { type: Number, required: true },
-      loan_count: { type: Number, required: true },
-    },
-    // action_by: {
+    // createdBy: {
     //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Staff", 
+    //   ref: "Staff",
     //   required: true,
     // },
   },
-  { timestamps: true } 
+  { timestamps: true }
 );
+
+LoanProjection.index({ loan_package: 1, year: 1 }, { unique: true }); // Ensure only one projection per package per year
 
 module.exports = mongoose.model("LoanProjection", LoanProjection);
