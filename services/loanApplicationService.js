@@ -1037,6 +1037,55 @@ module.exports = class LoanApplicationService {
     }
   }
 
+
+  static async getUserLoansCard(userId) {
+    try {
+        //etch all loans for the user with repayments populated
+        const loans = await LoanApplication.find({ customer: userId })
+            .populate('repayments')
+            .exec();
+
+        let totalDisbursed = { count: 0, amount: 0 };
+        let totalDeclined = { count: 0, amount: 0 };
+        let totalOutstanding = 0;
+        let totalRepaid = 0;
+
+        loans.forEach(loan => {
+            if (loan.status === 'disbursed') {
+                totalDisbursed.count += 1;
+                totalDisbursed.amount += loan.loan_amount;
+
+                //calc repayments
+                loan.repayments.forEach(repayment => {
+                    if (repayment.status === 'unpaid') {
+                        totalOutstanding += repayment.amount;
+                    } else if (repayment.status === 'paid') {
+                        totalRepaid += repayment.amount;
+                    }
+                });
+            } else if (loan.status === 'declined') {
+                totalDeclined.count += 1;
+                totalDeclined.amount += loan.loan_amount;
+            }
+        });
+
+        return {
+            success: true,
+            message: "User loans fetched successfully",
+            data: {
+                totalLoanBalance: totalDisbursed,
+                totalDeclinedLoans: totalDeclined,
+                totalOutstandingAmount: totalOutstanding,
+                totalRepaidAmount: totalRepaid
+            }
+        };
+    } catch (error) {
+        console.error("Error fetching user loans:", error);
+        return { success: false, message: "Failed to fetch user loans" };
+    }
+  }
+
+
   static async userLoanSummary(userId) {
     try {
         const loanApplications = await LoanApplication.find({ customer: userId }).populate("repayments");

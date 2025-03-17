@@ -51,4 +51,6 @@ router.patch(
     LoanApplicationController.uploadOfferLetter
 );
 
+router.get("/loan-cards/:userId", verifyToken, LoanApplicationController.getUserLoansCard);
+
 module.exports = router;

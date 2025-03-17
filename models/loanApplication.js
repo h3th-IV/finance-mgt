@@ -143,7 +143,6 @@ const LoanApplication = new mongoose.Schema(
                 },
                 uploaded_at: {
                     type: Date,
-                    default: Date.now,
                 },
                 notes: { type: String }
             }
@@ -162,7 +161,6 @@ const LoanApplication = new mongoose.Schema(
             },
             uploaded_at: {
                 type: Date,
-                default: Date.now,
             },
         },
         sent_offer_letter:{
