@@ -42,8 +42,6 @@ const generateLoanReport = async (req, res) => {
             },
         ]);
 
-        console.log({ actualLoans });
-
         // Create a map for actual loan data by loan product
         const loanDataByProduct = {};
 

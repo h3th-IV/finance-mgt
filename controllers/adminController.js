@@ -756,10 +756,20 @@ module.exports = class AdminController {
 
     static async getAllLoanData(req, res) {
         try {
+            // Handle permissions-based filters
+            let filters = {};
+
+            
+            if (req.user.role.permissions.includes("VIEW_CREATED_LOAN_APP")) {
+                console.log({req: req.user.role.permissions});
+                const userId = new mongoose.Types.ObjectId(req.user.id);
+                filters.createdBy = userId;
+            }
             const { timeRange } = req.query;
-    
+        
             let dateFilter = null;
-    
+        
+            // Handle different time ranges
             if (timeRange === "today") {
                 const startOfDay = new Date();
                 startOfDay.setHours(0, 0, 0, 0);
@@ -798,24 +808,39 @@ module.exports = class AdminController {
             } else if (timeRange === "allTime") {
                 dateFilter = {};
             }
-    
+        
             // Use no filter if timeRange is invalid or not provided
             if (!dateFilter) {
                 dateFilter = {};
             }
     
-            const result = await AdminService.getAllLoanStats(dateFilter);
-    
+            // Now, combine filters with the dateFilter
+            const combinedFilters = { ...filters, ...dateFilter };
+        
+            // Fetch loan stats with the combined filter
+            const result = await AdminService.getAllLoanStats(combinedFilters);
+        
             if (!result.success) {
-                return errorResponse(res, 500, result.message);
+                return res.status(500).json({
+                    success: false,
+                    message: result.message,
+                });
             }
-    
-            return successResponse(res, 200, "Loan metrics fetched successfully", result.data);
+        
+            return res.status(200).json({
+                success: true,
+                message: "Loan metrics fetched successfully",
+                data: result.data,
+            });
         } catch (error) {
             console.error("Error fetching loan metrics:", error);
-            return errorResponse(res, 500, "Server error");
+            return res.status(500).json({
+                success: false,
+                message: "Server error",
+            });
         }
     }
+    
 
     static async getAllUserStatistics(req, res) {
         try {
@@ -882,8 +907,24 @@ module.exports = class AdminController {
 
     static async getMonthlyLoanStatsForYear(req, res) {
         try {
-            const { year } = req.query;  // Get the year from the query params
+            const { year, status, search } = req.query;
+            let filters = {};
+            
+            // Handle permissions-based filters
+            if (req.user.role.permissions.includes("VIEW_CREATED_LOAN_APP")) {
+                const userId = new mongoose.Types.ObjectId(req.user.id);
+                filters.createdBy = userId;
+            }
     
+            // Add status filter if provided
+            if (status) {
+                filters.status = status;
+            }
+    
+            // If there's a search term, we use regex for searching in the loan-related fields
+            const searchRegex = search ? new RegExp(search, "i") : null;
+    
+            // Validate year query parameter
             if (!year) {
                 return res.status(400).json({
                     success: false,
@@ -891,7 +932,6 @@ module.exports = class AdminController {
                 });
             }
     
-            // Validate if the year is a valid number
             const parsedYear = parseInt(year, 10);
             if (isNaN(parsedYear) || parsedYear < 1900 || parsedYear > new Date().getFullYear()) {
                 return res.status(400).json({
@@ -900,50 +940,66 @@ module.exports = class AdminController {
                 });
             }
     
-            // MongoDB aggregation to get monthly loan amount and loan count for the given year
-            const monthlyStats = await LoanApplication.aggregate([
-                {
-                    $match: {
-                        createdAt: {
-                            $gte: new Date(`${parsedYear}-01-01T00:00:00Z`),
-                            $lt: new Date(`${parsedYear + 1}-01-01T00:00:00Z`),
-                        }
-                    }
+            // MongoDB query to find loan applications matching the filters
+            const queryFilter = {
+                createdAt: {
+                    $gte: new Date(`${parsedYear}-01-01T00:00:00Z`),
+                    $lt: new Date(`${parsedYear + 1}-01-01T00:00:00Z`),
                 },
-                {
-                    $group: {
-                        _id: { $month: "$createdAt" },  // Group by month (1 to 12)
-                        totalLoanAmount: { $sum: "$loan_amount" },  // Sum of loan amounts per month
-                        loanCount: { $sum: 1 }  // Count of loans per month
-                    }
-                },
-                {
-                    $sort: { "_id": 1 }  // Sort by month (1 to 12)
-                }
-            ]);
+                ...filters,
+            };
     
-            // Map month numbers (1 to 12) to month names (Jan to Dec)
+            if (searchRegex) {
+                queryFilter.$or = [
+                    { "loan_id": searchRegex },
+                    { "customer.first_name": searchRegex },
+                    { "customer.last_name": searchRegex },
+                    { "customer.business_name": searchRegex },
+                    { "customer.phone_number": searchRegex },
+                    { "customer.email": searchRegex },
+                ];
+            }
+    
+            // Fetch all loan applications for the given filters and year
+            const loanApplications = await LoanApplication.find(queryFilter).populate("customer");
+            console.log({loanApplications});
+            
+    
+            // Prepare the month-based data
+            const monthStats = Array(12).fill({
+                totalLoanAmount: 0,
+                loanCount: 0,
+            });
+    
+            // Process each loan application and group them by month
+            loanApplications.forEach((loan) => {
+                const month = loan.createdAt.getMonth(); // Get month (0 = Jan, 1 = Feb, etc.)
+                monthStats[month].totalLoanAmount += loan.loan_amount;
+                monthStats[month].loanCount += 1;
+            });
+    
+            // Map month numbers (0 to 11) to month names (Jan to Dec)
             const monthNames = [
                 "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
             ];
     
-            // Format the result into an array for each month with proper month names
-            const formattedStats = Array.from({ length: 12 }, (_, index) => {
-                const monthStats = monthlyStats.find(stat => stat._id === index + 1) || { totalLoanAmount: 0, loanCount: 0 };
+            // Prepare the final response with month names
+            const formattedStats = monthNames.map((monthName, index) => {
+                const stats = monthStats[index];
                 return {
-                    month: monthNames[index],  // Use month name (e.g., Jan, Feb)
-                    loanAmount: monthStats.totalLoanAmount,
-                    loanCount: monthStats.loanCount,
+                    month: monthName,
+                    loanAmount: stats.totalLoanAmount,
+                    loanCount: stats.loanCount,
                 };
             });
     
-            // Return the formatted stats
             return res.status(200).json({
                 success: true,
                 message: "Monthly loan stats fetched successfully",
                 data: formattedStats,
             });
+    
         } catch (error) {
             console.error("Error fetching monthly loan stats:", error);
             return res.status(500).json({
@@ -952,5 +1008,7 @@ module.exports = class AdminController {
             });
         }
     }
+    
+    
     
 }   

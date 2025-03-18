@@ -742,8 +742,9 @@ module.exports = class AdminService {
 
     static async getAllLoanStats(dateFilter) {
         try {
-            const queryFilter = dateFilter && dateFilter.start && dateFilter.end ? { createdAt: { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) } } : {};
-        
+            console.log({dateFilter});
+            const queryFilter = dateFilter && dateFilter.start && dateFilter.end ? { createdAt: { $gte: new Date(dateFilter.start), $lte: new Date(dateFilter.end) } } : dateFilter.createdBy ? dateFilter : {};
+
             const [
                 activeLoansCount,
                 delinquentLoansCount,
@@ -760,7 +761,7 @@ module.exports = class AdminService {
                 loanAmountPerWeek, // New addition for loan amounts per week
                 loanAmountAllYears // New addition for loan amounts across all years
             ] = await Promise.all([
-                LoanApplication.countDocuments({ ...queryFilter, status: "processing" }),
+                LoanApplication.countDocuments({ ...queryFilter, status: { $in: ["processing", "overdue", "disbursed", "ready_for_disbursement"] } }),
                 LoanApplication.countDocuments({ ...queryFilter, status: "overdue" }),
                 LoanApplication.countDocuments({ ...queryFilter, status: "ready_for_disbursement" }),
                 LoanApplication.aggregate([
@@ -775,7 +776,7 @@ module.exports = class AdminService {
                     { $match: { ...queryFilter, loan_type: "individual" } },
                     { $group: { _id: null, total: { $sum: "$loan_amount" } } }
                 ]),
-                LoanApplication.countDocuments({ ...queryFilter, status: "fully_paid" }),
+                0,
                 Repayment.aggregate([
                     { $match: queryFilter },
                     { $group: { _id: null, total: { $sum: "$amount" } } }

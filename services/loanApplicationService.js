@@ -609,22 +609,19 @@ module.exports = class LoanApplicationService {
         if (createdBy) {
             queryFilter.createdBy = createdBy;
         }
-        console.log("queryFilter", queryFilter);
-
         const searchRegex = search ? new RegExp(search, "i") : null;
 
-        // Use aggregation to include the customer details in the query
         const pipeline = [
-            { $match: queryFilter }, // Apply initial filters
+            { $match: queryFilter }, 
             {
                 $lookup: {
-                    from: "users", // Reference the User collection
+                    from: "users",
                     localField: "customer",
                     foreignField: "_id",
                     as: "customer",
                 },
             },
-            { $unwind: "$customer" }, // Flatten the customer array into an object
+            { $unwind: "$customer" }, 
         ];
 
         // Add search filter if provided
