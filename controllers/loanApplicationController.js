@@ -10,6 +10,8 @@ const loanApplication = require("../models/loanApplication");
 const mongoose = require("mongoose");
 const GuarantorsDataService = require("../services/guarantorsDataService");
 const { generateOfferLetter } = require("../services/offerLetterService");
+const Joi = require('joi');
+
 
 
 
@@ -589,4 +591,37 @@ module.exports = class LoanApplicationController {
             return errorResponse(res, 500, "An unexpected server error occurred");
         }
     };
+
+    static async logRepayment(req, res) {
+        const { loanApplicationId } = req.params;
+        const { amount } = req.body;
+        const { id, isStaff } = req.user;
+
+        const repaymentSchema = Joi.object({
+            amount: Joi.number().positive().required()
+        });
+
+        const { error } = repaymentSchema.validate({ amount });
+        if (error) {
+            return errorResponse(res, 400, error.details[0].message);
+        }
+
+        try {
+            const response = await LoanApplicationService.logRepayment(
+                loanApplicationId,
+                amount,
+                id,
+                isStaff ? "Staff" : "User"
+            );
+
+            if (!response.success) {
+                return errorResponse(res, 400, response.message);
+            }
+
+            return successResponse(res, 200, "Repayment logged successfully", response.data);
+        } catch (error) {
+            console.error("Error processing repayment:", error);
+            return errorResponse(res, 500, "Server error while processing repayment");
+        }
+    }
 }

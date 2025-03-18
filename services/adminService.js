@@ -294,6 +294,7 @@ module.exports = class AdminService {
             }
             staff.password = pass;
             staff.otp = "EXPIRED";
+            staff.status = 'active';
             await staff.save();
             return { success: true, message: "Password updated successfully", staff };
         } catch (error) {
@@ -937,5 +938,85 @@ module.exports = class AdminService {
             };
         }
     }
-    
+
+
+    static async getStaffStatistics() {
+        try {
+            // await Staff.updateMany({}, { $set: { status: 'active' } });
+            const allStaff = await Staff.find()
+                .populate('role', 'name')
+                .select('first_name last_name email status role');
+
+            const activeStaff = allStaff.filter(staff => staff.status === 'active');
+            const inactiveStaff = allStaff.filter(staff => staff.status === 'inactive');
+
+            return {
+                success: true,
+                data: {
+                    totalStaffCount: allStaff.length,
+                    totalActiveCount: activeStaff.length,
+                    totalInactiveCount: inactiveStaff.length,
+                    allStaff: allStaff.map(staff => ({
+                        _id: staff._id,
+                        first_name: staff.first_name,
+                        last_name: staff.last_name,
+                        email: staff.email,
+                        role: staff.role.name,
+                        status: staff.status
+                    })),
+                    activeStaffList: activeStaff.map(staff => ({
+                        _id: staff._id,
+                        first_name: staff.first_name,
+                        last_name: staff.last_name,
+                        email: staff.email,
+                        role: staff.role.name,
+                        status: staff.status
+                    })),
+                    inactiveStaffList: inactiveStaff.map(staff => ({
+                        _id: staff._id,
+                        first_name: staff.first_name,
+                        last_name: staff.last_name,
+                        email: staff.email,
+                        role: staff.role.name,
+                        status: staff.status
+                    }))
+                }
+            };
+        } catch (error) {
+            console.error("Error fetching staff statistics:", error);
+            return { success: false, message: "Failed to fetch staff statistics" };
+        }
+    }
+
+    // Service Implementation
+    static async getBusinessStatistics() {
+        try {
+            // Loan Application Statistics
+            const totalLoans = await LoanApplication.countDocuments();
+            const activeLoans = await LoanApplication.countDocuments({ status: 'disbursed' });
+
+            // User/Customer Statistics
+            const totalUsers = await User.countDocuments();
+            const activeCustomers = await User.countDocuments({ status: 'active' });
+            const inactiveCustomers = await User.countDocuments({ status: 'inactive' });
+
+            return {
+                success: true,
+                data: {
+                    loanStatistics: {
+                        totalApplications: totalLoans,
+                        activeLoans: activeLoans
+                    },
+                    customerStatistics: {
+                        totalCustomers: totalUsers,
+                        activeCustomers: activeCustomers,
+                        inactiveCustomers: inactiveCustomers
+                    }
+                }
+            };
+        } catch (error) {
+            console.error("Error fetching business statistics:", error);
+            return { success: false, message: "Failed to retrieve statistics" };
+        }
+    }
 }

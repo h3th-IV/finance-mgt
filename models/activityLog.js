@@ -13,6 +13,7 @@ const ActivityLog = new mongoose.Schema(
         "approve",
         "disburse",
         "archive",
+        "repay",
       ],
     },
     performedByType: {

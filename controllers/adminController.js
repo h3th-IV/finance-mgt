@@ -26,6 +26,19 @@ const sendSMSOTP = require('../helpers/messenger');
 
 
 module.exports = class AdminController {
+    static async getStaffStatistics(req, res) {
+        try {
+            const response = await AdminService.getStaffStatistics();
+            if (!response.success) {
+                return errorResponse(res, 500, response.message);
+            }
+            return successResponse(res, 200, "Staff statistics retrieved successfully", response.data);
+        } catch (error) {
+            console.error("Error fetching staff statistics:", error);
+            return errorResponse(res, 500, "Server error");
+        }
+    }
+
     static async getAllkycs(req, res) {
         try {
             const kycs = await AdminService.getAllkyc();
@@ -1009,6 +1022,21 @@ module.exports = class AdminController {
         }
     }
     
+
+    static async getBusinessStatistics(req, res) {
+        try {
+            const response = await AdminService.getBusinessStatistics();
+            
+            if (!response.success) {
+                return errorResponse(res, 500, response.message);
+            }
+            
+            return successResponse(res, 200, "Business statistics retrieved successfully", response.data);
+        } catch (error) {
+            console.error("Error fetching statistics:", error);
+            return errorResponse(res, 500, "Server error while retrieving statistics");
+        }
+    }
     
     
 }   

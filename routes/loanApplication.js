@@ -53,4 +53,7 @@ router.patch(
 
 router.get("/loan-cards/:userId", verifyToken, LoanApplicationController.getUserLoansCard);
 
+//repayLoan
+router.post("/:loanApplicationId/repay", verifyAnyToken, LoanApplicationController.logRepayment);
+
 module.exports = router;

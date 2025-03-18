@@ -17,12 +17,15 @@ const Repayment = new mongoose.Schema({
     amount: {
         type: Number,
     },
+    amount_paid:{
+        type: Number,
+    },
     due_date: {
         type: Date,
     },
     status: {
         type: String,
-        enum: ['unpaid', 'paid'],
+        enum: ['unpaid', 'partial', 'paid'],
         default: 'unpaid'
     }
 }, { timestamps: true });

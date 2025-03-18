@@ -65,6 +65,8 @@ router.get('/monthly-loan-stats', verifyStaffToken, AdminController.getMonthlyLo
 router.get("/getStaff/:staffId", verifyStaffToken, AdminController.getStaffByID)
 router.get("/all-user-data", verifyStaffToken, AdminController.getAllUserStatistics);
 router.get('/monthly-loan-stats', verifyStaffToken, AdminController.getMonthlyLoanStatsForYear);
+router.get('/staff-metrics', verifyStaffToken, AdminController.getStaffStatistics);
+router.get('/business-metrics', verifyStaffToken, AdminController.getBusinessStatistics);
 
 
 module.exports = router;
