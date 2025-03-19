@@ -609,22 +609,19 @@ module.exports = class LoanApplicationService {
         if (createdBy) {
             queryFilter.createdBy = createdBy;
         }
-        console.log("queryFilter", queryFilter);
-
         const searchRegex = search ? new RegExp(search, "i") : null;
 
-        // Use aggregation to include the customer details in the query
         const pipeline = [
-            { $match: queryFilter }, // Apply initial filters
+            { $match: queryFilter }, 
             {
                 $lookup: {
-                    from: "users", // Reference the User collection
+                    from: "users",
                     localField: "customer",
                     foreignField: "_id",
                     as: "customer",
                 },
             },
-            { $unwind: "$customer" }, // Flatten the customer array into an object
+            { $unwind: "$customer" }, 
         ];
 
         // Add search filter if provided
@@ -1381,6 +1378,90 @@ static async fetchAllRepayments(page = 1, limit = 10) {
             message: `Error: ${error.message}`,
             code: "INTERNAL_ERROR",
         };
+    }
+  }
+
+
+  static async logRepayment(loanApplicationId, amount, performedBy, performedByType) {
+    try {
+        //fetch loan application + repayments
+        const loanApplication = await LoanApplication.findById(loanApplicationId)
+            .populate({
+                path: 'repayments',
+                options: { sort: { due_date: 1 } }, //sort _ due date ascending
+                select: 'amount status due_date _id'
+            })
+            .exec();
+
+        if (!loanApplication) {
+            return { success: false, message: "Loan application not found", code: "NOT_FOUND" };
+        }
+
+        let remainingAmount = amount;
+        const updatedRepayments = [];
+
+        //process each repayment in order
+        for (const repayment of loanApplication.repayments) {
+            if (remainingAmount <= 0) break;
+
+            if (repayment.status === 'paid') continue;
+
+            const repaymentAmount = repayment.amount;
+            const appliedAmount = Math.min(remainingAmount, repaymentAmount);
+
+            //update repayment status
+            if (appliedAmount === repaymentAmount) {
+                repayment.status = 'paid';
+            } else {
+                repayment.status = 'partial';
+            }
+
+            repayment.amount_paid = appliedAmount;
+            await repayment.save();
+            updatedRepayments.push({
+                _id: repayment._id,
+                status: repayment.status,
+                applied: appliedAmount,
+                due_date: repayment.due_date,
+            });
+
+            remainingAmount -= appliedAmount;
+        }
+
+        //update loan application status
+        const allPaid = loanApplication.repayments.every(r => r.status === 'paid');
+        if (allPaid && loanApplication.status !== 'fully_paid') {
+            loanApplication.status = 'fully_paid';
+            await loanApplication.save();
+        }
+
+        //log activity
+        await ActivityLogService.LogActivity(
+            "repay",
+            performedByType,
+            performedBy,
+            "LoanApplication",
+            loanApplication._id,
+            {
+                amount: amount,
+                appliedTo: updatedRepayments,
+                remaining: remainingAmount,
+                newStatus: loanApplication.status
+            }
+        );
+
+        return {
+            success: true,
+            message: "Repayment processed successfully",
+            data: {
+                remainingAmount,
+                updatedRepayments,
+                newLoanStatus: loanApplication.status
+            }
+        };
+    } catch (error) {
+        console.error("Error logging repayment:", error);
+        return { success: false, message: "Failed to process repayment", code: "SERVER_ERROR" };
     }
   }
 };

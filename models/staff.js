@@ -41,6 +41,11 @@ const StaffSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'inactive'
+    }
 }, { timestamps: true });
 
 

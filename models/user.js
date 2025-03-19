@@ -70,7 +70,12 @@ const UsersSchema = new mongoose.Schema({
     kyc_business: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'BusinessKYC'
-    }
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+    },
 }, {timestamps: true});
 
 UsersSchema.methods.isOTPExpired = function () {
